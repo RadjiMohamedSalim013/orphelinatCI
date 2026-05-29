@@ -1,0 +1,128 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Dashboard - OrphaMap Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <!-- Hero Navigation -->
+    <div class="mb-12">
+        <h1 class="text-4xl font-bold tracking-tight text-gray-800 mb-4">
+            <svg class="h-8 w-8 inline-block mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Dashboard Admin
+        </h1>
+        <p class="text-lg text-gray-500">Navigateur central - Acces rapide a toutes sections</p>
+    </div>
+
+    <!-- Main Navigation Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <!-- Propositions -->
+        <a href="{{ path('admin_propositions_index') }}" class="group relative rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-all">
+                <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Propositions</h3>
+            <p class="text-sm text-gray-500">Nouvelles soumissions</p>
+            <span class="mt-3 inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-50 rounded-full">{{ propositions|length }} en attente</span>
+        </a>
+
+        <!-- Orphelinats -->
+        <a href="{{ path('admin_orphelinat_list') }}" class="group relative rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-all">
+                <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Orphelinats</h3>
+            <p class="text-sm text-gray-500">Gestion complete</p>
+            <span class="mt-3 inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-orange-600 bg-orange-50 rounded-full">{{ totalOrphelinats }} enregistre{{ totalOrphelinats > 1 ? 's' : '' }}</span>
+        </a>
+
+        <!-- Utilisateurs -->
+        <div class="group relative rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col items-center justify-center text-center opacity-60">
+            <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-all">
+                <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Utilisateurs</h3>
+            <p class="text-sm text-gray-500">Comptes admin</p>
+            <span class="mt-3 inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-50 rounded-full">{{ totalUsers }} actif{{ totalUsers > 1 ? 's' : '' }}</span>
+        </div>
+
+        <!-- Rapports -->
+        <div class="group relative rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col items-center justify-center text-center opacity-60">
+            <div class="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-all">
+                <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Rapports</h3>
+            <p class="text-sm text-gray-500">Statistiques</p>
+            <span class="mt-3 inline-flex items-center justify-center px-3 py-1 text-sm font-semibold text-orange-600 bg-orange-50 rounded-full">{{ totalPropositions }} proposition{{ totalPropositions > 1 ? 's' : '' }}</span>
+        </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Carte Propositions -->
+        <div class="rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <svg class="h-10 w-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <span class="text-4xl font-black">{{ propositions|length }}</span>
+            </div>
+            <h4 class="text-lg font-semibold mb-1">Propositions</h4>
+            <p class="text-sm opacity-80 mb-4">En attente de validation</p>
+            <a href="{{ path('admin_propositions_index') }}" class="inline-flex items-center text-sm font-medium text-white hover:underline">
+                Gerer <svg class="h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Carte Orphelinats -->
+        <div class="rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <svg class="h-10 w-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                <span class="text-4xl font-black">{{ totalOrphelinats }}</span>
+            </div>
+            <h4 class="text-lg font-semibold mb-1">Orphelinats</h4>
+            <p class="text-sm opacity-80 mb-4">Institutions enregistrees</p>
+            <a href="{{ path('admin_orphelinat_list') }}" class="inline-flex items-center text-sm font-medium text-white hover:underline">
+                Gerer <svg class="h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Carte Utilisateurs -->
+        <div class="rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <svg class="h-10 w-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span class="text-4xl font-black">{{ totalUsers }}</span>
+            </div>
+            <h4 class="text-lg font-semibold mb-1">Utilisateurs</h4>
+            <p class="text-sm opacity-80 mb-4">Comptes actifs</p>
+        </div>
+
+        <!-- Carte Total -->
+        <div class="rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <svg class="h-10 w-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-4xl font-black">{{ totalPropositions }}</span>
+            </div>
+            <h4 class="text-lg font-semibold mb-1">Total Propositions</h4>
+            <p class="text-sm opacity-80 mb-4">Depuis le lancement</p>
+        </div>
+</div>
+{% endblock %}

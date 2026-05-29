@@ -7,6 +7,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    uploads_images_directory: '%kernel.project_dir%/public/uploads/images'
+    uploads_documents_directory: '%kernel.project_dir%/public/uploads/documents'
 
 services:
     # default configuration for services in *this* file
@@ -18,6 +20,16 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    App\Controller\Admin\PropositionController:
+        arguments:
+            $propositionRepository: '@App\Repository\PropositionOrphelinatRepository'
+            $entityManager: '@doctrine.orm.entity_manager'
+
+    App\Controller\Public\PropositionController:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $slugger: '@slugger'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

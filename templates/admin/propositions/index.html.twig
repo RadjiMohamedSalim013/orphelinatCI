@@ -1,0 +1,100 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Propositions d'Orphelinat - OrphaMap Admin{% endblock %}
+
+{% block content %}
+    <div class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-file-alt text-xl text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-800 mb-1">Propositions d'Orphelinat</h1>
+                        <p class="text-md text-gray-500">En attente: <span class="font-semibold text-orange-600">{{ propositions|length|default(0) }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% if propositions|length > 0 %}
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nom Orphelinat</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Description</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Localisation</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for proposition in propositions %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                                    <i class="fas fa-hourglass-half text-orange-500 text-xs"></i>
+                                    {{ proposition.statut|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 font-semibold text-gray-800">{{ proposition.nom }}</td>
+                            <td class="px-6 py-4 hidden lg:table-cell">
+                                <div class="max-w-xs text-sm text-gray-500 truncate" title="{{ proposition.description }}">{{ proposition.description|slice(0, 80) ~ (proposition.description|length > 80 ? '...' : '') }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm text-gray-600"><i class="fas fa-phone text-blue-500 mr-2 w-3"></i>{{ proposition.telephone }}</span>
+                                    <span class="text-sm text-gray-600"><i class="fas fa-envelope text-blue-500 mr-2 w-3"></i>{{ proposition.email }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 hidden md:table-cell">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm text-gray-600"><i class="fas fa-flag text-orange-500 mr-2 w-3"></i>{{ proposition.pays }}</span>
+                                    <span class="text-sm text-gray-500"><i class="fas fa-map-marker-alt text-blue-500 mr-2 w-3"></i>{{ proposition.ville }}, {{ proposition.quartier }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-gray-500"><i class="fas fa-calendar-alt text-gray-400 mr-2"></i>{{ proposition.createdAt|date('d/m/Y') }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ path('admin_propositions_show', {'id': proposition.id}) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition">
+                                        <i class="fas fa-eye"></i> Voir
+                                    </a>
+                                    <form method="post" action="{{ path('admin_propositions_valider', {'id': proposition.id}) }}" class="inline" onsubmit="return confirm('Valider et créer l\'orphelinat?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('valider_proposition_' ~ proposition.id) }}">
+                                        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition shadow-sm" type="submit">
+                                            <i class="fas fa-check-circle"></i> Valider
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{{ path('admin_propositions_refuser', {'id': proposition.id}) }}" class="inline" onsubmit="return confirm('Refuser cette proposition?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('refuser_proposition_' ~ proposition.id) }}">
+                                        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition" type="submit">
+                                            <i class="fas fa-times"></i> Refuser
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        \),+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+            <div class="w-20 h-20 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-inbox text-3xl text-orange-500"></i>
+            </div>
+            <h4 class="text-xl font-bold text-gray-700 mb-2">Aucune proposition en attente</h4>
+            <p class="text-gray-500">Toutes les propositions ont été traitées.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

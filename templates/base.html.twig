@@ -4,6 +4,94 @@
         <meta charset="UTF-8">
         <title>{% block title %}Welcome!{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        
+        <!-- Tailwind CSS CDN with directives -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+                        },
+                        colors: {
+                            orange: {
+                                50: '#fff7ed',
+                                100: '#ffedd5',
+                                500: '#f97316',
+                                600: '#ea580c',
+                                700: '#c2410c',
+                                900: '#7c2d12'
+                            },
+                            blue: {
+                                50: '#eff6ff',
+                                100: '#dbeafe',
+                                500: '#3b82f6',
+                                600: '#2563eb',
+                                700: '#1d4ed8',
+                                900: '#1e3a8a'
+                            },
+                            white: '#ffffff'
+                        },
+                        animation: {
+                            'fade-in': 'fadeIn 0.5s ease-in-out',
+                            'slide-up': 'slideUp 0.3s ease-out'
+                        }
+                    }
+                }
+            }
+        </script>
+        <style>
+            @tailwind base;
+            @tailwind components;
+            @tailwind utilities;
+            
+            @layer base {
+                html {
+                    scroll-behavior: smooth;
+                }
+                body {
+                    background-color: #f9fafb;
+                }
+            }
+            
+            @layer components {
+                .line-clamp-2 {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                .btn-primary {
+                    background-color: #f97316;
+                    color: #ffffff;
+                    transition: background-color 0.3s ease;
+                }
+                .btn-primary:hover {
+                    background-color: #ea580c;
+                }
+                .btn-secondary {
+                    background-color: #3b82f6;
+                    color: #ffffff;
+                    transition: background-color 0.3s ease;
+                }
+                .btn-secondary:hover {
+                    background-color: #2563eb;
+                }
+                .card {
+                    background-color: #ffffff;
+                    border-radius: 0.5rem;
+                    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+                    transition: box-shadow 0.3s ease;
+                }
+                .card:hover {
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                }
+            }
+        </style>
+        
+        <link rel="stylesheet" href="{{ asset('assets/styles/app.css') }}">
         {% block stylesheets %}
         {% endblock %}
 
@@ -18,7 +106,7 @@
         <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
         {% endif %}
     </head>
-    <body>
+    <body class="{% if app.request.get('_route') starts with 'admin_' %}dark bg-gray-900 text-white{% else %}bg-gray-50{% endif %} min-h-screen antialiased">
         {% block body %}{% endblock %}
     </body>
 </html>

@@ -1,0 +1,147 @@
+PROJET : ORPHAMAP
+OBJECTIF : Plateforme web permettant de référencer et visualiser les orphelinats avec un système de validation admin.
+
+--------------------------------------------------
+1. ACTEURS DU SYSTÈME
+--------------------------------------------------
+
+1.1 Visiteur (non connecté)
+- Accéder au site public
+- Voir la liste des orphelinats
+- Filtrer par :
+  - pays
+  - ville
+  - commune
+  - quartier
+- Voir le détail d’un orphelinat
+- Soumettre une proposition d’orphelinat
+
+1.2 Administrateur
+- Se connecter
+- Accéder au dashboard
+- Voir les propositions
+- Valider ou refuser une proposition
+- Créer directement un orphelinat
+- Gérer les orphelinats existants
+
+--------------------------------------------------
+2. ROUTES DU PROJET
+--------------------------------------------------
+
+2.1 FRONTEND PUBLIC
+
+GET /
+→ Page d’accueil
+→ Liste des orphelinats
+→ Filtres (pays, ville, commune, quartier)
+
+GET /orphelinats/{id}
+→ Détail d’un orphelinat
+
+GET /proposer-orphelinat
+→ Afficher formulaire de proposition
+
+POST /proposer-orphelinat
+→ Enregistrer proposition
+
+--------------------------------------------------
+2.2 ADMIN
+
+GET /login
+→ Page de connexion admin
+
+GET /admin
+→ Dashboard admin
+
+--------------------------------------------------
+2.3 GESTION PROPOSITIONS
+
+GET /admin/propositions
+→ Liste des propositions (en attente)
+
+GET /admin/propositions/{id}/valider
+→ Valider une proposition
+→ Créer automatiquement un orphelinat
+
+GET /admin/propositions/{id}/refuser
+→ Refuser une proposition
+
+--------------------------------------------------
+2.4 GESTION ORPHELINATS (ADMIN)
+
+GET /admin/orphelinats
+→ Liste des orphelinats
+
+GET /admin/orphelinats/create
+→ Formulaire création
+
+POST /admin/orphelinats/create
+→ Enregistrer un orphelinat
+
+GET /admin/orphelinats/{id}/edit
+→ Modifier un orphelinat
+
+POST /admin/orphelinats/{id}/edit
+→ Sauvegarder modifications
+
+--------------------------------------------------
+3. LOGIQUE MÉTIER
+--------------------------------------------------
+
+3.1 PROPOSITIONS
+
+- Toute proposition est enregistrée avec statut = "en_attente"
+- Non visible sur le site public
+
+3.2 VALIDATION
+
+Si admin valide :
+- création d’un orphelinat
+- statut → "valide"
+
+Si refus :
+- statut → "refuse"
+
+--------------------------------------------------
+3.3 ORPHELINATS
+
+- visibles uniquement s’ils sont validés ou créés par admin
+- liés à un quartier
+- affichés avec :
+  - image
+  - document
+  - description
+  - contact
+
+--------------------------------------------------
+4. UPLOAD FICHIERS
+--------------------------------------------------
+
+Images :
+/public/uploads/images
+
+Documents :
+/public/uploads/documents
+
+- noms uniques obligatoires
+- gestion des erreurs
+
+--------------------------------------------------
+5. FRONTEND
+
+- Interface simple et propre (Twig + Bootstrap)
+- Liste + filtres
+- Cartes d’orphelinats
+- Page détail
+
+--------------------------------------------------
+6. BONNES PRATIQUES
+
+- Architecture propre :
+  Controller → Service → Repository
+- Pas de logique lourde dans les controllers
+- Utilisation Doctrine propre
+- Code maintenable et évolutif
+
+--------------------------------------------------
+FIN SPEC
