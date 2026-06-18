@@ -3,68 +3,130 @@
 {% block title %}Connexion Admin - OrphaMap{% endblock %}
 
 {% block body %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-    <div class="max-w-md w-full">
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4 relative overflow-hidden">
+
+    <!-- BACKGROUND DECOR -->
+    <div class="absolute inset-0">
+        <div class="absolute -top-32 -right-32 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-60"></div>
+        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-gray-200 rounded-full blur-3xl opacity-40"></div>
+    </div>
+
+    <!-- CARD -->
+    <div class="relative w-full max-w-md">
+
+        <!-- HEADER -->
         <div class="text-center mb-8">
-            <div class="h-16 w-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                </svg>
+
+            <div class="h-14 w-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+                <i class="fa-solid fa-lock text-white"></i>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">OrphaMap <span class="text-orange-500">Admin</span></h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Connectez-vous pour accéder au panel</p>
+
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mt-4">
+                OrphaMap <span class="text-orange-500">Admin</span>
+            </h1>
+
+            <p class="text-gray-500 text-sm mt-2">
+                Accédez à votre espace d’administration
+            </p>
+
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+        <!-- FORM CARD -->
+        <div class="bg-white border border-gray-200 rounded-3xl shadow-xl p-8 space-y-6 backdrop-blur-xl">
+
+            <!-- ERROR -->
             {% if error %}
-                <div class="mb-6 flex items-start gap-3 rounded-xl bg-red-500 p-4 text-white shadow-lg">
-                    <svg class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <p class="text-sm font-medium">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+                <div class="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700">
+
+                    <i class="fa-solid fa-circle-exclamation mt-1"></i>
+
+                    <p class="text-sm font-medium">
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                    </p>
+
                 </div>
             {% endif %}
 
+            <!-- USER LOGGED -->
             {% if app.user %}
-                <div class="mb-6 rounded-xl bg-blue-50 dark:bg-blue-900/30 p-4 text-blue-700 dark:text-blue-300">
-                    <p class="text-sm">Vous êtes connecté en tant que <strong>{{ app.user.userIdentifier }}</strong></p>
-                    <a href="{{ logout_path() }}" class="mt-2 inline-block text-sm font-medium text-blue-600 hover:text-blue-800 underline">Déconnexion</a>
+                <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+                    Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>
                 </div>
             {% endif %}
 
-            <form method="post" class="space-y-6">
+            <!-- FORM -->
+            <form method="post" class="space-y-5">
+
+                <!-- EMAIL -->
                 <div>
-                    <label for="inputEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
-                    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" 
-                           class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white transition"
-                           autocomplete="email" required autofocus placeholder="admin@example.com">
+                    <label class="text-sm font-medium text-gray-700">Email</label>
+
+                    <div class="relative mt-2">
+                        <i class="fa-solid fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                        <input type="email"
+                               name="email"
+                               value="{{ last_username }}"
+                               required
+                               autofocus
+                               placeholder="admin@orphamap.com"
+                               class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50
+                                      focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100
+                                      transition outline-none">
+                    </div>
                 </div>
 
+                <!-- PASSWORD -->
                 <div>
-                    <label for="inputPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mot de passe</label>
-                    <input type="password" name="password" id="inputPassword" 
-                           class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white transition"
-                           autocomplete="current-password" required placeholder="••••••••">
+                    <label class="text-sm font-medium text-gray-700">Mot de passe</label>
+
+                    <div class="relative mt-2">
+                        <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                        <input type="password"
+                               name="password"
+                               required
+                               placeholder="••••••••"
+                               class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50
+                                      focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100
+                                      transition outline-none">
+                    </div>
                 </div>
 
-                <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+                <!-- CSRF -->
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                <button type="submit" class="w-full flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-4 text-lg font-bold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
+                <!-- BUTTON -->
+                <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600
+                               text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg
+                               transition active:scale-[0.98]">
+
+                    <i class="fa-solid fa-right-to-bracket"></i>
                     Se connecter
+
                 </button>
+
             </form>
+
         </div>
 
-        <div class="mt-6 text-center">
-            <a href="{{ path('orphelinat_index') }}" class="text-sm text-gray-500 hover:text-orange-500 transition flex items-center justify-center gap-2">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
+        <!-- FOOT LINK -->
+        <div class="text-center mt-6">
+
+            <a href="{{ path('orphelinat_index') }}"
+               class="text-sm text-gray-500 hover:text-orange-500 flex items-center justify-center gap-2 transition">
+
+                <i class="fa-solid fa-arrow-left"></i>
                 Retour au site public
+
             </a>
+
         </div>
+
+    </div>
+
 </div>
+
 {% endblock %}

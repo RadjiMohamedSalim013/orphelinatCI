@@ -1,139 +1,140 @@
-{% extends 'base.html.twig' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Admin Panel{% endblock %}</title>
 
-{% block title %}Admin - {{ parent() }}{% endblock %}
+    <script src="https://cdn.tailwindcss.com"></script>
 
-{% block body %}
-<!-- Sidebar -->
-<nav class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 shadow-xl lg:translate-x-0 transition-transform -translate-x-full lg:translate-x-0" id="sidebar">
-    <div class="flex h-full flex-col overflow-hidden bg-white pt-20">
-        <!-- Logo -->
-        <div class="flex flex-shrink-0 items-center px-6">
-            <h1 class="text-xl font-bold text-gray-800">OrphaMap <span class="text-orange-500">Admin</span></h1>
+    <!-- FontAwesome (icônes propres) -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* smooth UI */
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system;
+        }
+
+        .sidebar-link {
+            transition: all .2s ease;
+        }
+
+        .sidebar-link:hover {
+            transform: translateX(3px);
+        }
+
+        .sidebar-link.active {
+            background: #fff7ed;
+            color: #f97316;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+
+<!-- ================= OVERLAY MOBILE ================= -->
+<div id="overlay"
+     class="fixed inset-0 bg-black/40 hidden lg:hidden z-40"
+     onclick="toggleSidebar()"></div>
+
+<!-- ================= SIDEBAR ================= -->
+<aside id="sidebar"
+    class="fixed top-0 left-0 h-full w-72 bg-white border-r shadow-xl z-50
+           transform -translate-x-full lg:translate-x-0 transition-all duration-300">
+
+    <!-- HEADER SIDEBAR -->
+    <div class="p-6 border-b">
+        <h1 class="text-xl font-bold tracking-tight">
+            <i class="fa-solid fa-shield-halved text-orange-500 mr-2"></i>
+            OrphaMap <span class="text-orange-500">Admin</span>
+        </h1>
+        <p class="text-xs text-gray-400 mt-1">Administration panel</p>
+    </div>
+
+    <!-- NAV -->
+    <nav class="p-4 space-y-2">
+
+        <a href="{{ path('admin_dashboard') }}"
+           class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-500">
+            <i class="fa-solid fa-chart-line w-5"></i>
+            Dashboard
+        </a>
+
+        <a href="{{ path('admin_propositions_index') }}"
+           class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-500">
+            <i class="fa-solid fa-inbox w-5"></i>
+            Propositions
+        </a>
+
+        <a href="{{ path('admin_orphelinat_list') }}"
+           class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-500">
+            <i class="fa-solid fa-house-user w-5"></i>
+            Orphelinats
+        </a>
+
+    </nav>
+
+    <!-- FOOTER SIDEBAR -->
+    <div class="absolute bottom-0 w-full p-4 border-t text-xs text-gray-400">
+        © OrphaMap Admin
+    </div>
+
+</aside>
+
+<!-- ================= MAIN ================= -->
+<div class="lg:ml-72 min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="h-16 bg-white border-b flex items-center justify-between px-6 sticky top-0 z-30">
+
+        <!-- MOBILE BUTTON -->
+        <button class="lg:hidden text-gray-600"
+                onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+
+        <h2 class="font-semibold text-gray-700">
+            {% block page_title %}Admin{% endblock %}
+        </h2>
+
+        <!-- USER -->
+        <div class="flex items-center gap-3 text-sm text-gray-600">
+
+            <div class="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center">
+                <i class="fa-solid fa-user text-orange-500"></i>
+            </div>
+
+            <span class="hidden sm:block">
+                {{ app.user.email ?? '' }}
+            </span>
+
         </div>
 
-        <!-- Nav Links -->
-        <div class="flex flex-1 flex-col overflow-y-auto pt-6 pb-4">
-            <a href="{{ path('admin_dashboard') }}" class="group mx-3 mb-1 flex items-center gap-x-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                </svg>
-                Dashboard
-            </a>
-            <a href="{{ path('admin_propositions_index') }}" class="group mx-3 mb-1 flex items-center gap-x-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-                Propositions
-            </a>
-            <a href="{{ path('admin_orphelinat_list') }}" class="group mx-3 mb-1 flex items-center gap-x-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-blue-50 hover:text-blue-600">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                </svg>
-                Orphelinats
-            </a>
-        </div>
-</nav>
+    </header>
 
-<!-- Mobile menu button -->
-<div class="lg:hidden">
-    <button id="mobile-menu-btn" class="fixed top-4 left-4 z-40 rounded-lg bg-blue-600 p-2 text-white shadow-lg hover:bg-blue-700 transition">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-    </button>
+    <!-- CONTENT -->
+    <main class="p-6">
+
+        {% include 'partials/_flashes.html.twig' %}
+
+        {% block content %}{% endblock %}
+
+    </main>
+
 </div>
 
-<!-- Overlay -->
-<div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden"></div>
-
-<!-- Header -->
-<header class="sticky top-0 z-40 flex h-16 w-full items-center justify-between bg-white shadow-sm border-b border-gray-100 px-6">
-    <div class="flex items-center gap-4">
-        <h1 class="text-xl font-semibold text-gray-800">Panel <span class="text-blue-600">Admin</span></h1>
-    </div>
-    
-    <div class="flex items-center gap-4">
-        <!-- Notifications -->
-        <button class="relative p-2 text-gray-400 hover:text-blue-600 transition">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-            </svg>
-            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">3</span>
-        </button>
-        
-        <!-- User dropdown -->
-        <div class="relative">
-            <button id="user-menu-btn" class="flex items-center gap-3 rounded-lg p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center font-semibold text-white">
-                    {{ app.user.email|slice(0,2)|upper }}
-                </div>
-                <span class="hidden sm:inline">{{ app.user.email }}</span>
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </button>
-            
-            <div id="user-menu" class="absolute right-0 top-full mt-2 w-48 divide-y divide-gray-100 rounded-xl bg-white shadow-lg ring-1 ring-black/5 opacity-0 invisible transition-all">
-                <div class="px-4 py-3">
-                    <p class="text-sm font-medium text-gray-900">Admin</p>
-                    <p class="truncate text-sm text-gray-500">{{ app.user.email }}</p>
-                </div>
-                <div class="py-1">
-                    <a href="{{ path('admin_dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">Dashboard</a>
-                </div>
-                <div class="py-1">
-                    <a href="{{ path('app_logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">Déconnexion</a>
-                </div>
-        </div>
-</header>
-
-<!-- Main content -->
-<main class="lg:ml-64 pt-16 pb-12 px-6 lg:px-12 bg-gray-50 min-h-screen transition-all">
-    <!-- Flashes -->
-    {% include 'partials/_flashes.html.twig' %}
-    
-    {% block content %}{% endblock %}
-</main>
-
+<!-- ================= JS ================= -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Mobile sidebar toggle
+function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const overlay = document.getElementById('sidebar-overlay');
-    
-    if (mobileBtn) {
-        mobileBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        });
-    }
-    
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-        });
-    }
-    
-    // User menu toggle
-    const userBtn = document.getElementById('user-menu-btn');
-    const userMenu = document.getElementById('user-menu');
-    
-    if (userBtn && userMenu) {
-        userBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            userMenu.classList.toggle('invisible');
-            userMenu.classList.toggle('opacity-0');
-        });
-        
-        // Close menus on outside click
-        document.addEventListener('click', (e) => {
-            if (!userBtn.contains(e.target)) {
-                userMenu.classList.add('invisible', 'opacity-0');
-            }
-        });
-    }
-});
+    const overlay = document.getElementById('overlay');
+
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+}
 </script>
-{% endblock %}
+
+</body>
+</html>

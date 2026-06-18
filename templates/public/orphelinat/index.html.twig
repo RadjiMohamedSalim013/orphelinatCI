@@ -3,161 +3,156 @@
 {% block title %}Orphelinats - OrphaMap{% endblock %}
 
 {% block body %}
-<div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-    <!-- Hero Header -->
-    <div class="text-center mb-12">
-        <h1 class="hero-title text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Découvrez les <span class="text-orange-500">Orphelinats</span>
-        </h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Trouvez l'orphelinat qui correspond à vos critères de recherche. Soutenez-les dès aujourd'hui !</p>
-    </div>
 
-    <!-- Main Content: Search + Filters + List -->
-    <div class="grid lg:grid-cols-4 gap-8">
-        <!-- Filters Sidebar -->
-        <div class="lg:col-span-1 space-y-6">
-            <div class="filter-panel bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">🔍 Filtres</h3>
-                
-                <form method="GET" class="space-y-4">
-                    <!-- Search -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rechercher</label>
-                        <input type="text" name="search" value="{{ currentFilters.search }}" placeholder="Nom, description, adresse..." 
-                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white transition">
-                    </div>
+    {% include '/partials/_hero.html.twig' %}
 
-                    <!-- Pays -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pays</label>
-                        <select name="pays_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white">
-                            <option value="">Tous les pays</option>
-                            {% for pays in filtersData.pays %}
-                                <option value="{{ pays.id }}" {% if currentFilters.pays_id == pays.id %}selected{% endif %}>{{ pays.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+    <div class="mt-14"></div>
 
-                    <!-- Ville -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ville</label>
-                        <select name="ville_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white">
-                            <option value="">Toutes les villes</option>
-                            {% for ville in filtersData.villes %}
-                                <option value="{{ ville.id }}" {% if currentFilters.ville_id == ville.id %}selected{% endif %}>{{ ville.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+    {% include '/partials/_orphelinat_explorer.html.twig' %}
 
-                    <!-- Commune -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Commune</label>
-                        <select name="commune_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white">
-                            <option value="">Toutes les communes</option>
-                            {% for commune in filtersData.communes %}
-                                <option value="{{ commune.id }}" {% if currentFilters.commune_id == commune.id %}selected{% endif %}>{{ commune.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+    <script>
+        (function () {
+            var shouldScroll = false;
 
-                    <!-- Quartier -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quartier</label>
-                        <select name="quartier_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white">
-                            <option value="">Tous les quartiers</option>
-                            {% for quartier in filtersData.quartiers %}
-                                <option value="{{ quartier.id }}" {% if currentFilters.quartier_id == quartier.id %}selected{% endif %}>{{ quartier.nom }} ({{ quartier.commune.ville.pays.nom }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+            // Cas 1 : l’URL contient déjà #orphelinat-explorer
+            if (window.location.hash === '#orphelinat-explorer') {
+                shouldScroll = true;
+            }
 
-                    <!-- Page hidden for pagination -->
-                    <input type="hidden" name="page" value="{{ currentFilters.page }}">
+            // Cas 2 : on a demandé explicitement le scroll après soumission des filtres
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('_scroll_to') === 'orphelinat-explorer') {
+                shouldScroll = true;
+            }
 
-                    <div class="flex gap-3 pt-2">
-                        <button type="submit" class="flex-1 bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition font-medium">Filtrer</button>
-                        <a href="{{ path('orphelinat_index') }}" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition font-medium">Effacer</a>
-                    </div>
-                </form>
-            </div>
+            if (!shouldScroll) return;
 
-            <div class="text-center text-sm text-gray-500 dark:text-gray-400 py-4 border-t border-gray-200 dark:border-gray-700">
-                {{ totalCount }} résultat{{ totalCount > 1 ? 's' : '' }}
-            </div>
+            window.requestAnimationFrame(function () {
+                var el = document.getElementById('orphelinat-explorer');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                }
+            });
+        })();
+    </script>
+
+
+
+    <!-- SECTION IMPACT -->
+    <section class="relative py-20 overflow-hidden">
+
+        <!-- BACKGROUND SUBTLE -->
+        <div class="absolute inset-0">
+            <div class="absolute top-10 left-10 w-72 h-72 bg-orange-100/40 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-10 right-10 w-72 h-72 bg-gray-100 rounded-full blur-3xl"></div>
         </div>
 
-        <!-- Orphelinats Grid -->
-        <div class="lg:col-span-3">
-            {% if orphelinats|length == 0 %}
-                <div class="text-center py-20">
-                    <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Aucun orphelinat trouvé</h3>
-                    <p class="text-gray-600 dark:text-gray-300 mb-6">Essayez de modifier vos critères de recherche.</p>
-                    <a href="{{ path('orphelinat_index') }}" class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition">Voir tous les orphelinats</a>
-                </div>
-            {% else %}
-                <div class="grid orphelinat-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {% for orphelinat in orphelinats %}
-                        <div class="orphelinat-card bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 group">
-                            {% if orphelinat.image %}
-                                <div class="h-48 w-full overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 group-hover:scale-105 transition-transform duration-500">
-                                    <img src="/uploads/images/{{ orphelinat.image }}" alt="{{ orphelinat.nom }}" class="w-full h-full object-cover">
-                                </div>
-                            {% else %}
-                                <div class="h-48 w-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                                    <svg class="w-16 h-16 text-white opacity-75" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                            {% endif %}
-                            <div class="p-6">
-                                <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-orange-500 transition">{{ orphelinat.nom }}</h4>
-                                <div class="space-y-2 mb-4">
-                                    <p class="text-gray-600 dark:text-gray-300"><i class="fas fa-map-marker-alt text-orange-500 mr-2"></i>{{ orphelinat.adresse }}</p>
-                                    <p class="text-gray-600 dark:text-gray-300"><i class="fas fa-phone text-blue-500 mr-2"></i>{{ orphelinat.telephone }}</p>
-                                    {% if orphelinat.quartier %}
-                                        <p class="text-gray-600 dark:text-gray-300 text-sm"><i class="fas fa-home text-blue-500 mr-2"></i>{{ orphelinat.quartier.nom }}, {{ orphelinat.quartier.commune.nom }}</p>
-                                    {% endif %}
-                                </div>
-                                <div class="flex gap-2 pt-2">
-                                <a href="{{ path('orphelinat_show', {'id': orphelinat.id}) }}" class="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg text-center hover:from-orange-600 hover:to-orange-700 transition-all font-medium transform hover:-translate-y-0.5">Voir détails</a>
-                                    <button class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition">
-                                        <i class="fas fa-heart"></i>
-                                    </button>
-                                </div>
-                            </div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- HEADER -->
+            <div class="text-center mb-14 space-y-3">
+
+                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                    Un réseau d’orphelinats plus visible
+                </h2>
+
+                <p class="text-gray-500 max-w-2xl mx-auto text-base md:text-lg">
+                    OrphaMap connecte les structures d’accueil pour améliorer leur visibilité et faciliter le soutien.
+                </p>
+
+            </div>
+
+            <!-- GRID -->
+            <div class="grid md:grid-cols-3 gap-6">
+
+                <!-- CARD 1 -->
+                <div class="group relative p-7 bg-white border border-gray-200 rounded-2xl
+                            transition duration-300 hover:-translate-y-2 hover:shadow-xl cursor-pointer">
+
+                    <div class="flex items-center gap-3 mb-4">
+
+                        <div class="h-11 w-11 flex items-center justify-center rounded-xl
+                                    bg-orange-50 text-orange-500
+                                    group-hover:bg-orange-500 group-hover:text-white transition">
+
+                            <i class="fa-solid fa-location-dot text-lg"></i>
+
                         </div>
-                    {% endfor %}
+
+                        <h3 class="font-semibold text-gray-900 group-hover:text-orange-500 transition">
+                            Localisation rapide
+                        </h3>
+
+                    </div>
+
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Trouvez un orphelinat en quelques secondes.
+                    </p>
+
+                    <div class="mt-5 h-[2px] w-0 bg-orange-500 group-hover:w-16 transition-all duration-300"></div>
+
                 </div>
 
-                <!-- Pagination -->
-                {% if totalPages > 1 %}
-                    <div class="mt-12 flex items-center justify-center space-x-1">
-                        {% if currentPage > 1 %}
-                            <a href="{{ path('orphelinat_index', {page: currentPage - 1, 'search': currentFilters.search|default(''), 'pays_id': currentFilters.pays_id|default(''), 'ville_id': currentFilters.ville_id|default(''), 'commune_id': currentFilters.commune_id|default(''), 'quartier_id': currentFilters.quartier_id|default('') }) }}" class="px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">Précédent</a>
-                        {% endif %}
+                <!-- CARD 2 -->
+                <div class="group relative p-7 bg-white border border-gray-200 rounded-2xl
+                            transition duration-300 hover:-translate-y-2 hover:shadow-xl cursor-pointer">
 
-                        {% for p in 1..totalPages %}
-                            <a href="{{ path('orphelinat_index', {page: p, 'search': currentFilters.search|default(''), 'pays_id': currentFilters.pays_id|default(''), 'ville_id': currentFilters.ville_id|default(''), 'commune_id': currentFilters.commune_id|default(''), 'quartier_id': currentFilters.quartier_id|default('') }) }}" 
-                               class="px-3 py-2 {{ p == currentPage ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600' }} rounded-lg hover:bg-orange-50 dark:hover:bg-gray-700 transition font-medium">
-                                {{ p }}
-                            </a>
-                        {% endfor %}
+                    <div class="flex items-center gap-3 mb-4">
 
-                        {% if currentPage < totalPages %}
-                            <a href="{{ path('orphelinat_index', {page: currentPage + 1, 'search': currentFilters.search|default(''), 'pays_id': currentFilters.pays_id|default(''), 'ville_id': currentFilters.ville_id|default(''), 'commune_id': currentFilters.commune_id|default(''), 'quartier_id': currentFilters.quartier_id|default('') }) }}" class="px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">Suivant</a>
-                        {% endif %}
+                        <div class="h-11 w-11 flex items-center justify-center rounded-xl
+                                    bg-orange-50 text-orange-500
+                                    group-hover:bg-orange-500 group-hover:text-white transition">
+
+                            <i class="fa-solid fa-eye text-lg"></i>
+
+                        </div>
+
+                        <h3 class="font-semibold text-gray-900 group-hover:text-orange-500 transition">
+                            Visibilité accrue
+                        </h3>
+
                     </div>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
-</div>
 
-<!-- FontAwesome CDN -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Chaque structure est accessible au public.
+                    </p>
+
+                    <div class="mt-5 h-[2px] w-0 bg-orange-500 group-hover:w-16 transition-all duration-300"></div>
+
+                </div>
+
+                <!-- CARD 3 -->
+                <div class="group relative p-7 bg-white border border-gray-200 rounded-2xl
+                            transition duration-300 hover:-translate-y-2 hover:shadow-xl cursor-pointer">
+
+                    <div class="flex items-center gap-3 mb-4">
+
+                        <div class="h-11 w-11 flex items-center justify-center rounded-xl
+                                    bg-orange-50 text-orange-500
+                                    group-hover:bg-orange-500 group-hover:text-white transition">
+
+                            <i class="fa-solid fa-hand-holding-heart text-lg"></i>
+
+                        </div>
+
+                        <h3 class="font-semibold text-gray-900 group-hover:text-orange-500 transition">
+                            Impact social
+                        </h3>
+
+                    </div>
+
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        Faciliter les dons et le soutien.
+                    </p>
+
+                    <div class="mt-5 h-[2px] w-0 bg-orange-500 group-hover:w-16 transition-all duration-300"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
 {% endblock %}

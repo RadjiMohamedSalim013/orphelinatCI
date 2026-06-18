@@ -45,19 +45,38 @@ $form->handleRequest($request);
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Handle file uploads
+            // Handle file uploads (defense-in-depth)
             $imageFile = $form->get('image')->getData();
             if ($imageFile) {
+                $mime = $imageFile->getMimeType();
+                $allowedImageMimes = ['image/jpeg', 'image/png', 'image/webp'];
+                $allowedExtensions = ['jpeg', 'jpg', 'png', 'webp'];
+
+                if (!in_array($mime, $allowedImageMimes, true)) {
+                    $this->addFlash('error', 'Le fichier image doit être un JPG, PNG ou WEBP.');
+                    return $this->render('public/proposition/new.html.twig', [
+                        'form' => $form->createView(),
+                    ]);
+                }
+
+                $ext = strtolower((string) $imageFile->guessExtension());
+                if (!$ext || !in_array($ext, $allowedExtensions, true)) {
+                    $this->addFlash('error', 'Extension image invalide.');
+                    return $this->render('public/proposition/new.html.twig', [
+                        'form' => $form->createView(),
+                    ]);
+                }
+
                 $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $this->slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$ext;
 
                 try {
-$imageFile->move(
+                    $imageFile->move(
                         $this->getParameter('uploads_images_directory'),
                         $newFilename
                     );
-$proposition->setImage($newFilename);
+                    $proposition->setImage($newFilename);
                 } catch (FileException $e) {
                     $this->addFlash('error', 'Erreur lors de l\'upload de l\'image.');
                     return $this->render('public/proposition/new.html.twig', [
@@ -68,16 +87,26 @@ $proposition->setImage($newFilename);
 
             $documentFile = $form->get('document')->getData();
             if ($documentFile) {
+                $mime = $documentFile->getMimeType();
+                $allowedDocumentMimes = ['application/pdf'];
+
+                if (!in_array($mime, $allowedDocumentMimes, true)) {
+                    $this->addFlash('error', 'Le document doit être un PDF.');
+                    return $this->render('public/proposition/new.html.twig', [
+                        'form' => $form->createView(),
+                    ]);
+                }
+
                 $originalFilename = pathinfo($documentFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $this->slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$documentFile->guessExtension();
+                $newFilename = $safeFilename.'-'.uniqid().'.pdf';
 
                 try {
                     $documentFile->move(
                         $this->getParameter('uploads_documents_directory'),
                         $newFilename
                     );
-$proposition->setDocument($newFilename);
+                    $proposition->setDocument($newFilename);
                 } catch (FileException $e) {
                     $this->addFlash('error', 'Erreur lors de l\'upload du document.');
                     return $this->render('public/proposition/new.html.twig', [
@@ -85,6 +114,7 @@ $proposition->setDocument($newFilename);
                     ]);
                 }
             }
+
 
             $this->entityManager->persist($proposition);
             $this->entityManager->flush();

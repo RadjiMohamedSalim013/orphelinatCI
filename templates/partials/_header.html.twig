@@ -1,0 +1,142 @@
+<header class="sticky top-0 z-50 w-full bg-white/90 backdrop-blur border-b border-gray-200">
+
+    <style>
+        /* micro branding OrphaMap */
+        .nav-link {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 0;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .nav-link:hover {
+            color: #111827;
+        }
+
+        .nav-link::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -3px;
+            width: 0%;
+            height: 2px;
+            background: #f97316;
+            transition: width 0.25s ease;
+            border-radius: 2px;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .brand-text {
+            font-family: Inter, sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .cta-btn {
+            transition: all 0.2s ease;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .cta-btn:active {
+            transform: scale(0.96);
+        }
+    </style>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="flex items-center justify-between h-16">
+
+            <!-- LOGO -->
+            <a href="#" class="flex items-center gap-2 font-extrabold text-xl brand-text">
+
+                <i data-lucide="map-pin" class="h-5 w-5 text-orange-500"></i>
+
+                <span>
+                    <span class="text-orange-500">Orpha</span><span class="text-gray-900">Map</span>
+                </span>
+
+            </a>
+
+            <!-- NAV -->
+            <nav class="hidden md:flex items-center gap-8 text-sm">
+
+                <a href="{{ path('orphelinat_index') }}" class="nav-link">
+                    <i data-lucide="home" class="h-4 w-4 text-gray-400"></i>
+                    Accueil
+                </a>
+
+                <a href="#" class="nav-link">
+                    <i data-lucide="info" class="h-4 w-4 text-gray-400"></i>
+                    À propos
+                </a>
+
+
+                <a href="#" class="nav-link">
+                    <i data-lucide="mail" class="h-4 w-4 text-gray-400"></i>
+                    Contact
+                </a>
+
+            </nav>
+
+            <!-- ACTION -->
+            <div class="flex items-center gap-3">
+
+                <!-- CTA -->
+                <a href="{{ path('proposer_orphelinat') }}"
+                   class="cta-btn inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm">
+
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+
+                    Ajouter
+                </a>
+
+                <!-- MOBILE BTN -->
+                <button onclick="document.getElementById('mobileMenu').classList.toggle('hidden')"
+                        class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition">
+
+                    <i data-lucide="menu" class="h-6 w-6 text-gray-700"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MOBILE MENU -->
+    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 bg-white">
+
+        <div class="px-4 py-4 space-y-3 text-sm">
+
+            <a href="#" class="flex items-center gap-2 text-gray-700">
+                <i data-lucide="home" class="h-4 w-4"></i> Accueil
+            </a>
+
+            <a href="#" class="flex items-center gap-2 text-gray-700">
+                <i data-lucide="info" class="h-4 w-4"></i> À propos
+            </a>
+
+            <a href="#" class="flex items-center gap-2 text-gray-700">
+                <i data-lucide="mail" class="h-4 w-4"></i> Contact
+            </a>
+
+            <a href="#"
+               class="flex items-center justify-center gap-2 mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg">
+                <i data-lucide="plus" class="h-4 w-4"></i>
+                Ajouter un orphelinat
+            </a>
+
+        </div>
+
+    </div>
+
+</header>

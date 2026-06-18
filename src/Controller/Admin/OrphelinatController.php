@@ -71,6 +71,7 @@ class OrphelinatController extends AbstractController
             'currentPage' => $page,
             'search' => $search,
         ]);
+
     }
 
     #[Route('/orphelinats/create', name: 'orphelinat_create', methods: ['GET', 'POST'])]
