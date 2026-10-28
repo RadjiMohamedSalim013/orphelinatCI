@@ -2,172 +2,160 @@
 
 namespace App\Form;
 
+use App\Entity\Commune;
 use App\Entity\PropositionOrphelinat;
+use App\Repository\CommuneRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\Length;
-use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Constraints\IsTrue;
 
+/**
+ * Formulaire public de proposition. La commune est choisie dans le référentiel
+ * (listes en cascade pays > ville > commune) ou saisie si elle n'y figure pas.
+ */
 class PropositionOrphelinatType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-
-            // =========================
-            // INFORMATIONS ORPHELINAT
-            // =========================
-
             ->add('nom', TextType::class, [
-                'label' => 'Nom de l’orphelinat',
-                'attr' => [
-                    'placeholder' => 'Ex : Orphelinat Saint Joseph',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'Le nom est requis.'),
-                    new Length(max: 255),
-                ],
+                'label' => 'Nom de l\'établissement',
+                'attr' => ['placeholder' => 'Ex. : Orphelinat Sainte-Famille', 'maxlength' => 255, 'minlength' => 3],
             ])
-
-            ->add('description', TextareaType::class, [
-                'label' => 'Présentation de l’orphelinat',
-                'attr' => [
-                    'rows' => 6,
-                    'placeholder' => 'Présentez brièvement l’orphelinat, sa mission, son histoire et les enfants accueillis...',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'La description est requise.'),
-                    new Length(max: 2000),
-                ],
+            ->add('commune', EntityType::class, [
+                'label' => 'Commune',
+                'class' => Commune::class,
+                'query_builder' => static fn (CommuneRepository $r) => $r->createOrderedQueryBuilder(),
+                'choice_label' => 'nom',
+                'choice_attr' => static fn (Commune $c) => ['data-ville' => $c->getVille()?->getId()],
+                'group_by' => static fn (Commune $c) => $c->getVille()?->getNom(),
+                'placeholder' => 'Choisissez une commune',
+                'required' => false,
             ])
-
-            ->add('telephone', TextType::class, [
-                'label' => 'Numéro de téléphone',
-                'attr' => [
-                    'placeholder' => '+225 07 00 00 00 00',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'Le téléphone est requis.'),
-                ],
-            ])
-
-            ->add('email', TextType::class, [
-                'label' => 'Adresse e-mail',
-                'attr' => [
-                    'placeholder' => 'contact@orphelinat.org',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'L’email est requis.'),
-                    new Email(message: 'Email invalide.'),
-                ],
-            ])
-
-            // =========================
-            // LOCALISATION
-            // =========================
-
-            ->add('pays', TextType::class, [
-                'label' => 'Pays',
-                'attr' => [
-                    'placeholder' => 'Ex : Côte d’Ivoire',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'Le pays est requis.'),
-                ],
-            ])
-
-            ->add('ville', TextType::class, [
-                'label' => 'Ville',
-                'attr' => [
-                    'placeholder' => 'Ex : Abidjan',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'La ville est requise.'),
-                ],
-            ])
-
-            ->add('quartier', TextType::class, [
-                'label' => 'Quartier',
-                'attr' => [
-                    'placeholder' => 'Ex : Cocody, Yopougon...',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'Le quartier est requis.'),
-                ],
-            ])
-
-            ->add('adresse', TextType::class, [
-                'label' => 'Adresse complète',
-                'attr' => [
-                    'placeholder' => 'Adresse précise de l’orphelinat',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'L’adresse est requise.'),
-                ],
-            ])
-
-            // =========================
-            // DOCUMENTS
-            // =========================
-
-            ->add('image', FileType::class, [
-                'label' => 'Photo principale',
+            ->add('communeAbsente', CheckboxType::class, [
+                'label' => 'Ma ville ou ma commune n\'est pas dans la liste',
                 'mapped' => false,
                 'required' => false,
-                'help' => 'Ajoutez une photo permettant d’identifier facilement l’orphelinat.',
+            ])
+            ->add('pays', TextType::class, [
+                'label' => 'Pays',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex. : Côte d\'Ivoire'],
+            ])
+            ->add('ville', TextType::class, [
+                'label' => 'Ville',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex. : Bouaké'],
+            ])
+            ->add('communeSaisie', TextType::class, [
+                'label' => 'Commune',
+                'required' => false,
+                'attr' => ['placeholder' => 'Nom de la commune'],
+            ])
+            ->add('quartier', TextType::class, [
+                'label' => 'Quartier',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex. : Riviera 2'],
+            ])
+            ->add('adresse', TextType::class, [
+                'label' => 'Adresse ou repères',
+                'attr' => ['placeholder' => 'Rue, lot, repère connu (près de…)', 'maxlength' => 255],
+            ])
+            ->add('telephone', TelType::class, [
+                'label' => 'Téléphone de l\'établissement',
+                'required' => false,
+                'attr' => ['placeholder' => '+225 07 00 00 00 00', 'inputmode' => 'tel'],
+            ])
+            ->add('email', EmailType::class, [
+                'label' => 'E-mail de l\'établissement',
+                'required' => false,
+                'attr' => ['placeholder' => 'contact@exemple.org'],
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Présentation',
+                'required' => false,
+                'help' => 'Mission, public accueilli, activités. Ne mentionnez aucun enfant nommément.',
+                'attr' => ['rows' => 4, 'maxlength' => 2000],
+            ])
+            ->add('source', TextareaType::class, [
+                'label' => 'Comment connaissez-vous cet établissement ?',
+                'help' => 'Ex. : je suis bénévole sur place, page officielle, article de presse (lien), numéro d\'agrément…',
+                'attr' => ['rows' => 3, 'maxlength' => 1000, 'minlength' => 10],
+            ])
+            ->add('image', FileType::class, [
+                'label' => 'Photo de la façade (facultatif)',
+                'mapped' => false,
+                'required' => false,
+                'help' => 'JPG, PNG ou WEBP, 5 Mo maximum. Pas de photo d\'enfants.',
+                'attr' => ['accept' => 'image/jpeg,image/png,image/webp'],
                 'constraints' => [
-                    new NotBlank(groups: ['upload_image']),
                     new File(
                         maxSize: '5M',
                         mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-                        mimeTypesMessage: 'Le fichier image doit être de type JPG, PNG ou WEBP.',
+                        mimeTypesMessage: 'La photo doit être au format JPG, PNG ou WEBP.',
                     ),
                 ],
             ])
-
             ->add('document', FileType::class, [
-                'label' => 'Document justificatif',
+                'label' => 'Justificatif (facultatif)',
                 'mapped' => false,
                 'required' => false,
-                'help' => 'Autorisation, récépissé ou document administratif.',
+                'help' => 'Agrément, récépissé… PDF ou image, 10 Mo maximum. Consulté uniquement par l\'équipe de vérification.',
+                'attr' => ['accept' => 'application/pdf,image/jpeg,image/png,image/webp'],
                 'constraints' => [
                     new File(
                         maxSize: '10M',
-                        mimeTypes: ['application/pdf'],
-                        mimeTypesMessage: 'Le document doit être un PDF.',
+                        mimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+                        mimeTypesMessage: 'Le justificatif doit être un PDF ou une image.',
                     ),
                 ],
             ])
-
-            // =========================
-            // PROPOSANT
-            // =========================
-
             ->add('nomProposant', TextType::class, [
-                'label' => 'Votre nom complet',
-                'attr' => [
-                    'placeholder' => 'Ex : Mohamed Salim',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'Votre nom est requis.'),
-                ],
+                'label' => 'Votre nom',
+                'attr' => ['autocomplete' => 'name', 'maxlength' => 255],
             ])
-
             ->add('contactProposant', TextType::class, [
-                'label' => 'Téléphone ou e-mail',
-                'attr' => [
-                    'placeholder' => '+225 07 00 00 00 00 ou email@example.com',
-                ],
-                'constraints' => [
-                    new NotBlank(message: 'Votre contact est requis.'),
-                ],
+                'label' => 'Votre téléphone ou e-mail',
+                'help' => 'Utilisé uniquement pour vérifier la proposition et vous informer de la décision. Jamais publié.',
+                'attr' => ['maxlength' => 255],
+            ])
+            ->add('consentement', CheckboxType::class, [
+                'label' => 'J\'atteste que ces informations sont exactes à ma connaissance.',
+                'mapped' => false,
+                'constraints' => [new IsTrue(message: 'Merci de confirmer l\'exactitude des informations.')],
             ]);
+
+        AntiSpamFields::add($builder);
+
+        // Une seule source de vérité pour la localisation : la commune choisie
+        // impose pays et ville ; sinon on garde la saisie libre.
+        $builder->addEventListener(FormEvents::SUBMIT, static function (FormEvent $event): void {
+            /** @var PropositionOrphelinat $proposition */
+            $proposition = $event->getData();
+            $form = $event->getForm();
+
+            if ($form->get('communeAbsente')->getData()) {
+                $proposition->setCommune(null);
+            }
+
+            if ($commune = $proposition->getCommune()) {
+                $proposition
+                    ->setVille($commune->getVille()?->getNom())
+                    ->setPays($commune->getVille()?->getPays()?->getNom())
+                    ->setCommuneSaisie(null);
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void

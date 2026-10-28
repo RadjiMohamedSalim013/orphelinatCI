@@ -6,8 +6,12 @@ use App\Repository\VilleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: VilleRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_ville_pays_nom', columns: ['pays_id', 'nom'])]
+#[UniqueEntity(fields: ['pays', 'nom'], message: 'Cette ville existe déjà pour ce pays.', errorPath: 'nom')]
 class Ville
 {
     #[ORM\Id]
@@ -16,21 +20,30 @@ class Ville
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private ?string $nom = null;
 
     #[ORM\ManyToOne(inversedBy: 'villes')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
     private ?Pays $pays = null;
 
     /**
      * @var Collection<int, Commune>
      */
     #[ORM\OneToMany(targetEntity: Commune::class, mappedBy: 'ville')]
+    #[ORM\OrderBy(['nom' => 'ASC'])]
     private Collection $communes;
 
     public function __construct()
     {
         $this->communes = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->nom;
     }
 
     public function getId(): ?int
@@ -43,9 +56,9 @@ class Ville
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
-        $this->nom = $nom;
+        $this->nom = null === $nom ? null : trim($nom);
 
         return $this;
     }

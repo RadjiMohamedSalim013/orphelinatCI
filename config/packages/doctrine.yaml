@@ -8,6 +8,12 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        # Le serveur MySQL local utilise MyISAM par défaut : on force InnoDB
+        # pour disposer des clés étrangères et des transactions.
+        default_table_options:
+            engine: InnoDB
+            charset: utf8mb4
+            collation: utf8mb4_unicode_ci
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

@@ -1,191 +1,211 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ orphelinat.nom }} - OrphaMap{% endblock %}
+{% block title %}{{ orphelinat.nom }} — {{ orphelinat.commune.nom }} — OrphaMap CI{% endblock %}
+{% block meta_description %}{{ orphelinat.nom }}, orphelinat à {{ orphelinat.localisationLabel }}. Adresse et contacts.{% endblock %}
+
+{% block og_type %}place{% endblock %}
+{% block og_image %}{{ orphelinat.image ? absolute_url(image_url(orphelinat.image, 1600)) : parent() }}{% endblock %}
+{% block canonical %}{{ url('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}{% endblock %}
+
+{% block structured_data %}
+    {% set fiche = {
+        '@context': 'https://schema.org',
+        '@type': 'NGO',
+        '@id': url('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) ~ '#etablissement',
+        'name': orphelinat.nom,
+        'url': url('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}),
+        'address': {
+            '@type': 'PostalAddress',
+            'streetAddress': orphelinat.adresse,
+            'addressLocality': orphelinat.commune.nom,
+            'addressRegion': orphelinat.ville.nom,
+            'addressCountry': orphelinat.pays.nom,
+        },
+    } %}
+    {% if orphelinat.description %}{% set fiche = fiche|merge({description: orphelinat.description|length > 300 ? orphelinat.description|slice(0, 297) ~ '…' : orphelinat.description}) %}{% endif %}
+    {% if orphelinat.telephone %}{% set fiche = fiche|merge({telephone: orphelinat.telephone}) %}{% endif %}
+    {% if orphelinat.email %}{% set fiche = fiche|merge({email: orphelinat.email}) %}{% endif %}
+    {% if orphelinat.image %}{% set fiche = fiche|merge({image: absolute_url(image_url(orphelinat.image, 1600))}) %}{% endif %}
+    {% if orphelinat.hasCoordinates %}{% set fiche = fiche|merge({geo: {'@type': 'GeoCoordinates', latitude: orphelinat.latitude + 0, longitude: orphelinat.longitude + 0}}) %}{% endif %}
+    {% set liens = [orphelinat.siteWeb, orphelinat.reseauSocial]|filter(l => l) %}
+    {% if liens is not empty %}{% set fiche = fiche|merge({sameAs: liens}) %}{% endif %}
+
+    {% set ariane = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': [
+            {'@type': 'ListItem', position: 1, name: 'Annuaire', item: url('orphelinat_index')},
+            {'@type': 'ListItem', position: 2, name: orphelinat.ville.nom, item: url('orphelinat_index', {pays: orphelinat.pays.id, ville: orphelinat.ville.id})},
+            {'@type': 'ListItem', position: 3, name: orphelinat.commune.nom, item: url('orphelinat_index', {pays: orphelinat.pays.id, ville: orphelinat.ville.id, commune: orphelinat.commune.id})},
+            {'@type': 'ListItem', position: 4, name: orphelinat.nom},
+        ],
+    } %}
+    <script type="application/ld+json">{{ fiche|json_encode(constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_HEX_TAG'))|raw }}</script>
+    <script type="application/ld+json">{{ ariane|json_encode(constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_HEX_TAG'))|raw }}</script>
+{% endblock %}
+
+{% block stylesheets %}
+    {% if orphelinat.hasCoordinates %}{% include 'partials/_leaflet.html.twig' %}{% endif %}
+{% endblock %}
 
 {% block body %}
+    {% set ferme = orphelinat.statut.value == 'ferme' %}
+    {% set tel = orphelinat.telephone ? orphelinat.telephone|replace({' ': '', '.': '', '-': '', '(': '', ')': ''}) %}
+    {% set images = (orphelinat.image ? [orphelinat.image] : [])|merge(orphelinat.photos|map(p => p.filename)) %}
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <section class="border-b border-ink-200/70 bg-white">
+        <div class="om-container py-6 sm:py-8">
+            <nav aria-label="Fil d’Ariane" class="text-sm">
+                <ol class="flex flex-wrap items-center gap-1.5 text-ink-500">
+                    <li><a class="hover:text-brand-700" href="{{ path('orphelinat_index') }}">Annuaire</a></li>
+                    <li aria-hidden="true"><i class="fa-solid fa-chevron-right text-[10px]"></i></li>
+                    <li><a class="hover:text-brand-700" href="{{ path('orphelinat_index', {pays: orphelinat.pays.id, ville: orphelinat.ville.id}) }}">{{ orphelinat.ville.nom }}</a></li>
+                    <li aria-hidden="true"><i class="fa-solid fa-chevron-right text-[10px]"></i></li>
+                    <li><a class="hover:text-brand-700" href="{{ path('orphelinat_index', {pays: orphelinat.pays.id, ville: orphelinat.ville.id, commune: orphelinat.commune.id}) }}" aria-current="location">{{ orphelinat.commune.nom }}</a></li>
+                </ol>
+            </nav>
 
-<div class="max-w-5xl mx-auto px-4 py-10 space-y-6">
+            <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        {% include 'partials/_verification_badge.html.twig' %}
+                        {% if ferme %}<span class="om-badge-danger"><i class="fa-solid fa-door-closed" aria-hidden="true"></i> Fermé</span>{% endif %}
+                    </div>
+                    <h1 class="om-h1 mt-3 !text-3xl sm:!text-4xl">{{ orphelinat.nom }}</h1>
+                    <p class="mt-2 flex items-start gap-2 text-ink-600">
+                        <i class="fa-solid fa-location-dot mt-1 text-ink-400" aria-hidden="true"></i>{{ orphelinat.localisationLabel }}, {{ orphelinat.pays.nom }}
+                    </p>
+                </div>
+                {% if not ferme %}
+                    <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                        {% if tel %}<a href="tel:{{ tel }}" class="om-btn-primary"><i class="fa-solid fa-phone" aria-hidden="true"></i> Appeler</a>{% endif %}
+                        {% if orphelinat.email %}<a href="mailto:{{ orphelinat.email }}" class="om-btn-secondary"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Écrire</a>{% endif %}
+                        {% if orphelinat.hasCoordinates %}
+                            <a href="https://www.openstreetmap.org/directions?to={{ orphelinat.latitude }}%2C{{ orphelinat.longitude }}" target="_blank" rel="noopener" class="om-btn-secondary">
+                                <i class="fa-solid fa-route" aria-hidden="true"></i> Itinéraire<span class="sr-only"> (nouvel onglet)</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
 
-    <!-- BACK -->
-    <a href="{{ path('orphelinat_index') }}"
-       class="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-orange-600 transition">
-        <i class="fa-solid fa-arrow-left"></i>
-        Retour
-    </a>
+    <div class="om-container py-8">
+        {% if ferme %}
+            <div class="om-alert-warning mb-6" role="status">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
+                <p>Cet établissement est indiqué comme <strong>fermé</strong>. Ses informations sont conservées pour mémoire.</p>
+            </div>
+        {% endif %}
 
-    <!-- ================= DOSSIER CARD ================= -->
-    <div class="bg-white border rounded-3xl shadow-sm overflow-hidden">
+        <div class="grid gap-8 lg:grid-cols-[1fr_360px] [&>*]:min-w-0">
+            <div class="space-y-10">
+                {% if images is not empty %}
+                    <div class="grid gap-3 {{ images|length > 1 ? 'grid-cols-2 sm:grid-cols-4' }}">
+                        {% for image in images|slice(0, 5) %}
+                            <a href="{{ image_url(image, 1600) }}" target="_blank" rel="noopener"
+                               class="group relative block overflow-hidden rounded-lg bg-ink-100 {{ loop.first ? (images|length > 1 ? 'col-span-2 row-span-2 aspect-[4/3]' : 'aspect-[16/9]') : 'aspect-[4/3]' }}">
+                                <img src="{{ image_url(image, loop.first ? 1600 : 640) }}" {{ loop.first ? 'fetchpriority="high"' }} alt="Photo {{ loop.index }} de {{ orphelinat.nom }}" loading="{{ loop.first ? 'eager' : 'lazy' }}" decoding="async"
+                                     class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]">
+                                <span class="sr-only"> (agrandir dans un nouvel onglet)</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-        <!-- HEADER DOSSIER -->
-        <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+                <section aria-labelledby="titre-presentation">
+                    <h2 id="titre-presentation" class="om-h3">Présentation</h2>
+                    {% if orphelinat.description %}
+                        <div class="mt-3 max-w-prose leading-relaxed text-ink-700">{{ orphelinat.description|nl2br }}</div>
+                    {% else %}
+                        <p class="mt-3 text-ink-500">Aucune présentation n’a encore été fournie pour cet établissement.</p>
+                    {% endif %}
+                </section>
 
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                {% if orphelinat.services %}
+                    <section aria-labelledby="titre-services">
+                        <h2 id="titre-services" class="om-h3">Services et accompagnement</h2>
+                        <div class="mt-3 max-w-prose leading-relaxed text-ink-700">{{ orphelinat.services|nl2br }}</div>
+                    </section>
+                {% endif %}
 
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold">
-                        {{ orphelinat.nom }}
-                    </h1>
+                {% if orphelinat.hasCoordinates %}
+                    <section aria-labelledby="titre-carte">
+                        <h2 id="titre-carte" class="om-h3">Localisation</h2>
+                        <div class="om-card mt-3 overflow-hidden"
+                             data-controller="map"
+                             data-map-points-value="{{ [{id: orphelinat.id, nom: orphelinat.nom, latitude: orphelinat.latitude, longitude: orphelinat.longitude, commune: orphelinat.commune.nom, verifie: orphelinat.verifie}]|json_encode }}"
+                             data-map-tile-url-value="{{ carte.tuiles }}"
+                             data-map-attribution-value="{{ carte.attribution }}">
+                            <div data-map-target="canvas" class="om-skeleton !rounded-none h-80 w-full" role="region" aria-label="Carte de localisation de {{ orphelinat.nom }}"></div>
+                            <p data-map-target="message" class="p-4 text-sm text-ink-600" hidden></p>
+                        </div>
+                    </section>
+                {% endif %}
+            </div>
 
-                    {% if orphelinat.quartier %}
-                        <p class="text-white/90 text-sm mt-1 flex items-center gap-2">
-                            <i class="fa-solid fa-location-dot"></i>
-                            {{ orphelinat.quartier.nom }},
-                            {{ orphelinat.quartier.commune.nom }}
-                        </p>
+            <aside class="space-y-4" aria-label="Coordonnées et informations">
+                <div class="om-card om-card-pad">
+                    <h2 class="om-h3">Coordonnées</h2>
+                    <dl class="mt-4 space-y-4 text-sm">
+                        <div class="flex gap-3">
+                            <dt class="mt-0.5 w-5 text-center text-ink-400"><i class="fa-solid fa-map-pin" aria-hidden="true"></i><span class="sr-only">Adresse</span></dt>
+                            <dd class="text-ink-800">{{ orphelinat.adresse }}<br><span class="text-ink-500">{{ orphelinat.localisationLabel }}</span></dd>
+                        </div>
+                        {% if orphelinat.telephone %}
+                            <div class="flex gap-3">
+                                <dt class="mt-0.5 w-5 text-center text-ink-400"><i class="fa-solid fa-phone" aria-hidden="true"></i><span class="sr-only">Téléphone</span></dt>
+                                <dd><a class="om-link" href="tel:{{ tel }}">{{ orphelinat.telephone }}</a></dd>
+                            </div>
+                        {% endif %}
+                        {% if orphelinat.email %}
+                            <div class="flex gap-3">
+                                <dt class="mt-0.5 w-5 text-center text-ink-400"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span class="sr-only">E-mail</span></dt>
+                                <dd class="min-w-0 break-all"><a class="om-link" href="mailto:{{ orphelinat.email }}">{{ orphelinat.email }}</a></dd>
+                            </div>
+                        {% endif %}
+                        {% if orphelinat.siteWeb %}
+                            <div class="flex gap-3">
+                                <dt class="mt-0.5 w-5 text-center text-ink-400"><i class="fa-solid fa-globe" aria-hidden="true"></i><span class="sr-only">Site internet</span></dt>
+                                <dd class="min-w-0 break-all"><a class="om-link" href="{{ orphelinat.siteWeb }}" target="_blank" rel="noopener nofollow">{{ orphelinat.siteWeb|replace({'https://': '', 'http://': ''})|trim('/') }}</a></dd>
+                            </div>
+                        {% endif %}
+                        {% if orphelinat.reseauSocial %}
+                            <div class="flex gap-3">
+                                <dt class="mt-0.5 w-5 text-center text-ink-400"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i><span class="sr-only">Page officielle</span></dt>
+                                <dd class="min-w-0 break-all"><a class="om-link" href="{{ orphelinat.reseauSocial }}" target="_blank" rel="noopener nofollow">Page officielle</a></dd>
+                            </div>
+                        {% endif %}
+                    </dl>
+                    {% if not orphelinat.telephone and not orphelinat.email %}
+                        <p class="mt-4 text-sm text-ink-500">Aucun contact n’est encore connu pour cet établissement.</p>
+                    {% endif %}
+                    {% if not orphelinat.verifie %}
+                        <p class="om-alert-info mt-5 !text-[13px]"><i class="fa-solid fa-circle-info mt-0.5" aria-hidden="true"></i><span>Informations pas encore confirmées par l’équipe. Vérifiez-les avant de vous déplacer.</span></p>
                     {% endif %}
                 </div>
 
-                <div class="text-sm bg-white/20 px-4 py-2 rounded-xl">
-                    Dossier OrphaMap
+                {% if orphelinat.document %}
+                    <a href="{{ asset('uploads/documents/' ~ orphelinat.document) }}" target="_blank" rel="noopener" class="om-btn-secondary w-full">
+                        <i class="fa-solid fa-file-pdf text-red-700" aria-hidden="true"></i> Document officiel (PDF)
+                    </a>
+                {% endif %}
+
+                <div class="om-card om-card-pad">
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between gap-2"><dt class="text-ink-500">Ajouté le</dt><dd class="font-medium text-ink-800">{{ orphelinat.createdAt|date('d/m/Y') }}</dd></div>
+                        {% if orphelinat.verifiedAt %}<div class="flex justify-between gap-2"><dt class="text-ink-500">Vérifié le</dt><dd class="font-medium text-ink-800">{{ orphelinat.verifiedAt|date('d/m/Y') }}</dd></div>{% endif %}
+                        {% if orphelinat.updatedAt %}<div class="flex justify-between gap-2"><dt class="text-ink-500">Mis à jour le</dt><dd class="font-medium text-ink-800">{{ orphelinat.updatedAt|date('d/m/Y') }}</dd></div>{% endif %}
+                    </dl>
+                    <div class="mt-5 border-t border-ink-100 pt-4">
+                        <p class="text-sm text-ink-600">Une information est inexacte ou obsolète&nbsp;?</p>
+                        <a href="{{ path('orphelinat_signaler', {id: orphelinat.id}) }}" class="om-btn-secondary mt-3 w-full">
+                            <i class="fa-regular fa-flag" aria-hidden="true"></i> Signaler une erreur
+                        </a>
+                    </div>
                 </div>
-
-            </div>
-
+            </aside>
         </div>
-
-        <!-- BODY -->
-        <div class="p-6 space-y-8">
-
-            <!-- PHOTO + CONTACT -->
-            <div class="grid md:grid-cols-3 gap-6">
-
-                <!-- PHOTO -->
-                <div class="md:col-span-1">
-
-                    <div class="rounded-2xl overflow-hidden border bg-gray-100 h-56">
-
-                        {% if orphelinat.image %}
-                            <img src="/uploads/images/{{ orphelinat.image }}"
-                                 class="w-full h-full object-cover">
-                        {% else %}
-                            <div class="w-full h-full flex items-center justify-center bg-orange-100">
-                                <i class="fa-solid fa-building text-orange-500 text-5xl"></i>
-                            </div>
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-                <!-- CONTACT -->
-                <div class="md:col-span-2 space-y-4">
-
-                    <h2 class="font-bold text-gray-800 flex items-center gap-2">
-                        <i class="fa-solid fa-address-card text-orange-500"></i>
-                        Informations de contact
-                    </h2>
-
-                    <div class="border rounded-2xl p-5 space-y-4 bg-gray-50">
-
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Téléphone</span>
-                            <span class="font-semibold flex items-center gap-2">
-                                <i class="fa-solid fa-phone text-blue-500"></i>
-                                {{ orphelinat.telephone }}
-                            </span>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Email</span>
-                            <span class="font-semibold flex items-center gap-2">
-                                <i class="fa-solid fa-envelope text-blue-500"></i>
-                                {{ orphelinat.email }}
-                            </span>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Adresse</span>
-                            <span class="font-semibold flex items-center gap-2 text-right">
-                                <i class="fa-solid fa-location-crosshairs text-orange-500"></i>
-                                {{ orphelinat.adresse }}
-                            </span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- DESCRIPTION -->
-            <div>
-
-                <h2 class="font-bold text-gray-800 flex items-center gap-2 mb-3">
-                    <i class="fa-solid fa-circle-info text-orange-500"></i>
-                    Description du centre
-                </h2>
-
-                <div class="border rounded-2xl p-5 bg-white text-gray-600 leading-relaxed">
-                    {{ orphelinat.description }}
-                </div>
-
-            </div>
-
-            <!-- LOCALISATION -->
-            {% if orphelinat.quartier %}
-            <div>
-
-                <h2 class="font-bold text-gray-800 flex items-center gap-2 mb-3">
-                    <i class="fa-solid fa-map-location-dot text-green-600"></i>
-                    Localisation administrative
-                </h2>
-
-                <div class="grid sm:grid-cols-2 gap-4">
-
-                    <div class="border rounded-xl p-4">
-                        <p class="text-gray-500 text-sm">Pays</p>
-                        <p class="font-semibold">
-                            {{ orphelinat.quartier.commune.ville.pays.nom }}
-                        </p>
-                    </div>
-
-                    <div class="border rounded-xl p-4">
-                        <p class="text-gray-500 text-sm">Ville</p>
-                        <p class="font-semibold">
-                            {{ orphelinat.quartier.commune.ville.nom }}
-                        </p>
-                    </div>
-
-                    <div class="border rounded-xl p-4">
-                        <p class="text-gray-500 text-sm">Commune</p>
-                        <p class="font-semibold">
-                            {{ orphelinat.quartier.commune.nom }}
-                        </p>
-                    </div>
-
-                    <div class="border rounded-xl p-4">
-                        <p class="text-gray-500 text-sm">Quartier</p>
-                        <p class="font-semibold">
-                            {{ orphelinat.quartier.nom }}
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-            {% endif %}
-
-            <!-- DOCUMENT -->
-            {% if orphelinat.document %}
-            <div class="pt-4">
-
-                <a href="/uploads/documents/{{ orphelinat.document }}"
-                   target="_blank"
-                   class="inline-flex items-center gap-3 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-xl shadow transition">
-
-                    <i class="fa-solid fa-file-pdf text-lg"></i>
-                    Télécharger le document officiel
-
-                </a>
-
-            </div>
-            {% endif %}
-
-        </div>
-
     </div>
-</div>
-
 {% endblock %}

@@ -1,11 +1,13 @@
 {% use 'form_div_layout.html.twig' %}
 
+{# Thème de formulaire OrphaMap : composants om-* de assets/styles/app.css #}
+
 {%- block form_row -%}
     {%- set widget_attr = {} -%}
     {%- if help is not empty -%}
-        {%- set widget_attr = {attr: {'aria-describedby': id ~"_help"}} -%}
+        {%- set widget_attr = {attr: attr|merge({'aria-describedby': id ~ '_help'})} -%}
     {%- endif -%}
-    <div class="mb-4"{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+    <div{% with {attr: row_attr|merge({class: (row_attr.class|default('') ~ ' mb-5')|trim})} %}{{ block('attributes') }}{% endwith %}>
         {{- form_label(form) -}}
         {{- form_widget(form, widget_attr) -}}
         {{- form_errors(form) -}}
@@ -14,80 +16,85 @@
 {%- endblock form_row -%}
 
 {%- block form_label -%}
-    {% if label is not same as(false) -%}
-        {% if not compound -%}
-            {% set label_attr = label_attr|merge({'for': id}) %}
-        {%- endif -%}
-        {% if required -%}
-            {% set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2')|trim}) %}
-        {%- else -%}
-            {% set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2')|trim}) %}
-        {%- endif -%}
-        {% if label is empty -%}
-            {%- if label_format is not empty -%}
-                {% set label = label_format|replace({
-                    '%name%': name,
-                    '%id%': id,
-                }) %}
-            {%- else -%}
-                {% set label = name|humanize %}
-            {%- endif -%}
-        {%- endif -%}
-        <label{% with {attr: label_attr} %}{{ block('attributes') }}{% endwith %}>
-            {%- if translation_domain is same as(false) -%}
-                {{- label -}}
-            {%- else -%}
-                {{- label|trans(label_translation_parameters, translation_domain) -}}
-            {%- endif -%}
-            {%- if required %} <span class="text-red-500">*</span>{% endif -%}
-        </label>
+    {%- if label is not same as(false) -%}
+        {%- set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' om-label')|trim}) -%}
+        {%- if not compound -%}{%- set label_attr = label_attr|merge({for: id}) -%}{%- endif -%}
+        {%- if label is empty -%}{%- set label = name|humanize -%}{%- endif -%}
+        {%- set balise = compound ? 'p' : 'label' -%}
+        <{{ balise }}{% if compound %} id="{{ id }}_label"{% endif %}{% with {attr: label_attr} %}{{ block('attributes') }}{% endwith %}>
+            {{- translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain) -}}
+            {%- if required %} <span class="text-red-700" aria-hidden="true">*</span>{% else %} <span class="font-normal text-ink-400">(facultatif)</span>{% endif -%}
+        </{{ balise }}>
     {%- endif -%}
 {%- endblock form_label -%}
 
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
-        <ul class="mt-1 list-none">
+        <div id="{{ id }}_errors">
             {%- for error in errors -%}
-                <li class="text-sm text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                    <svg class="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                    {{ error.message }}
-                </li>
+                <p class="om-error"><i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i><span>{{ error.message }}</span></p>
             {%- endfor -%}
-        </ul>
+        </div>
     {%- endif -%}
 {%- endblock form_errors -%}
 
 {%- block form_help -%}
     {%- if help is not empty -%}
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" id="{{ id }}_help">{{ help }}</p>
+        <p class="om-help" id="{{ id }}_help">{{ help }}</p>
     {%- endif -%}
 {%- endblock form_help -%}
 
+{%- block widget_attributes -%}
+    {%- if errors|length > 0 -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true', 'aria-errormessage': id ~ '_errors'}) -%}
+    {%- endif -%}
+    {%- if required -%}
+        {%- set attr = attr|merge({'aria-required': 'true'}) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock widget_attributes -%}
+
+{%- block form_widget_simple -%}
+    {%- if type is not defined or type not in ['hidden', 'file'] -%}
+        {%- set attr = attr|merge({class: (attr.class|default('') ~ ' om-input' ~ (errors|length > 0 ? ' om-input-error' : ''))|trim}) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock form_widget_simple -%}
+
 {%- block textarea_widget -%}
-    <textarea {{ block('widget_attributes') }} class="{{ attr.class|default('') }} block w-full rounded-xl border-gray-300 dark:border-gray-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 dark:bg-gray-700 dark:text-white sm:text-sm">{{ value }}</textarea>
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' om-input' ~ (errors|length > 0 ? ' om-input-error' : ''))|trim}) -%}
+    {{- parent() -}}
 {%- endblock textarea_widget -%}
 
 {%- block choice_widget_collapsed -%}
-    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' block w-full rounded-xl border-gray-300 dark:border-gray-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 dark:bg-gray-700 dark:text-white sm:text-sm')|trim}) -%}
-    <select {{ block('widget_attributes') }}{% if multiple %} multiple="multiple"{% endif %}>
-        {%- if placeholder is not none -%}
-            <option value=""{% if required and value is empty %} selected="selected"{% endif %}>{{ placeholder != '' ? (translation_domain is same as(false) ? placeholder : placeholder|trans({}, translation_domain)) }}</option>
-        {%- endif -%}
-        {%- if preferred_choices|length > 0 -%}
-            {% set options = preferred_choices %}
-            {{- block('choice_widget_options') -}}
-            {%- if choices|length > 0 and separator is not none -%}
-                <option disabled="disabled">{{ separator }}</option>
-            {%- endif -%}
-        {%- endif -%}
-        {%- set options = choices -%}
-        {{- block('choice_widget_options') -}}
-    </select>
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' om-input' ~ (errors|length > 0 ? ' om-input-error' : ''))|trim}) -%}
+    {{- parent() -}}
 {%- endblock choice_widget_collapsed -%}
 
+{%- block choice_widget_expanded -%}
+    <div {{ block('widget_container_attributes') }} role="radiogroup" aria-labelledby="{{ id }}_label" class="grid gap-2 sm:grid-cols-2">
+        {%- for child in form %}
+            <label class="flex min-h-[48px] cursor-pointer items-center gap-3 rounded-md border border-ink-300 bg-white px-3.5 py-2.5 text-sm text-ink-800 transition hover:border-ink-400 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-300">
+                {{- form_widget(child, {attr: {class: 'h-4 w-4 shrink-0 accent-brand-600'}}) -}}
+                <span>{{ child.vars.label }}</span>
+            </label>
+        {% endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}
+
+{%- block checkbox_row -%}
+    <div{% with {attr: row_attr|merge({class: (row_attr.class|default('') ~ ' mb-5')|trim})} %}{{ block('attributes') }}{% endwith %}>
+        <label class="flex cursor-pointer items-start gap-3 text-sm text-ink-800" for="{{ id }}">
+            {{- form_widget(form, {attr: attr|merge({class: (attr.class|default('') ~ ' om-checkbox')|trim})}) -}}
+            <span>{{ label }}{% if required %} <span class="text-red-700" aria-hidden="true">*</span>{% endif %}</span>
+        </label>
+        {{- form_errors(form) -}}
+        {{- form_help(form) -}}
+    </div>
+{%- endblock checkbox_row -%}
+
 {%- block file_widget -%}
-    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-orange-900/30 dark:file:text-orange-300 cursor-pointer')|trim}) -%}
-    <input type="file" {{ block('widget_attributes') }} />
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' block w-full cursor-pointer rounded-md border border-dashed border-ink-300 bg-ink-50/60 p-2 text-sm text-ink-600 transition hover:border-brand-400 file:mr-3 file:min-h-[36px] file:cursor-pointer file:rounded-md file:border-0 file:bg-white file:px-4 file:text-sm file:font-semibold file:text-brand-700 file:shadow-sm file:ring-1 file:ring-ink-200 hover:file:bg-brand-50')|trim}) -%}
+    {%- set type = 'file' -%}
+    <input type="file" {{ block('widget_attributes') }}{% if multiple|default(false) %} multiple="multiple"{% endif %} />
 {%- endblock file_widget -%}

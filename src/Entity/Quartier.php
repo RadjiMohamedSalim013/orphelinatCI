@@ -6,8 +6,12 @@ use App\Repository\QuartierRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: QuartierRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_quartier_commune_nom', columns: ['commune_id', 'nom'])]
+#[UniqueEntity(fields: ['commune', 'nom'], message: 'Ce quartier existe déjà pour cette commune.', errorPath: 'nom')]
 class Quartier
 {
     #[ORM\Id]
@@ -16,10 +20,13 @@ class Quartier
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private ?string $nom = null;
 
     #[ORM\ManyToOne(inversedBy: 'quartiers')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
     private ?Commune $commune = null;
 
     /**
@@ -33,6 +40,11 @@ class Quartier
         $this->orphelinats = new ArrayCollection();
     }
 
+    public function __toString(): string
+    {
+        return (string) $this->nom;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -43,9 +55,9 @@ class Quartier
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
-        $this->nom = $nom;
+        $this->nom = null === $nom ? null : trim($nom);
 
         return $this;
     }
@@ -69,28 +81,4 @@ class Quartier
     {
         return $this->orphelinats;
     }
-
-    public function addOrphelinat(Orphelinat $orphelinat): static
-    {
-        if (!$this->orphelinats->contains($orphelinat)) {
-            $this->orphelinats->add($orphelinat);
-            $orphelinat->setQuartier($this);
-        }
-
-        return $this;
-    }
-
-    public function removeOrphelinat(Orphelinat $orphelinat): static
-    {
-        if ($this->orphelinats->removeElement($orphelinat)) {
-            // set the owning side to null (unless already changed)
-            if ($orphelinat->getQuartier() === $this) {
-                $orphelinat->setQuartier(null);
-            }
-        }
-
-        return $this;
-    }
-
-
 }

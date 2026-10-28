@@ -1,0 +1,111 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ orphelinat ? 'Modifier ' ~ orphelinat.nom : 'Nouvel établissement' }} — Administration OrphaMap CI{% endblock %}
+
+{% block stylesheets %}{% include 'partials/_leaflet.html.twig' %}{% endblock %}
+
+{% block content %}
+{% embed 'admin/_page_header.html.twig' with {        titre: orphelinat ? 'Modifier « ' ~ orphelinat.nom ~ ' »' : 'Nouvel établissement',        sous_titre: 'Les champs marqués * sont obligatoires.',        retour: orphelinat ? {url: path('admin_orphelinat_show', {id: orphelinat.id}), label: 'Retour à la fiche'} : {url: path('admin_orphelinat_list'), label: 'Établissements'},    } %}{% endembed %}
+
+    {% if not form.vars.valid and form.vars.submitted %}
+        <div class="om-alert-error mb-6" role="alert" tabindex="-1" data-controller="focus-on-connect"><i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i><div>
+            <p class="font-semibold">Le formulaire contient des erreurs, signalées sous les champs concernés.</p>
+            {{ form_errors(form) }}</div>
+        </div>
+    {% endif %}
+
+    {{ form_start(form, {attr: {class: 'grid gap-6 xl:grid-cols-[1fr_380px] [&>*]:min-w-0', novalidate: 'novalidate', 'data-controller': 'ui', 'data-action': 'submit->ui#loading'}}) }}
+        <div class="space-y-6">
+            <fieldset class="om-fieldset">
+                <legend class="om-fieldset-title mb-4">Identité</legend>
+                {{ form_row(form.nom) }}
+                {{ form_row(form.description) }}
+                {{ form_row(form.services) }}
+            </fieldset>
+
+            <fieldset class="om-fieldset" data-controller="cascade">
+                <legend class="om-fieldset-title mb-4">Localisation</legend>
+                <p class="mb-4 text-sm text-ink-600">Commune absente de la liste&nbsp;? Ajoutez-la d’abord dans <a class="om-link" href="{{ path('admin_localisations_index') }}">Localisations</a>.</p>
+                {{ form_row(form.commune, {attr: {'data-cascade-target': 'select', 'data-cascade-name': 'commune', 'data-cascade-child': 'quartier', 'data-action': 'cascade#change'}}) }}
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.quartier, {attr: {'data-cascade-target': 'select', 'data-cascade-name': 'quartier', 'data-cascade-filter': 'commune'}}) }}
+                    {{ form_row(form.nouveauQuartier) }}
+                </div>
+                {{ form_row(form.adresse) }}
+
+                <div data-controller="map" data-map-editable-value="true"
+                     data-map-points-value="{{ (orphelinat and orphelinat.hasCoordinates ? [{id: orphelinat.id, nom: orphelinat.nom, latitude: orphelinat.latitude, longitude: orphelinat.longitude}] : [])|json_encode }}"
+                     data-map-tile-url-value="{{ carte.tuiles }}" data-map-attribution-value="{{ carte.attribution }}">
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {{ form_row(form.latitude, {attr: {'data-map-target': 'latitude'}}) }}
+                        {{ form_row(form.longitude, {attr: {'data-map-target': 'longitude'}}) }}
+                    </div>
+                    <p class="om-help !mt-0 mb-2">Cliquez sur la carte pour placer l’établissement, ou saisissez les coordonnées relevées sur place. Aucune position n’est déduite automatiquement de l’adresse.</p>
+                    <div data-map-target="canvas" class="om-skeleton h-72 w-full overflow-hidden rounded-md border border-ink-200" role="application" aria-label="Carte pour positionner l'établissement"></div>
+                    <p data-map-target="message" class="mt-2 text-sm text-ink-600" hidden></p>
+                </div>
+            </fieldset>
+
+            <fieldset class="om-fieldset">
+                <legend class="om-fieldset-title mb-4">Contacts</legend>
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.telephone) }}
+                    {{ form_row(form.email) }}
+                    {{ form_row(form.siteWeb) }}
+                    {{ form_row(form.reseauSocial) }}
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="space-y-6">
+            <fieldset class="om-fieldset">
+                <legend class="om-fieldset-title mb-4">Publication</legend>
+                {{ form_row(form.statut) }}
+                {{ form_row(form.verification) }}
+            </fieldset>
+
+            <fieldset class="om-fieldset">
+                <legend class="om-fieldset-title mb-4">Photos et document</legend>
+                {% if orphelinat and orphelinat.image %}
+                    <img src="{{ image_url(orphelinat.image, 640) }}" alt="Photo principale actuelle" class="mb-3 h-32 w-full rounded-lg object-cover">
+                {% endif %}
+                {{ form_row(form.image, {help: orphelinat and orphelinat.image ? 'Choisir un fichier remplace la photo principale actuelle.' : 'JPG, PNG ou WEBP, 5 Mo maximum. Pas de photo d’enfant identifiable.'}) }}
+                {{ form_row(form.photos) }}
+                {% if orphelinat and orphelinat.document %}
+                    <p class="mb-2 text-sm"><a class="om-link" href="{{ asset('uploads/documents/' ~ orphelinat.document) }}" target="_blank" rel="noopener">Document actuel</a></p>
+                {% endif %}
+                {{ form_row(form.document) }}
+            </fieldset>
+
+            {% if orphelinat and orphelinat.photos is not empty %}
+                <div class="om-card om-card-pad">
+                    <h2 class="om-h3 mb-3 !text-base">Galerie</h2>
+                    <ul class="grid grid-cols-2 gap-2">
+                        {% for photo in orphelinat.photos %}
+                            <li class="relative">
+                                <img src="{{ image_url(photo.filename, 640) }}" alt="" class="h-24 w-full rounded-lg object-cover">
+                                <button type="submit" form="suppr-photo-{{ photo.id }}" class="absolute right-1 top-1 rounded-md bg-white/90 px-2 py-1 text-xs font-semibold text-red-700 shadow hover:bg-white">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i><span class="sr-only">Supprimer cette photo</span>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="flex flex-col gap-2 xl:sticky xl:bottom-4">
+                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Enregistrement…"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Enregistrer</button>
+                <a href="{{ orphelinat ? path('admin_orphelinat_show', {id: orphelinat.id}) : path('admin_orphelinat_list') }}" class="om-btn-secondary">Annuler</a>
+            </div>
+        </div>
+    {{ form_end(form) }}
+
+    {# Formulaires de suppression hors du formulaire principal (les formulaires imbriqués sont interdits en HTML) #}
+    {% if orphelinat %}
+        {% for photo in orphelinat.photos %}
+            <form id="suppr-photo-{{ photo.id }}" method="post" action="{{ path('admin_orphelinat_photo_delete', {id: orphelinat.id, photo: photo.id}) }}" data-confirm="La photo sera supprimée définitivement." data-confirm-title="Supprimer cette photo ?" data-confirm-label="Supprimer" data-confirm-variant="danger" hidden>
+                <input type="hidden" name="_token" value="{{ csrf_token('photo_' ~ photo.id) }}">
+            </form>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

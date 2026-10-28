@@ -1,0 +1,72 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Localisations — Administration OrphaMap CI{% endblock %}
+
+{% macro ajout(type, parent, placeholder) %}
+    <form method="post" action="{{ path('admin_localisations_add', {type: type}) }}" class="flex gap-2">
+        <input type="hidden" name="_token" value="{{ csrf_token('localisation') }}">
+        {% if parent %}<input type="hidden" name="parent" value="{{ parent }}">{% endif %}
+        <label class="sr-only" for="ajout-{{ type }}-{{ parent ?: 0 }}">{{ placeholder }}</label>
+        <input id="ajout-{{ type }}-{{ parent ?: 0 }}" name="nom" required maxlength="255" class="om-input !py-1.5 text-sm" placeholder="{{ placeholder }}">
+        <button class="om-btn-secondary !py-1.5 !px-3" title="Ajouter"><i class="fa-solid fa-plus" aria-hidden="true"></i><span class="sr-only">Ajouter</span></button>
+    </form>
+{% endmacro %}
+
+{% macro element(type, entite) %}
+    <div id="{{ type }}-{{ entite.id }}" class="flex flex-wrap items-center gap-2" data-controller="ui">
+        <span class="flex-1 font-medium text-ink-900">{{ entite.nom }}</span>
+        <button type="button" class="text-xs text-ink-500 hover:text-brand-700" data-action="ui#toggle">Renommer</button>
+        <form method="post" action="{{ path('admin_localisations_delete', {type: type, id: entite.id}) }}" data-confirm="Cet élément sera supprimé du référentiel (impossible s’il est encore utilisé)." data-confirm-title="Supprimer « {{ entite.nom }} » ?" data-confirm-label="Supprimer" data-confirm-variant="danger">
+            <input type="hidden" name="_token" value="{{ csrf_token('localisation') }}">
+            <button class="text-xs text-ink-500 hover:text-red-700">Supprimer</button>
+        </form>
+        <form method="post" action="{{ path('admin_localisations_rename', {type: type, id: entite.id}) }}" class="hidden basis-full flex gap-2" data-ui-target="panel">
+            <input type="hidden" name="_token" value="{{ csrf_token('localisation') }}">
+            <input name="nom" value="{{ entite.nom }}" required maxlength="255" class="om-input !py-1.5 text-sm" aria-label="Nouveau nom">
+            <button class="om-btn-secondary !py-1.5">OK</button>
+        </form>
+    </div>
+{% endmacro %}
+
+{% block content %}
+    {% import _self as l %}
+    <h1 class="text-2xl font-extrabold tracking-tight text-ink-900">Localisations</h1>
+    <p class="text-sm text-ink-600">Référentiel utilisé par la recherche et les formulaires. Un élément utilisé ne peut pas être supprimé.</p>
+
+    <div class="om-card mt-5 max-w-md p-4">
+        <p class="om-label">Ajouter un pays</p>
+        {{ l.ajout('pays', null, 'Nom du pays') }}
+    </div>
+
+    <div class="mt-5 space-y-4">
+        {% for pays in arborescence %}
+            <section class="om-card p-4">
+                {{ l.element('pays', pays) }}
+                <div class="mt-3 space-y-3 border-l-2 border-ink-100 pl-4">
+                    {% for ville in pays.villes %}
+                        <div class="rounded-lg bg-ink-50 p-3">
+                            {{ l.element('ville', ville) }}
+                            <ul class="mt-3 space-y-2 border-l-2 border-ink-200 pl-4 text-sm">
+                                {% for commune in ville.communes %}
+                                    <li class="rounded-lg bg-white p-2">
+                                        {{ l.element('commune', commune) }}
+                                        {% if commune.quartiers is not empty %}
+                                            <ul class="mt-2 space-y-1 border-l border-ink-200 pl-3 text-ink-700">
+                                                {% for quartier in commune.quartiers %}<li>{{ l.element('quartier', quartier) }}</li>{% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                        <div class="mt-2 max-w-xs">{{ l.ajout('quartier', commune.id, 'Nouveau quartier') }}</div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="mt-3 max-w-xs">{{ l.ajout('commune', ville.id, 'Nouvelle commune') }}</div>
+                        </div>
+                    {% endfor %}
+                    <div class="max-w-xs">{{ l.ajout('ville', pays.id, 'Nouvelle ville') }}</div>
+                </div>
+            </section>
+        {% else %}
+            <p class="text-sm text-ink-500">Aucun pays. Ajoutez-en un, ou lancez <code>php bin/console app:referentiel:cote-divoire</code>.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

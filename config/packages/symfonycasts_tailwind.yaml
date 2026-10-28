@@ -1,0 +1,5 @@
+symfonycasts_tailwind:
+    # Version figée : CSS compilé et minifié par le binaire autonome (aucun Node.js requis)
+    binary_version: 'v3.4.17'
+    input_css: '%kernel.project_dir%/assets/styles/app.css'
+    config_file: '%kernel.project_dir%/tailwind.config.js'

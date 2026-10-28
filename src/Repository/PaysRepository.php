@@ -16,28 +16,31 @@ class PaysRepository extends ServiceEntityRepository
         parent::__construct($registry, Pays::class);
     }
 
-    //    /**
-    //     * @return Pays[] Returns an array of Pays objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Pays[]
+     */
+    public function findAllOrdered(): array
+    {
+        return $this->findBy([], ['nom' => 'ASC']);
+    }
 
-    //    public function findOneBySomeField($value): ?Pays
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Référentiel complet pays > villes > communes > quartiers en une requête.
+     *
+     * @return Pays[]
+     */
+    public function findArborescence(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.villes', 'v')
+            ->leftJoin('v.communes', 'c')
+            ->leftJoin('c.quartiers', 'q')
+            ->addSelect('v', 'c', 'q')
+            ->orderBy('p.nom', 'ASC')
+            ->addOrderBy('v.nom', 'ASC')
+            ->addOrderBy('c.nom', 'ASC')
+            ->addOrderBy('q.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

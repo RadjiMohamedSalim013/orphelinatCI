@@ -1,0 +1,48 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Signalements — Administration OrphaMap CI{% endblock %}
+
+{% block content %}
+    {% embed 'admin/_page_header.html.twig' with {titre: 'Signalements', sous_titre: 'Erreurs signalées par le public sur les fiches existantes.'} %}{% endembed %}
+
+    {% set onglets = {ouverts: 'À traiter', nouveau: 'Nouveaux', en_cours: 'En cours', traite: 'Traités', rejete: 'Rejetés', tous: 'Tous'} %}
+    <nav class="om-tabs" aria-label="Filtrer par statut">
+        {% for cle, label in onglets %}
+            <a href="{{ path('admin_signalements_index', {statut: cle}) }}" class="om-tab" {% if filtre == cle %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+    </nav>
+
+    <div class="om-card mt-5 overflow-hidden">
+        {% if signalements is empty %}
+            <div class="flex flex-col items-center px-6 py-14 text-center">
+                <span class="om-empty-icon" aria-hidden="true"><i class="fa-solid fa-flag"></i></span>
+                <p class="font-semibold text-ink-900">Aucun signalement dans cette catégorie.</p>
+            </div>
+        {% else %}
+            <table class="om-table">
+                <caption class="sr-only">Signalements</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Établissement</th>
+                        <th scope="col">Problème signalé</th>
+                        <th scope="col">Reçu le</th>
+                        <th scope="col">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in signalements %}
+                        <tr>
+                            <td><a href="{{ path('admin_signalements_show', {id: s.id}) }}" class="font-semibold text-ink-900 hover:text-brand-700">{{ s.orphelinat.nom }}</a></td>
+                            <td data-label="Problème">
+                                <span class="font-medium text-ink-800">{{ s.type.label }}</span>
+                                <span class="block max-w-md truncate text-xs text-ink-500 max-md:max-w-[12rem]">{{ s.message }}</span>
+                            </td>
+                            <td data-label="Reçu le" class="whitespace-nowrap tabular-nums text-ink-600">{{ s.createdAt|date('d/m/Y H:i') }}</td>
+                            <td data-label="Statut">{% include 'admin/_statut_badge.html.twig' with {statut: s.statut} %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

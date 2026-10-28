@@ -1,142 +1,48 @@
-<header class="sticky top-0 z-50 w-full bg-white/90 backdrop-blur border-b border-gray-200">
+{% set route = app.request.attributes.get('_route') %}
+{% set nav = [
+    {route: 'home', label: 'Accueil', icon: 'fa-house', actif: route == 'home'},
+    {route: 'orphelinat_index', label: 'Rechercher', icon: 'fa-magnifying-glass', actif: route in ['orphelinat_index', 'orphelinat_show', 'orphelinat_signaler']},
+] %}
+<header class="sticky top-0 z-40 border-b border-ink-200/70 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80" data-controller="menu">
+    <div class="om-container flex h-16 items-center justify-between gap-4">
+        <a href="{{ path('home') }}" class="rounded-md" aria-label="OrphaMap CI, retour à l’accueil">
+            {% include 'partials/_logo.html.twig' %}
+        </a>
 
-    <style>
-        /* micro branding OrphaMap */
-        .nav-link {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 0;
-            font-weight: 500;
-            color: #6b7280;
-        }
+        <nav class="hidden items-center gap-1 md:flex" aria-label="Navigation principale">
+            {% for item in nav %}
+                <a href="{{ path(item.route) }}" class="om-btn-ghost om-btn-sm {{ item.actif ? '!bg-brand-50 !text-brand-800' }}" {% if item.actif %}aria-current="page"{% endif %}>
+                    <i class="fa-solid {{ item.icon }} text-xs opacity-70" aria-hidden="true"></i>{{ item.label }}
+                </a>
+            {% endfor %}
+        </nav>
 
-        .nav-link:hover {
-            color: #111827;
-        }
-
-        .nav-link::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -3px;
-            width: 0%;
-            height: 2px;
-            background: #f97316;
-            transition: width 0.25s ease;
-            border-radius: 2px;
-        }
-
-        .nav-link:hover::after {
-            width: 100%;
-        }
-
-        .brand-text {
-            font-family: Inter, sans-serif;
-            letter-spacing: -0.5px;
-        }
-
-        .cta-btn {
-            transition: all 0.2s ease;
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .cta-btn:active {
-            transform: scale(0.96);
-        }
-    </style>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        <div class="flex items-center justify-between h-16">
-
-            <!-- LOGO -->
-            <a href="#" class="flex items-center gap-2 font-extrabold text-xl brand-text">
-
-                <i data-lucide="map-pin" class="h-5 w-5 text-orange-500"></i>
-
-                <span>
-                    <span class="text-orange-500">Orpha</span><span class="text-gray-900">Map</span>
-                </span>
-
+        <div class="flex items-center gap-2">
+            {% if app.request.hasPreviousSession and is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_dashboard') }}" class="om-btn-ghost om-btn-sm hidden lg:inline-flex"><i class="fa-solid fa-gauge text-xs" aria-hidden="true"></i> Administration</a>
+            {% endif %}
+            <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary om-btn-sm hidden sm:inline-flex {{ route == 'proposer_orphelinat' ? 'ring-2 ring-brand-200' }}">
+                <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i> Proposer un orphelinat
             </a>
-
-            <!-- NAV -->
-            <nav class="hidden md:flex items-center gap-8 text-sm">
-
-                <a href="{{ path('orphelinat_index') }}" class="nav-link">
-                    <i data-lucide="home" class="h-4 w-4 text-gray-400"></i>
-                    Accueil
-                </a>
-
-                <a href="#" class="nav-link">
-                    <i data-lucide="info" class="h-4 w-4 text-gray-400"></i>
-                    À propos
-                </a>
-
-
-                <a href="#" class="nav-link">
-                    <i data-lucide="mail" class="h-4 w-4 text-gray-400"></i>
-                    Contact
-                </a>
-
-            </nav>
-
-            <!-- ACTION -->
-            <div class="flex items-center gap-3">
-
-                <!-- CTA -->
-                <a href="{{ path('proposer_orphelinat') }}"
-                   class="cta-btn inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm">
-
-                    <i data-lucide="plus" class="h-4 w-4"></i>
-
-                    Ajouter
-                </a>
-
-                <!-- MOBILE BTN -->
-                <button onclick="document.getElementById('mobileMenu').classList.toggle('hidden')"
-                        class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition">
-
-                    <i data-lucide="menu" class="h-6 w-6 text-gray-700"></i>
-
-                </button>
-
-            </div>
-
+            <button type="button" class="om-btn-icon om-btn-ghost md:hidden" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-controls="menu-mobile">
+                <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i><span class="sr-only">Ouvrir le menu</span>
+            </button>
         </div>
-
     </div>
 
-    <!-- MOBILE MENU -->
-    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 bg-white">
-
-        <div class="px-4 py-4 space-y-3 text-sm">
-
-            <a href="#" class="flex items-center gap-2 text-gray-700">
-                <i data-lucide="home" class="h-4 w-4"></i> Accueil
-            </a>
-
-            <a href="#" class="flex items-center gap-2 text-gray-700">
-                <i data-lucide="info" class="h-4 w-4"></i> À propos
-            </a>
-
-            <a href="#" class="flex items-center gap-2 text-gray-700">
-                <i data-lucide="mail" class="h-4 w-4"></i> Contact
-            </a>
-
-            <a href="#"
-               class="flex items-center justify-center gap-2 mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg">
-                <i data-lucide="plus" class="h-4 w-4"></i>
-                Ajouter un orphelinat
-            </a>
-
+    <nav id="menu-mobile" class="hidden border-t border-ink-200 bg-white shadow-raised data-[open=true]:block md:!hidden" data-menu-target="panel" aria-label="Navigation mobile">
+        <div class="om-container flex flex-col gap-1 py-3">
+            {% for item in nav %}
+                <a href="{{ path(item.route) }}" class="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-base font-medium {{ item.actif ? 'bg-brand-50 text-brand-800' : 'text-ink-700 hover:bg-ink-50' }}" {% if item.actif %}aria-current="page"{% endif %}>
+                    <i class="fa-solid {{ item.icon }} w-5 text-center text-ink-400" aria-hidden="true"></i>{{ item.label }}
+                </a>
+            {% endfor %}
+            {% if app.request.hasPreviousSession and is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_dashboard') }}" class="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-base font-medium text-ink-700 hover:bg-ink-50">
+                    <i class="fa-solid fa-gauge w-5 text-center text-ink-400" aria-hidden="true"></i>Administration
+                </a>
+            {% endif %}
+            <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary mt-2"><i class="fa-solid fa-plus" aria-hidden="true"></i> Proposer un orphelinat</a>
         </div>
-
-    </div>
-
+    </nav>
 </header>

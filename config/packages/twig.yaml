@@ -1,5 +1,10 @@
 twig:
     file_name_pattern: '*.twig'
+    form_themes: ['form/tailwind_layout.html.twig']
+    globals:
+        carte:
+            tuiles: '%env(MAP_TILE_URL)%'
+            attribution: '%env(MAP_ATTRIBUTION)%'
 
 when@test:
     twig:

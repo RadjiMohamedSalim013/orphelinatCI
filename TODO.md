@@ -1,12 +1,12 @@
-- [ ] Lire et comprendre les templates de la page d’accueil (hero + explorer + header)
-- [ ] Repérer où sont les liens/actions “filtrer” et “Explorer”
-- [ ] Implémenter un ancrage vers la section `#orphelinat-explorer` uniquement après :
-  - premier chargement sans hash => rester au haut de la page
-  - clic “Filtrer” / soumission du formulaire => forcer scroll vers la section explorer (via hash ou scroll JS)
-  - clic bouton “Explorer” du hero => naviguer vers `/#orphelinat-explorer`
-- [x] Corriger aussi le bouton/carte “Explorer” dans les cartes si nécessaire
+# TODO
 
-- [ ] Vérifier le fonctionnement dans le navigateur (toutes les actions)
-- [x] Remplacer le filtre Quartier par Commune dans le filtre de la page d’accueil (front)
+- [x] Mettre à jour `templates/admin/orphelinats/create.html.twig` pour reprendre le design stylisé de la page publique `templates/public/proposition/new.html.twig`.
+  - [x] Remplacer le bloc `<style>` et la structure HTML actuelle (page admin création).
+
+  - [x] Conserver la logique Symfony/Twig : `form_theme`, `form_start/form_end`, `include('partials/_flashes.html.twig')`.
+  - [x] Conserver les champs admin existants (nom/telephone/email/adresse, localisation, fichiers, etc.).
+  - [x] Conserver la navigation admin via `admin/layout.html.twig` (ne pas toucher au layout).
+
+- [ ] Tester visuellement la page dans l’interface admin (chargement de la page de création d’orphelinat).
 
 

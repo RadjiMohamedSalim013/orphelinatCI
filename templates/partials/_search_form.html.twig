@@ -1,0 +1,50 @@
+{#
+    Recherche géographique pays > ville > commune + nom.
+    Variables : pays, villes, communes (listes pré-filtrées côté serveur), criteres (RechercheCriteres|null)
+#}
+{% set criteres = criteres ?? null %}
+<form method="get" action="{{ path('orphelinat_index') }}" role="search" aria-label="Rechercher un orphelinat"
+      data-controller="cascade ui" data-action="submit->ui#loading" data-ui-busy-selector-value="#resultats"
+      class="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.25fr)_auto] lg:items-end">
+    <div>
+        <label for="f-pays" class="om-label"><i class="fa-solid fa-earth-africa mr-1.5 text-ink-400" aria-hidden="true"></i>Pays</label>
+        <select id="f-pays" name="pays" class="om-input" data-cascade-target="select" data-cascade-name="pays" data-cascade-child="ville" data-action="cascade#change">
+            <option value="">Tous les pays</option>
+            {% for p in pays %}
+                <option value="{{ p.id }}" {{ criteres and criteres.paysId == p.id ? 'selected' }}>{{ p.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="f-ville" class="om-label"><i class="fa-solid fa-city mr-1.5 text-ink-400" aria-hidden="true"></i>Ville</label>
+        <select id="f-ville" name="ville" class="om-input" data-cascade-target="select" data-cascade-name="ville" data-cascade-child="commune"
+                data-cascade-url="{{ path('api_localisations_villes') }}?pays=" data-action="cascade#change"
+                {{ villes is empty ? 'disabled' }} aria-describedby="f-ville-aide">
+            <option value="">{{ villes is empty ? 'Choisissez un pays' : 'Toutes les villes' }}</option>
+            {% for v in villes %}
+                <option value="{{ v.id }}" {{ criteres and criteres.villeId == v.id ? 'selected' }}>{{ v.nom }}</option>
+            {% endfor %}
+        </select>
+        <span id="f-ville-aide" class="sr-only">La liste dépend du pays choisi.</span>
+    </div>
+    <div>
+        <label for="f-commune" class="om-label"><i class="fa-solid fa-location-dot mr-1.5 text-ink-400" aria-hidden="true"></i>Commune</label>
+        <select id="f-commune" name="commune" class="om-input" data-cascade-target="select" data-cascade-name="commune"
+                data-cascade-url="{{ path('api_localisations_communes') }}?ville=" {{ communes is empty ? 'disabled' }} aria-describedby="f-commune-aide">
+            <option value="">{{ communes is empty ? 'Choisissez une ville' : 'Toutes les communes' }}</option>
+            {% for c in communes %}
+                <option value="{{ c.id }}" {{ criteres and criteres.communeId == c.id ? 'selected' }}>{{ c.nom }}</option>
+            {% endfor %}
+        </select>
+        <span id="f-commune-aide" class="sr-only">La liste dépend de la ville choisie.</span>
+    </div>
+    <div class="sm:col-span-2 lg:col-span-1">
+        <label for="f-q" class="om-label"><i class="fa-solid fa-signature mr-1.5 text-ink-400" aria-hidden="true"></i>Nom <span class="font-normal text-ink-400">(facultatif)</span></label>
+        <input id="f-q" type="search" name="q" value="{{ criteres ? criteres.recherche }}" maxlength="100" placeholder="Ex. : Sainte-Famille" class="om-input" autocomplete="off">
+    </div>
+    <div class="sm:col-span-2 lg:col-span-1">
+        <button type="submit" class="om-btn-primary w-full lg:w-auto" data-ui-target="submit" data-loading-label="Recherche…">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Rechercher
+        </button>
+    </div>
+</form>

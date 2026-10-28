@@ -1,158 +1,137 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Orphelinats - OrphaMap{% endblock %}
+{% block title %}{{ lieu ? 'Orphelinats à ' ~ lieu : 'Annuaire des orphelinats de Côte d’Ivoire' }}{{ criteres.page > 1 ? ' — page ' ~ criteres.page }} | OrphaMap CI{% endblock %}
+{% block meta_description %}
+    {%- if lieu -%}
+        Liste des orphelinats à {{ lieu }}{{ resultats ? ' (' ~ resultats.total ~ ' établissement' ~ (resultats.total > 1 ? 's') ~ ')' }} : adresses, téléphones et fiches vérifiées.
+    {%- else -%}
+        Annuaire des orphelinats de Côte d’Ivoire : recherchez par ville et commune, consultez adresses, contacts et fiches vérifiées.
+    {%- endif -%}
+{% endblock %}
+{# Seuls les critères géographiques (et la page) font partie de l’adresse canonique. #}
+{% block canonical %}{{ url('orphelinat_index', criteres.toQuery|filter((v, k) => k != 'q')|merge(criteres.page > 1 ? {page: criteres.page} : {})) }}{% endblock %}
+{% block meta_robots %}
+    {%- if erreur or criteres.recherche or (resultats and resultats.total == 0) -%}<meta name="robots" content="noindex, follow">{%- endif -%}
+{% endblock %}
+
+{% block stylesheets %}
+    {% if points is not empty %}{% include 'partials/_leaflet.html.twig' %}{% endif %}
+{% endblock %}
 
 {% block body %}
+    {# Libellés des filtres actifs, retrouvés dans les listes déjà chargées #}
+    {% set filtres = [] %}
+    {% for p in pays|filter(p => p.id == criteres.paysId) %}
+        {% set filtres = filtres|merge([{label: p.nom, icone: 'fa-earth-africa', sans: {q: criteres.recherche}}]) %}
+    {% endfor %}
+    {% for v in villes|filter(v => v.id == criteres.villeId) %}
+        {% set filtres = filtres|merge([{label: v.nom, icone: 'fa-city', sans: {pays: criteres.paysId, q: criteres.recherche}}]) %}
+    {% endfor %}
+    {% for c in communes|filter(c => c.id == criteres.communeId) %}
+        {% set filtres = filtres|merge([{label: c.nom, icone: 'fa-location-dot', sans: {pays: criteres.paysId, ville: criteres.villeId, q: criteres.recherche}}]) %}
+    {% endfor %}
+    {% if criteres.recherche %}
+        {% set filtres = filtres|merge([{label: '« ' ~ criteres.recherche ~ ' »', icone: 'fa-signature', sans: criteres.toQuery|filter((v, k) => k != 'q')}]) %}
+    {% endif %}
 
-    {% include '/partials/_hero.html.twig' %}
-
-    <div class="mt-14"></div>
-
-    {% include '/partials/_orphelinat_explorer.html.twig' %}
-
-    <script>
-        (function () {
-            var shouldScroll = false;
-
-            // Cas 1 : l’URL contient déjà #orphelinat-explorer
-            if (window.location.hash === '#orphelinat-explorer') {
-                shouldScroll = true;
-            }
-
-            // Cas 2 : on a demandé explicitement le scroll après soumission des filtres
-            var params = new URLSearchParams(window.location.search);
-            if (params.get('_scroll_to') === 'orphelinat-explorer') {
-                shouldScroll = true;
-            }
-
-            if (!shouldScroll) return;
-
-            window.requestAnimationFrame(function () {
-                var el = document.getElementById('orphelinat-explorer');
-                if (el) {
-                    el.scrollIntoView({ behavior: 'auto', block: 'start' });
-                }
-            });
-        })();
-    </script>
-
-
-
-    <!-- SECTION IMPACT -->
-    <section class="relative py-20 overflow-hidden">
-
-        <!-- BACKGROUND SUBTLE -->
-        <div class="absolute inset-0">
-            <div class="absolute top-10 left-10 w-72 h-72 bg-orange-100/40 rounded-full blur-3xl"></div>
-            <div class="absolute bottom-10 right-10 w-72 h-72 bg-gray-100 rounded-full blur-3xl"></div>
+    <section class="border-b border-ink-200/70 bg-white">
+        <div class="om-container py-8 sm:py-10">
+            <h1 class="om-h2">{{ lieu ? 'Orphelinats à ' ~ lieu : 'Rechercher un orphelinat' }}</h1>
+            <p class="mt-1 text-ink-600">Utilisez un ou plusieurs critères : les listes s’adaptent au pays puis à la ville choisis.</p>
+            <div class="mt-6">{% include 'partials/_search_form.html.twig' %}</div>
         </div>
-
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            <!-- HEADER -->
-            <div class="text-center mb-14 space-y-3">
-
-                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
-                    Un réseau d’orphelinats plus visible
-                </h2>
-
-                <p class="text-gray-500 max-w-2xl mx-auto text-base md:text-lg">
-                    OrphaMap connecte les structures d’accueil pour améliorer leur visibilité et faciliter le soutien.
-                </p>
-
-            </div>
-
-            <!-- GRID -->
-            <div class="grid md:grid-cols-3 gap-6">
-
-                <!-- CARD 1 -->
-                <div class="group relative p-7 bg-white border border-gray-200 rounded-2xl
-                            transition duration-300 hover:-translate-y-2 hover:shadow-xl cursor-pointer">
-
-                    <div class="flex items-center gap-3 mb-4">
-
-                        <div class="h-11 w-11 flex items-center justify-center rounded-xl
-                                    bg-orange-50 text-orange-500
-                                    group-hover:bg-orange-500 group-hover:text-white transition">
-
-                            <i class="fa-solid fa-location-dot text-lg"></i>
-
-                        </div>
-
-                        <h3 class="font-semibold text-gray-900 group-hover:text-orange-500 transition">
-                            Localisation rapide
-                        </h3>
-
-                    </div>
-
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        Trouvez un orphelinat en quelques secondes.
-                    </p>
-
-                    <div class="mt-5 h-[2px] w-0 bg-orange-500 group-hover:w-16 transition-all duration-300"></div>
-
-                </div>
-
-                <!-- CARD 2 -->
-                <div class="group relative p-7 bg-white border border-gray-200 rounded-2xl
-                            transition duration-300 hover:-translate-y-2 hover:shadow-xl cursor-pointer">
-
-                    <div class="flex items-center gap-3 mb-4">
-
-                        <div class="h-11 w-11 flex items-center justify-center rounded-xl
-                                    bg-orange-50 text-orange-500
-                                    group-hover:bg-orange-500 group-hover:text-white transition">
-
-                            <i class="fa-solid fa-eye text-lg"></i>
-
-                        </div>
-
-                        <h3 class="font-semibold text-gray-900 group-hover:text-orange-500 transition">
-                            Visibilité accrue
-                        </h3>
-
-                    </div>
-
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        Chaque structure est accessible au public.
-                    </p>
-
-                    <div class="mt-5 h-[2px] w-0 bg-orange-500 group-hover:w-16 transition-all duration-300"></div>
-
-                </div>
-
-                <!-- CARD 3 -->
-                <div class="group relative p-7 bg-white border border-gray-200 rounded-2xl
-                            transition duration-300 hover:-translate-y-2 hover:shadow-xl cursor-pointer">
-
-                    <div class="flex items-center gap-3 mb-4">
-
-                        <div class="h-11 w-11 flex items-center justify-center rounded-xl
-                                    bg-orange-50 text-orange-500
-                                    group-hover:bg-orange-500 group-hover:text-white transition">
-
-                            <i class="fa-solid fa-hand-holding-heart text-lg"></i>
-
-                        </div>
-
-                        <h3 class="font-semibold text-gray-900 group-hover:text-orange-500 transition">
-                            Impact social
-                        </h3>
-
-                    </div>
-
-                    <p class="text-sm text-gray-500 leading-relaxed">
-                        Faciliter les dons et le soutien.
-                    </p>
-
-                    <div class="mt-5 h-[2px] w-0 bg-orange-500 group-hover:w-16 transition-all duration-300"></div>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </section>
 
+    <section class="om-container py-8" aria-labelledby="titre-resultats" data-controller="view">
+        {% if erreur %}
+            {% embed 'partials/_empty.html.twig' with {icone: 'fa-plug-circle-exclamation', titre: 'La recherche est momentanément indisponible', texte: 'Ce n’est pas de votre fait. Réessayez dans quelques instants.'} %}
+                {% block actions %}<a href="{{ app.request.requestUri }}" class="om-btn-primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Réessayer</a>{% endblock %}
+            {% endembed %}
+        {% else %}
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 id="titre-resultats" class="text-base font-semibold text-ink-900" aria-live="polite">
+                    {{ resultats.total }} établissement{{ resultats.total > 1 ? 's' }}
+                    <span class="font-normal text-ink-500">{{ criteres.hasFilters ? 'pour votre recherche' : 'dans l’annuaire' }}</span>
+                </h2>
+                {% if points is not empty %}
+                    <div class="inline-flex rounded-md border border-ink-200 bg-white p-1 lg:hidden" role="tablist" aria-label="Affichage des résultats" id="bascule-vue">
+                        <button type="button" role="tab" aria-selected="true" aria-controls="vue-liste" data-view="liste" data-view-target="tab" data-action="view#show"
+                                class="rounded px-3 py-1.5 text-sm font-semibold text-ink-600 aria-selected:bg-ink-900 aria-selected:text-white">
+                            <i class="fa-solid fa-list mr-1" aria-hidden="true"></i>Liste
+                        </button>
+                        <button type="button" role="tab" aria-selected="false" aria-controls="vue-carte" data-view="carte" data-view-target="tab" data-action="view#show"
+                                class="rounded px-3 py-1.5 text-sm font-semibold text-ink-600 aria-selected:bg-ink-900 aria-selected:text-white">
+                            <i class="fa-solid fa-map mr-1" aria-hidden="true"></i>Carte
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if filtres is not empty %}
+                <ul class="mt-3 flex flex-wrap items-center gap-2" aria-label="Filtres actifs">
+                    {% for f in filtres %}
+                        <li>
+                            <a href="{{ path('orphelinat_index', f.sans|filter(v => v)) }}" class="om-chip" aria-label="Retirer le filtre {{ f.label }}">
+                                <i class="fa-solid {{ f.icone }} text-xs text-ink-400" aria-hidden="true"></i>{{ f.label }}
+                                <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                    {% endfor %}
+                    <li><a href="{{ path('orphelinat_index') }}" class="om-btn-ghost om-btn-sm text-brand-700">Tout effacer</a></li>
+                </ul>
+            {% endif %}
+
+            <div id="resultats" class="group mt-6 grid gap-6 {{ points is not empty ? 'lg:grid-cols-[minmax(0,1fr)_420px]' }}">
+                <div id="vue-liste" role="tabpanel" data-view="liste" data-view-target="panel" class="min-w-0 {{ points is not empty ? 'max-lg:hidden max-lg:data-[active]:block' }}" data-active>
+                    {# Squelettes affichés pendant une nouvelle recherche #}
+                    <div class="hidden gap-4 group-aria-[busy=true]:grid" aria-hidden="true">
+                        {% for i in 1..3 %}
+                            <div class="om-card flex gap-4 p-4">
+                                <div class="om-skeleton h-24 w-28 shrink-0 sm:w-44"></div>
+                                <div class="flex-1 space-y-3 py-1"><div class="om-skeleton h-4 w-24"></div><div class="om-skeleton h-5 w-3/4"></div><div class="om-skeleton h-4 w-1/2"></div></div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="group-aria-[busy=true]:hidden">
+                        {% if resultats.items is not empty %}
+                            <ul class="grid gap-4">
+                                {% for orphelinat in resultats.items %}
+                                    <li>{% include 'partials/_orphelinat_card.html.twig' with {ligne: true} %}</li>
+                                {% endfor %}
+                            </ul>
+                            {% include 'partials/_pagination.html.twig' with {page: resultats.page, pages: resultats.pages, total: resultats.total, route: 'orphelinat_index', params: criteres.toQuery} %}
+                        {% else %}
+                            {% embed 'partials/_empty.html.twig' with {
+                                icone: 'fa-magnifying-glass-location',
+                                titre: criteres.hasFilters ? 'Aucun établissement pour ces critères' : 'L’annuaire est encore vide',
+                                texte: criteres.hasFilters ? 'Élargissez la recherche (retirez la commune ou le nom), ou proposez un établissement que vous connaissez.' : 'Vous connaissez un établissement ? Proposez-le pour enrichir l’annuaire.',
+                            } %}
+                                {% block actions %}
+                                    {% if criteres.hasFilters %}<a href="{{ path('orphelinat_index') }}" class="om-btn-secondary">Effacer les filtres</a>{% endif %}
+                                    <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Proposer un orphelinat</a>
+                                {% endblock %}
+                            {% endembed %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if points is not empty %}
+                    <div id="vue-carte" role="tabpanel" data-view="carte" data-view-target="panel" class="max-lg:hidden max-lg:data-[active]:block">
+                        <div class="om-card overflow-hidden lg:sticky lg:top-[calc(var(--header-height)+1.5rem)]"
+                             data-controller="map"
+                             data-map-points-value="{{ points|map(p => p|merge({url: path('orphelinat_show', {id: p.id, slug: p.slug})}))|json_encode }}"
+                             data-map-tile-url-value="{{ carte.tuiles }}"
+                             data-map-attribution-value="{{ carte.attribution }}">
+                            <div data-map-target="canvas" class="om-skeleton !rounded-none h-[60vh] w-full lg:h-[calc(100vh-var(--header-height)-6rem)]" role="region" aria-label="Carte des établissements"></div>
+                            <p data-map-target="message" class="p-4 text-sm text-ink-600" hidden></p>
+                            <p class="border-t border-ink-100 px-4 py-2.5 text-xs text-ink-500">
+                                {{ points|length }} établissement{{ points|length > 1 ? 's' }} positionné{{ points|length > 1 ? 's' }} sur la carte (toutes pages confondues).
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </section>
 {% endblock %}

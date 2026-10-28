@@ -1,140 +1,83 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Admin Panel{% endblock %}</title>
+{% extends 'base.html.twig' %}
 
-    <script src="https://cdn.tailwindcss.com"></script>
+{% block title %}Administration — OrphaMap CI{% endblock %}
+{% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
-    <!-- FontAwesome (icônes propres) -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% block page %}
+    {% set admin_route = app.request.attributes.get('_route') %}
+    {% set admin_nav_compteurs = admin_compteurs() %}
+    {% set admin_sections = [
+        {titre: 'Pilotage', liens: [
+            {route: 'admin_dashboard', prefix: 'admin_dashboard', label: 'Tableau de bord', icon: 'fa-chart-simple'},
+        ]},
+        {titre: 'À traiter', liens: [
+            {route: 'admin_propositions_index', prefix: 'admin_propositions', label: 'Propositions', icon: 'fa-inbox', compteur: admin_nav_compteurs.propositions},
+            {route: 'admin_signalements_index', prefix: 'admin_signalements', label: 'Signalements', icon: 'fa-flag', compteur: admin_nav_compteurs.signalements},
+        ]},
+        {titre: 'Annuaire', liens: [
+            {route: 'admin_orphelinat_list', prefix: 'admin_orphelinat', label: 'Établissements', icon: 'fa-house-chimney-window'},
+            {route: 'admin_localisations_index', prefix: 'admin_localisations', label: 'Localisations', icon: 'fa-map-location-dot'},
+        ]},
+        {titre: 'Système', liens: [
+            {route: 'admin_backups_index', prefix: 'admin_backups', label: 'Sauvegardes', icon: 'fa-database'},
+            {route: 'admin_security_index', prefix: 'admin_security', label: 'Audit sécurité', icon: 'fa-shield-halved'},
+        ]},
+    ] %}
 
-    <style>
-        /* smooth UI */
-        body {
-            font-family: ui-sans-serif, system-ui, -apple-system;
-        }
-
-        .sidebar-link {
-            transition: all .2s ease;
-        }
-
-        .sidebar-link:hover {
-            transform: translateX(3px);
-        }
-
-        .sidebar-link.active {
-            background: #fff7ed;
-            color: #f97316;
-            font-weight: 600;
-        }
-    </style>
-</head>
-
-<body class="bg-gray-50">
-
-<!-- ================= OVERLAY MOBILE ================= -->
-<div id="overlay"
-     class="fixed inset-0 bg-black/40 hidden lg:hidden z-40"
-     onclick="toggleSidebar()"></div>
-
-<!-- ================= SIDEBAR ================= -->
-<aside id="sidebar"
-    class="fixed top-0 left-0 h-full w-72 bg-white border-r shadow-xl z-50
-           transform -translate-x-full lg:translate-x-0 transition-all duration-300">
-
-    <!-- HEADER SIDEBAR -->
-    <div class="p-6 border-b">
-        <h1 class="text-xl font-bold tracking-tight">
-            <i class="fa-solid fa-shield-halved text-orange-500 mr-2"></i>
-            OrphaMap <span class="text-orange-500">Admin</span>
-        </h1>
-        <p class="text-xs text-gray-400 mt-1">Administration panel</p>
-    </div>
-
-    <!-- NAV -->
-    <nav class="p-4 space-y-2">
-
-        <a href="{{ path('admin_dashboard') }}"
-           class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-500">
-            <i class="fa-solid fa-chart-line w-5"></i>
-            Dashboard
-        </a>
-
-        <a href="{{ path('admin_propositions_index') }}"
-           class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-500">
-            <i class="fa-solid fa-inbox w-5"></i>
-            Propositions
-        </a>
-
-        <a href="{{ path('admin_orphelinat_list') }}"
-           class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-500">
-            <i class="fa-solid fa-house-user w-5"></i>
-            Orphelinats
-        </a>
-
-    </nav>
-
-    <!-- FOOTER SIDEBAR -->
-    <div class="absolute bottom-0 w-full p-4 border-t text-xs text-gray-400">
-        © OrphaMap Admin
-    </div>
-
-</aside>
-
-<!-- ================= MAIN ================= -->
-<div class="lg:ml-72 min-h-screen flex flex-col">
-
-    <!-- HEADER -->
-    <header class="h-16 bg-white border-b flex items-center justify-between px-6 sticky top-0 z-30">
-
-        <!-- MOBILE BUTTON -->
-        <button class="lg:hidden text-gray-600"
-                onclick="toggleSidebar()">
-            <i class="fa-solid fa-bars text-xl"></i>
-        </button>
-
-        <h2 class="font-semibold text-gray-700">
-            {% block page_title %}Admin{% endblock %}
-        </h2>
-
-        <!-- USER -->
-        <div class="flex items-center gap-3 text-sm text-gray-600">
-
-            <div class="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center">
-                <i class="fa-solid fa-user text-orange-500"></i>
-            </div>
-
-            <span class="hidden sm:block">
-                {{ app.user.email ?? '' }}
-            </span>
-
+    <div class="min-h-screen bg-page lg:pl-64" data-controller="menu">
+        {# Barre supérieure mobile #}
+        <div class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-ink-200 bg-white px-4 lg:hidden">
+            <a href="{{ path('admin_dashboard') }}" class="rounded-md">{% include 'partials/_logo.html.twig' with {suffixe: 'Admin'} %}</a>
+            <button type="button" class="om-btn-icon om-btn-ghost" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-controls="admin-menu">
+                <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i><span class="sr-only">Menu d’administration</span>
+            </button>
         </div>
 
-    </header>
+        <div class="fixed inset-0 z-40 bg-ink-950/40 lg:hidden" data-menu-target="overlay" data-action="click->menu#close" hidden></div>
 
-    <!-- CONTENT -->
-    <main class="p-6">
+        <aside id="admin-menu" data-menu-target="panel"
+               class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-ink-200 bg-white transition-transform duration-200 data-[open=true]:translate-x-0 lg:w-64 lg:translate-x-0">
+            <div class="flex h-16 shrink-0 items-center justify-between px-5">
+                <a href="{{ path('admin_dashboard') }}" class="rounded-md">{% include 'partials/_logo.html.twig' with {suffixe: 'Admin'} %}</a>
+                <button type="button" class="om-btn-icon om-btn-ghost lg:hidden" data-action="menu#close">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Fermer le menu</span>
+                </button>
+            </div>
 
-        {% include 'partials/_flashes.html.twig' %}
+            <nav class="flex-1 overflow-y-auto px-3 py-2" aria-label="Administration">
+                {% for section in admin_sections %}
+                    <p class="mb-1 mt-4 px-3 text-[11px] font-semibold uppercase tracking-[.12em] text-ink-400 first:mt-0">{{ section.titre }}</p>
+                    <ul class="space-y-0.5">
+                        {% for lien in section.liens %}
+                            {% set admin_actif = admin_route starts with lien.prefix %}
+                            <li>
+                                <a href="{{ path(lien.route) }}"
+                                   class="group flex min-h-[40px] items-center gap-3 rounded-md px-3 text-sm font-medium transition {{ admin_actif ? 'bg-brand-50 text-brand-800' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900' }}"
+                                   {% if admin_actif %}aria-current="page"{% endif %}>
+                                    <i class="fa-solid {{ lien.icon }} w-4 text-center {{ admin_actif ? 'text-brand-600' : 'text-ink-400 group-hover:text-ink-600' }}" aria-hidden="true"></i>
+                                    <span class="flex-1">{{ lien.label }}</span>
+                                    {% if lien.compteur|default(0) > 0 %}<span class="om-count">{{ lien.compteur }}<span class="sr-only"> à traiter</span></span>{% endif %}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </nav>
 
-        {% block content %}{% endblock %}
+            <div class="shrink-0 border-t border-ink-200 p-3">
+                <div class="flex items-center gap-3 px-3 py-2">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-900 text-xs font-bold uppercase text-white" aria-hidden="true">{{ app.user.userIdentifier|first }}</span>
+                    <p class="min-w-0 truncate text-sm text-ink-700" title="{{ app.user.userIdentifier }}">{{ app.user.userIdentifier }}</p>
+                </div>
+                <div class="mt-1 grid grid-cols-2 gap-1">
+                    <a href="{{ path('home') }}" class="om-btn-ghost om-btn-sm !justify-start" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square text-xs" aria-hidden="true"></i> Site</a>
+                    <a href="{{ path('app_logout') }}" class="om-btn-ghost om-btn-sm !justify-start"><i class="fa-solid fa-right-from-bracket text-xs" aria-hidden="true"></i> Quitter</a>
+                </div>
+            </div>
+        </aside>
 
-    </main>
-
-</div>
-
-<!-- ================= JS ================= -->
-<script>
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-
-    sidebar.classList.toggle('-translate-x-full');
-    overlay.classList.toggle('hidden');
-}
-</script>
-
-</body>
-</html>
+        <main id="contenu" class="mx-auto w-full max-w-[90rem] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+{% endblock %}

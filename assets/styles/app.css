@@ -1,59 +1,229 @@
-/* OrphaMap Custom Styles - Public Orphelinat Index */
+/*
+ * OrphaMap CI — système de design
+ * Compilé par symfonycasts/tailwind-bundle (php bin/console tailwind:build).
+ *
+ * 1. Tokens (variables CSS)   2. Base   3. Composants om-*   4. Utilitaires
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Root variables */
-:root {
-  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  --card-shadow: 0 20px 25px -5px rgba(0, 0,0, 0.1), 0 10px 10px -5px rgba(0, 0,0, 0.04);
-  --card-hover-shadow: 0 25px 50px -12px rgba(0, 0,0, 0.25);
+/* ───────────── 1. Tokens ───────────── */
+@layer base {
+    :root {
+        /* Terre cuite : identité, actions principales. 600 = AA sur blanc. */
+        --brand-50: 255 247 237;  --brand-100: 255 237 213; --brand-200: 254 215 170;
+        --brand-300: 253 186 116; --brand-400: 251 146 60;  --brand-500: 234 88 12;
+        --brand-600: 194 65 12;   --brand-700: 154 52 18;   --brand-800: 124 45 18;
+        --brand-900: 98 36 16;
+
+        /* Vert d'eau : confiance, informations vérifiées. */
+        --trust-50: 240 253 250;  --trust-100: 204 251 241; --trust-200: 153 246 228;
+        --trust-300: 94 234 212;  --trust-400: 45 212 191;  --trust-500: 20 184 166;
+        --trust-600: 13 148 136;  --trust-700: 15 118 110;  --trust-800: 17 94 89;
+        --trust-900: 19 78 74;
+
+        /* Encre : textes, bordures, surfaces neutres. */
+        --ink-50: 248 250 252;    --ink-100: 241 245 249;   --ink-200: 226 232 240;
+        --ink-300: 203 213 225;   --ink-400: 148 163 184;   --ink-500: 100 116 139;
+        --ink-600: 71 85 105;     --ink-700: 51 65 85;      --ink-800: 30 41 59;
+        --ink-900: 15 23 42;      --ink-950: 2 6 23;
+
+        --surface-page: 250 250 247;
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+
+        --shadow-card: 0 1px 2px rgb(15 23 42 / .04), 0 1px 3px rgb(15 23 42 / .06);
+        --shadow-raised: 0 4px 6px -2px rgb(15 23 42 / .05), 0 12px 24px -6px rgb(15 23 42 / .10);
+        --shadow-overlay: 0 24px 48px -12px rgb(15 23 42 / .25);
+
+        --content-width: 72rem;
+        --header-height: 4rem;
+        --focus-ring: 0 0 0 3px rgb(var(--brand-500) / .35);
+    }
+
+    /* ───────────── 2. Base ───────────── */
+    html {
+        -webkit-text-size-adjust: 100%;
+        scroll-padding-top: calc(var(--header-height) + 1rem);
+    }
+
+    body {
+        @apply bg-[rgb(var(--surface-page))] font-sans text-[15px] leading-relaxed text-ink-800 antialiased;
+    }
+
+    h1, h2, h3 {
+        @apply font-display tracking-[-0.01em] text-ink-900;
+        text-wrap: balance;
+    }
+
+    :focus-visible {
+        outline: 2px solid rgb(var(--brand-600));
+        outline-offset: 2px;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    ::selection {
+        background: rgb(var(--brand-200));
+    }
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ───────────── 3. Composants ───────────── */
+@layer components {
+    /* Mise en page */
+    .om-container { @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8; }
+    .om-section { @apply py-14 sm:py-20; }
+    .om-eyebrow { @apply text-xs font-semibold uppercase tracking-[.12em] text-brand-700; }
+    .om-h1 { @apply text-[2rem] font-extrabold leading-[1.1] sm:text-5xl; }
+    .om-h2 { @apply text-2xl font-bold leading-tight sm:text-3xl; }
+    .om-h3 { @apply text-lg font-bold leading-snug; }
+    .om-lead { @apply text-base text-ink-600 sm:text-lg; }
+    .om-muted { @apply text-sm text-ink-500; }
+
+    /* Cartes */
+    .om-card { @apply rounded-lg border border-ink-200/80 bg-white shadow-card; }
+    .om-card-pad { @apply p-5 sm:p-6; }
+    .om-card-interactive { @apply om-card transition duration-150 hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-raised focus-within:border-brand-500 motion-reduce:hover:translate-y-0; }
+
+    /* Boutons */
+    .om-btn {
+        @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 text-sm font-semibold transition duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-55 aria-[busy=true]:cursor-progress;
+    }
+    .om-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .om-btn-primary { @apply om-btn bg-brand-600 text-white shadow-sm hover:bg-brand-700; }
+    .om-btn-secondary { @apply om-btn border border-ink-300 bg-white text-ink-800 shadow-sm hover:border-ink-400 hover:bg-ink-50; }
+    .om-btn-ghost { @apply om-btn text-ink-700 hover:bg-ink-100 hover:text-ink-900; }
+    .om-btn-danger { @apply om-btn bg-red-700 text-white shadow-sm hover:bg-red-800; }
+    .om-btn-success { @apply om-btn bg-trust-700 text-white shadow-sm hover:bg-trust-800; }
+    .om-btn-sm { @apply min-h-[36px] px-3 text-[13px]; }
+    .om-btn-lg { @apply min-h-[52px] px-6 text-base; }
+    .om-btn-icon { @apply om-btn min-h-[40px] w-10 px-0; }
+
+    /* Liens */
+    .om-link { @apply rounded-sm font-semibold text-brand-700 underline decoration-brand-300 decoration-2 underline-offset-[3px] transition hover:text-brand-800 hover:decoration-brand-600; }
+
+    /* Formulaires */
+    .om-label { @apply mb-1.5 block text-sm font-semibold text-ink-800; }
+    .om-input {
+        @apply block min-h-[44px] w-full rounded-md border border-ink-300 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 shadow-sm transition placeholder:text-ink-400 hover:border-ink-400 focus:border-brand-600 focus:outline-none disabled:cursor-not-allowed disabled:bg-ink-50 disabled:text-ink-400;
+    }
+    .om-input:focus { box-shadow: var(--focus-ring); }
+    select.om-input {
+        @apply appearance-none bg-no-repeat pr-10;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+        background-position: right .75rem center;
+        background-size: 1.25rem;
+    }
+    select.om-input[aria-busy=true] { @apply animate-pulse; }
+    textarea.om-input { @apply min-h-[6rem] leading-relaxed; }
+    .om-input-error { @apply border-red-600 bg-red-50/40 hover:border-red-700 focus:border-red-700; }
+    .om-help { @apply mt-1.5 text-[13px] leading-snug text-ink-500; }
+    .om-error { @apply mt-1.5 flex items-start gap-1.5 text-[13px] font-medium text-red-700; }
+    .om-checkbox { @apply mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-ink-300 accent-brand-600; }
+    .om-fieldset { @apply om-card om-card-pad; }
+    .om-fieldset-title { @apply mb-1 flex items-center gap-3 text-lg font-bold text-ink-900; }
+    .om-step { @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 ring-1 ring-brand-200; }
+
+    /* Badges : toujours un libellé + une icône, jamais la couleur seule */
+    .om-badge { @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset; }
+    .om-badge-neutral { @apply om-badge bg-ink-100 text-ink-700 ring-ink-200; }
+    .om-badge-brand { @apply om-badge bg-brand-50 text-brand-800 ring-brand-200; }
+    .om-badge-trust { @apply om-badge bg-trust-50 text-trust-800 ring-trust-200; }
+    .om-badge-warning { @apply om-badge bg-amber-50 text-amber-900 ring-amber-200; }
+    .om-badge-danger { @apply om-badge bg-red-50 text-red-800 ring-red-200; }
+    .om-badge-info { @apply om-badge bg-sky-50 text-sky-800 ring-sky-200; }
+    .om-count { @apply inline-flex min-w-[1.375rem] items-center justify-center rounded-full bg-brand-600 px-1.5 text-[11px] font-bold leading-5 text-white; }
+
+    /* Alertes */
+    .om-alert { @apply flex items-start gap-3 rounded-md border px-4 py-3 text-sm; }
+    .om-alert-success { @apply om-alert border-trust-200 bg-trust-50 text-trust-900; }
+    .om-alert-error { @apply om-alert border-red-200 bg-red-50 text-red-900; }
+    .om-alert-warning { @apply om-alert border-amber-200 bg-amber-50 text-amber-900; }
+    .om-alert-info { @apply om-alert border-sky-200 bg-sky-50 text-sky-900; }
+
+    /* Puces de filtres actifs */
+    .om-chip { @apply inline-flex min-h-[32px] items-center gap-1.5 rounded-full border border-ink-200 bg-white py-1 pl-3 pr-2 text-[13px] font-medium text-ink-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-800; }
+
+    /* États vides */
+    .om-empty { @apply om-card flex flex-col items-center px-6 py-12 text-center; }
+    .om-empty-icon { @apply mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-ink-100 text-xl text-ink-500; }
+
+    /* Squelettes et indicateurs de chargement */
+    .om-skeleton { @apply relative overflow-hidden rounded-md bg-ink-100; }
+    .om-skeleton::after {
+        @apply absolute inset-0 -translate-x-full content-[''];
+        animation: om-shimmer 1.4s infinite;
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / .6), transparent);
+    }
+    .om-spinner { @apply inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent; }
+
+    /* Tableaux d'administration : lignes empilées en cartes sur mobile */
+    .om-table { @apply w-full text-sm; }
+    .om-table thead { @apply border-b border-ink-200 bg-ink-50 text-left text-xs font-semibold uppercase tracking-wide text-ink-500; }
+    .om-table th { @apply px-4 py-3 font-semibold; }
+    .om-table td { @apply px-4 py-3.5 align-middle; }
+    .om-table tbody tr { @apply border-b border-ink-100 transition last:border-0 hover:bg-ink-50/70; }
+    @media (max-width: 767px) {
+        .om-table thead { @apply sr-only; }
+        .om-table tbody tr { @apply block px-4 py-3; }
+        .om-table td { @apply flex items-start justify-between gap-4 px-0 py-1.5 text-right; }
+        .om-table td::before { @apply shrink-0 text-left text-xs font-semibold uppercase tracking-wide text-ink-400; content: attr(data-label); }
+        .om-table td[data-label=""]::before { content: none; }
+        .om-table td:first-child { @apply block text-left; }
+        .om-table td:first-child::before { content: none; }
+    }
+
+    /* Onglets de filtrage */
+    .om-tabs { @apply -mx-4 flex gap-1 overflow-x-auto border-b border-ink-200 px-4 text-sm sm:mx-0 sm:px-0; scrollbar-width: none; }
+    .om-tab { @apply -mb-px inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 font-medium text-ink-600 transition hover:border-ink-300 hover:text-ink-900; }
+    .om-tab[aria-current=page] { @apply border-brand-600 text-brand-700; }
+
+    /* Liste de définitions */
+    .om-dl { @apply grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2; }
+    .om-dl dt { @apply text-[13px] font-medium text-ink-500; }
+    .om-dl dd { @apply mt-0.5 break-words text-ink-900; }
+
+    /* Fenêtre de confirmation */
+    .om-dialog { @apply m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border-0 bg-white p-0 text-ink-800 shadow-overlay; }
+    .om-dialog::backdrop { background: rgb(var(--ink-950) / .45); backdrop-filter: blur(2px); }
+    .om-dialog[open] { animation: om-dialog-in .16s ease-out; }
+
+    /* Notifications */
+    .om-toast { @apply pointer-events-auto flex w-full items-start gap-3 rounded-lg border bg-white px-4 py-3 text-sm shadow-raised animate-fade-up; }
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ───────────── 4. Utilitaires et compléments ───────────── */
+@layer utilities {
+    .om-hp { position: absolute !important; left: -10000px !important; width: 1px; height: 1px; overflow: hidden; }
+    .text-balance { text-wrap: balance; }
+    .bg-page { background-color: rgb(var(--surface-page)); }
 }
 
-/* Hero improvements */
-.hero-title {
-  @apply text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-primary-600 to-primary-900 bg-clip-text text-transparent drop-shadow-2xl animate-fade-in;
+@keyframes om-shimmer {
+    100% { transform: translateX(100%); }
 }
 
-/* Card enhancements */
-.orphelinat-card {
-  @apply transform hover:-translate-y-2 transition-all duration-500 group-hover:shadow-2xl bg-gradient-to-br from-white/80 to-gray-50/80 dark:from-gray-800/90 dark:to-gray-900/90 backdrop-blur-sm border-primary-100/50 dark:border-primary-900/50;
+@keyframes om-dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to { opacity: 1; transform: none; }
 }
 
-.orphelinat-card img {
-  @apply group-hover:scale-110 transition-transform duration-700 object-cover brightness-105 group-hover:brightness-110;
-}
+.leaflet-container { font: inherit; z-index: 0; }
+.leaflet-popup-content-wrapper { border-radius: var(--radius-md); box-shadow: var(--shadow-raised); }
+.leaflet-popup-content { margin: .75rem 1rem; line-height: 1.45; }
+.leaflet-popup-content a { display: inline-block; margin-top: .35rem; font-weight: 600; color: rgb(var(--brand-700)); }
 
-.orphelinat-card h4 {
-  @apply line-clamp-2 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-white dark:to-gray-100 bg-clip-text text-transparent font-black tracking-tight;
-}
-
-/* Filter panel */
-.filter-panel {
-  @apply backdrop-blur-xl bg-white/90 dark:bg-gray-800/90 shadow-2xl border border-white/50 dark:border-gray-700/50 ring-1 ring-white/20 dark:ring-gray-700/40;
-}
-
-/* Pagination active */
-.pagination-active {
-  @apply bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/25 ring-2 ring-primary-500/50 text-white font-bold transform scale-105;
-}
-
-/* Responsive grid adjustments */
-@media (min-width: 1024px) {
-  .orphelinat-grid {
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  }
-}
-
-/* Smooth hover effects */
-.card-overlay {
-  @apply absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none;
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

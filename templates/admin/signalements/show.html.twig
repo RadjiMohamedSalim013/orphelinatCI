@@ -1,0 +1,75 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Signalement — {{ signalement.orphelinat.nom }} — Administration OrphaMap CI{% endblock %}
+
+{% block content %}
+    {% set orphelinat = signalement.orphelinat %}
+
+    {% embed 'admin/_page_header.html.twig' with {titre: signalement.type.label, sous_titre: 'Reçu le ' ~ signalement.createdAt|date('d/m/Y à H:i'), retour: {url: path('admin_signalements_index'), label: 'Signalements'}} %}
+        {% block surtitre %}<div class="mb-2">{% include 'admin/_statut_badge.html.twig' with {statut: signalement.statut} %}</div>{% endblock %}
+    {% endembed %}
+
+    <div class="grid gap-6 xl:grid-cols-[1fr_380px] [&>*]:min-w-0">
+        <div class="space-y-6">
+            <section class="om-card om-card-pad" aria-labelledby="titre-message">
+                <h2 id="titre-message" class="om-h3 !text-base">Message de l’auteur</h2>
+                <blockquote class="mt-3 border-l-4 border-brand-200 pl-4 text-sm leading-relaxed text-ink-800 [overflow-wrap:anywhere]">{{ signalement.message|nl2br }}</blockquote>
+                <p class="mt-4 text-xs text-ink-500"><i class="fa-solid fa-lock mr-1" aria-hidden="true"></i>Contact (confidentiel) : {{ signalement.contact ?: 'non communiqué' }}</p>
+            </section>
+
+            <section class="om-card om-card-pad" aria-labelledby="titre-fiche">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="titre-fiche" class="om-h3 !text-base">Fiche concernée</h2>
+                    <div class="flex gap-2">
+                        <a class="om-btn-secondary om-btn-sm" href="{{ path('admin_orphelinat_show', {id: orphelinat.id}) }}">Voir</a>
+                        <a class="om-btn-primary om-btn-sm" href="{{ path('admin_orphelinat_edit', {id: orphelinat.id}) }}"><i class="fa-solid fa-pen text-xs" aria-hidden="true"></i> Corriger la fiche</a>
+                    </div>
+                </div>
+                <p class="mt-3 font-semibold text-ink-900">{{ orphelinat.nom }}</p>
+                <dl class="om-dl mt-4">
+                    {% for libelle, valeur in {
+                        'Situation': orphelinat.statut.label,
+                        'Vérification': orphelinat.verification.label,
+                        'Adresse': orphelinat.adresse,
+                        'Localisation': orphelinat.localisationLabel,
+                        'Téléphone': orphelinat.telephone,
+                        'E-mail': orphelinat.email,
+                    } %}
+                        <div><dt>{{ libelle }}</dt><dd>{{ valeur ?: '—' }}</dd></div>
+                    {% endfor %}
+                </dl>
+            </section>
+        </div>
+
+        <aside>
+            <form method="post" action="{{ path('admin_signalements_traiter', {id: signalement.id}) }}" class="om-card om-card-pad" data-controller="ui" data-action="submit->ui#loading">
+                <h2 class="om-h3 !text-base">Décision</h2>
+                <input type="hidden" name="_token" value="{{ csrf_token('traiter_signalement_' ~ signalement.id) }}">
+
+                {% if signalement.decision %}
+                    <p class="mt-3 rounded-md bg-ink-50 p-3 text-sm text-ink-800">{{ signalement.decision }}</p>
+                {% endif %}
+
+                <label for="decision" class="om-label mt-4">Commentaire</label>
+                <textarea id="decision" name="decision" rows="3" class="om-input" aria-describedby="decision-aide" placeholder="Correction appliquée, vérification effectuée, motif du rejet…"></textarea>
+                <p id="decision-aide" class="om-help">Obligatoire pour un rejet. Les corrections se font dans le formulaire de la fiche.</p>
+
+                {% if signalement.type.value == 'ferme' and orphelinat.statut.value == 'actif' %}
+                    <label class="mt-4 flex cursor-pointer items-start gap-3 rounded-md bg-amber-50 p-3 text-sm text-ink-800">
+                        <input type="checkbox" name="marquer_ferme" value="1" class="om-checkbox">
+                        <span>Fermeture confirmée : marquer l’établissement comme <strong>fermé</strong></span>
+                    </label>
+                {% endif %}
+
+                <div class="mt-5 grid gap-2">
+                    {% if signalement.statut.value == 'nouveau' %}
+                        <button name="statut" value="en_cours" class="om-btn-secondary"><i class="fa-solid fa-hand" aria-hidden="true"></i> Prendre en charge</button>
+                    {% endif %}
+                    <button name="statut" value="traite" class="om-btn-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Marquer comme traité</button>
+                    <button name="statut" value="rejete" class="om-btn-secondary !text-red-700"><i class="fa-solid fa-ban" aria-hidden="true"></i> Rejeter (commentaire requis)</button>
+                </div>
+                {% if signalement.traiteAt %}<p class="mt-4 text-xs text-ink-500">Dernière décision le {{ signalement.traiteAt|date('d/m/Y à H:i') }}.</p>{% endif %}
+            </form>
+        </aside>
+    </div>
+{% endblock %}

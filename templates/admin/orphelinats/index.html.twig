@@ -1,210 +1,105 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Orphelinats - OrphaMap Admin{% endblock %}
+{% block title %}Établissements — Administration OrphaMap CI{% endblock %}
 
 {% block content %}
+    {% set actifs = filtres.q or filtres.commune or filtres.statut or filtres.verification %}
 
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% embed 'admin/_page_header.html.twig' with {titre: 'Établissements', sous_titre: resultats.total ~ ' fiche' ~ (resultats.total > 1 ? 's') ~ (actifs ? ' correspondant aux filtres' : ' au total')} %}
+        {% block actions %}
+            <a href="{{ path('admin_orphelinat_create') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Ajouter</a>
+        {% endblock %}
+    {% endembed %}
 
-<div class="space-y-8">
-
-    <!-- ================= HEADER ================= -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-        <div class="flex items-center gap-4">
-
-            <div class="h-12 w-12 bg-orange-50 rounded-xl flex items-center justify-center">
-                <i class="fa-solid fa-building text-orange-500"></i>
-            </div>
-
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Orphelinats</h1>
-
-                <p class="text-gray-500 text-sm mt-1">
-                    <i class="fa-solid fa-database mr-1 text-gray-400"></i>
-                    {{ totalCount }} enregistrement(s)
-                </p>
-            </div>
-
+    <form method="get" class="om-card mb-5 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))_auto] lg:items-end" role="search" aria-label="Filtrer les établissements"
+          data-controller="ui" data-action="submit->ui#loading" data-ui-busy-selector-value="#table-orphelinats">
+        <div class="sm:col-span-2 lg:col-span-1">
+            <label for="a-q" class="om-label">Recherche</label>
+            <input id="a-q" type="search" name="q" value="{{ filtres.q }}" class="om-input" placeholder="Nom, adresse, téléphone…">
         </div>
-
-        <a href="{{ path('admin_orphelinat_create') }}"
-           class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 text-white font-semibold
-                  hover:bg-orange-600 transition shadow-sm hover:-translate-y-0.5">
-
-            <i class="fa-solid fa-plus"></i>
-            Nouvel orphelinat
-        </a>
-
-    </div>
-
-    <!-- ================= SEARCH ================= -->
-    <div class="bg-white rounded-2xl border shadow-sm p-5">
-
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-
-            <div>
-                <h3 class="font-semibold text-gray-800">
-                    <i class="fa-solid fa-filter text-orange-500 mr-1"></i>
-                    Recherche
-                </h3>
-                <p class="text-sm text-gray-500">Filtrer les résultats instantanément</p>
-            </div>
-
-            <div class="relative w-full lg:max-w-md">
-
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-
-                <input type="text"
-                       id="searchInput"
-                       placeholder="Nom, téléphone, adresse..."
-                       class="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl
-                              focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-
-                <button id="clearSearch"
-                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-
-            </div>
-
+        <div>
+            <label for="a-commune" class="om-label">Commune</label>
+            <select id="a-commune" name="commune" class="om-input">
+                <option value="">Toutes</option>
+                {% for c in communes %}<option value="{{ c.id }}" {{ filtres.commune == c.id ? 'selected' }}>{{ c.nom }} ({{ c.ville.nom }})</option>{% endfor %}
+            </select>
         </div>
-
-    </div>
-
-    <!-- ================= TABLE ================= -->
-    {% if orphelinats|length > 0 %}
-
-    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
-
-        <div class="overflow-x-auto">
-
-            <table class="w-full">
-
-                <thead class="bg-gray-50 text-xs uppercase text-gray-500">
-
-                    <tr>
-                        <th class="text-left p-4">
-                            <i class="fa-solid fa-building mr-1"></i> Orphelinat
-                        </th>
-                        <th class="text-left p-4 hidden md:table-cell">
-                            <i class="fa-solid fa-location-dot mr-1"></i> Adresse
-                        </th>
-                        <th class="text-left p-4">
-                            <i class="fa-solid fa-phone mr-1"></i> Contact
-                        </th>
-                        <th class="text-right p-4">
-                            Actions
-                        </th>
-                    </tr>
-
-                </thead>
-
-                <tbody class="divide-y divide-gray-100">
-
-                {% for orphelinat in orphelinats %}
-
-                    <tr class="orphelinat-row hover:bg-orange-50/40 transition">
-
-                        <!-- ORPHELINAT -->
-                        <td class="p-4">
-
-                            <div class="flex items-center gap-4">
-
-                                {% if orphelinat.image %}
-                                    <img src="/uploads/images/{{ orphelinat.image }}"
-                                         class="h-12 w-12 rounded-xl object-cover border">
-                                {% else %}
-                                    <div class="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                                        {{ orphelinat.nom|slice(0,1)|upper }}
-                                    </div>
-                                {% endif %}
-
-                                <div>
-                                    <div class="font-semibold text-gray-800">
-                                        {{ orphelinat.nom }}
-                                    </div>
-
-                                    <div class="text-xs text-gray-500 flex items-center gap-1">
-                                        <i class="fa-solid fa-envelope text-gray-400"></i>
-                                        {{ orphelinat.email ?: '-' }}
-                                    </div>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <!-- ADRESSE -->
-                        <td class="p-4 hidden md:table-cell text-gray-600 text-sm">
-                            <i class="fa-solid fa-location-dot text-orange-400 mr-1"></i>
-                            {{ orphelinat.adresse ?: '-' }}
-                        </td>
-
-                        <!-- CONTACT -->
-                        <td class="p-4">
-                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm">
-                                <i class="fa-solid fa-phone text-xs"></i>
-                                {{ orphelinat.telephone ?: '-' }}
-                            </span>
-                        </td>
-
-                        <!-- ACTIONS -->
-                        <td class="p-4">
-
-                            <div class="flex justify-end gap-2">
-
-                                <a href="{{ path('orphelinat_show', {'id': orphelinat.id}) }}"
-                                   class="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-
-                                <a href="{{ path('admin_orphelinat_edit', {'id': orphelinat.id}) }}"
-                                   class="p-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600">
-                                    <i class="fa-solid fa-pen"></i>
-                                </a>
-
-                                <form method="post"
-                                      action="{{ path('admin_orphelinat_delete', {'id': orphelinat.id}) }}"
-                                      onsubmit="return confirm('Supprimer cet orphelinat ?');">
-
-                                    <input type="hidden"
-                                           name="_token"
-                                           value="{{ csrf_token('delete_orphelinat_' ~ orphelinat.id) }}">
-
-                                    <button type="submit"
-                                            class="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-
-                                </form>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
+        <div>
+            <label for="a-statut" class="om-label">Situation</label>
+            <select id="a-statut" name="statut" class="om-input">
+                <option value="">Toutes</option>
+                {% for s in enum_cases('App\\Enum\\OrphelinatStatut') %}<option value="{{ s.value }}" {{ filtres.statut == s ? 'selected' }}>{{ s.label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="a-verif" class="om-label">Vérification</label>
+            <select id="a-verif" name="verification" class="om-input">
+                <option value="">Toutes</option>
+                {% for v in enum_cases('App\\Enum\\VerificationStatut') %}<option value="{{ v.value }}" {{ filtres.verification == v ? 'selected' }}>{{ v.label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="a-tri" class="om-label">Trier par</label>
+            <select id="a-tri" name="tri" class="om-input">
+                {% for valeur, libelle in {nom: 'Nom', commune: 'Commune', recent: 'Plus récents', maj: 'Dernière mise à jour'} %}
+                    <option value="{{ valeur }}" {{ filtres.tri == valeur ? 'selected' }}>{{ libelle }}</option>
                 {% endfor %}
-
-                </tbody>
-
-            </table>
-
+            </select>
         </div>
+        <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
+            <button class="om-btn-primary flex-1" type="submit" data-ui-target="submit" data-loading-label="Filtrage…">Filtrer</button>
+            {% if actifs %}<a class="om-btn-secondary" href="{{ path('admin_orphelinat_list') }}">Effacer</a>{% endif %}
+        </div>
+    </form>
 
+    <div id="table-orphelinats" class="om-card overflow-hidden transition aria-[busy=true]:opacity-50">
+        {% if resultats.items is empty %}
+            <div class="px-6 py-14 text-center">
+                <p class="font-semibold text-ink-900">Aucun établissement ne correspond à ces filtres.</p>
+                {% if actifs %}<a href="{{ path('admin_orphelinat_list') }}" class="om-link mt-2 inline-block text-sm">Effacer les filtres</a>{% endif %}
+            </div>
+        {% else %}
+            <table class="om-table">
+                <caption class="sr-only">Liste des établissements</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Établissement</th>
+                        <th scope="col">Localisation</th>
+                        <th scope="col">Téléphone</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in resultats.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('admin_orphelinat_show', {id: o.id}) }}" class="font-semibold text-ink-900 hover:text-brand-700">{{ o.nom }}</a>
+                                <p class="mt-0.5 text-xs text-ink-500">
+                                    Ajouté le {{ o.createdAt|date('d/m/Y') }}
+                                    {% if not o.hasCoordinates %}<span class="ml-1 text-amber-700"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> sans position</span>{% endif %}
+                                </p>
+                            </td>
+                            <td data-label="Localisation">{{ o.commune.nom }}<span class="block text-xs text-ink-500">{{ o.ville.nom }}</span></td>
+                            <td data-label="Téléphone" class="whitespace-nowrap tabular-nums">{{ o.telephone ?: '—' }}</td>
+                            <td data-label="Statut">
+                                <div class="flex flex-wrap justify-end gap-1 md:justify-start">
+                                    {% include 'admin/_statut_badge.html.twig' with {statut: o.statut} %}
+                                    {% include 'partials/_verification_badge.html.twig' with {orphelinat: o} %}
+                                </div>
+                            </td>
+                            <td data-label="" class="md:text-right">
+                                <a href="{{ path('admin_orphelinat_edit', {id: o.id}) }}" class="om-btn-secondary om-btn-sm w-full md:w-auto"><i class="fa-solid fa-pen text-xs" aria-hidden="true"></i> Modifier<span class="sr-only"> {{ o.nom }}</span></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     </div>
 
-    {% else %}
-
-        <div class="bg-white border rounded-2xl p-12 text-center text-gray-500">
-            <i class="fa-solid fa-inbox text-3xl mb-3 text-gray-300"></i>
-            <p>Aucun orphelinat trouvé</p>
-        </div>
-
-    {% endif %}
-
-</div>
-
+    {% include 'partials/_pagination.html.twig' with {
+        page: resultats.page, pages: resultats.pages, route: 'admin_orphelinat_list',
+        params: {q: filtres.q, commune: filtres.commune, statut: filtres.statut ? filtres.statut.value, verification: filtres.verification ? filtres.verification.value, tri: filtres.tri}|filter(v => v)
+    } %}
 {% endblock %}

@@ -1,161 +1,136 @@
 {% extends 'base.html.twig' %}
 
-{% form_theme form 'form/tailwind_layout.html.twig' %}
-
-{% block title %}Proposer un orphelinat - OrphaMap{% endblock %}
+{% block title %}Proposer un orphelinat — OrphaMap CI{% endblock %}
 
 {% block body %}
+    <section class="border-b border-ink-200/70 bg-white">
+        <div class="om-container py-8 sm:py-10">
+            <p class="om-eyebrow">Contribuer</p>
+            <h1 class="om-h2 mt-1">Proposer un orphelinat</h1>
+            <p class="om-lead mt-2 max-w-2xl">Indiquez ce que vous savez de l’établissement. L’équipe le vérifie avant toute publication.</p>
+        </div>
+    </section>
 
-<style>
-    .form-control {
-        width: 100%;
-        border: 1.5px solid #e5e7eb;
-        background: #f9fafb;
-        padding: 12px 14px;
-        border-radius: 14px;
-        transition: all .2s ease;
-        outline: none;
-        font-size: 14px;
-    }
+    <div class="om-container grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div class="min-w-0">
+            {% if form.vars.submitted and not form.vars.valid %}
+                <div class="om-alert-error mb-6" role="alert" tabindex="-1" data-controller="focus-on-connect">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <div>
+                        <p class="font-semibold">Certaines informations sont à compléter ou corriger.</p>
+                        <p class="mt-0.5">Les champs concernés sont signalés ci-dessous. Vos saisies ont été conservées{% if form.image.vars.data is not null or form.document.vars.data is not null %}, mais les fichiers doivent être joints à nouveau{% endif %}.</p>
+                        {{ form_errors(form) }}
+                    </div>
+                </div>
+            {% endif %}
 
-    .form-control:focus {
-        border-color: #f97316;
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
-    }
+            <p class="mb-4 text-sm text-ink-500">Les champs marqués <span class="text-red-700">*</span> sont obligatoires.</p>
 
-    .form-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 700;
-        color: #111827;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #e5e7eb;
-    }
+            {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate', 'data-controller': 'ui', 'data-action': 'submit->ui#loading'}}) }}
 
-    .section-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        padding: 22px;
-    }
-</style>
+                <fieldset class="om-fieldset">
+                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">1</span>L’établissement</legend>
+                    <div class="mt-5">
+                        {{ form_row(form.nom) }}
+                        {{ form_row(form.description) }}
+                    </div>
+                </fieldset>
 
-<div class="max-w-5xl mx-auto px-4 py-12 space-y-10">
+                <fieldset class="om-fieldset" data-controller="cascade">
+                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">2</span>Localisation</legend>
+                    <p class="om-help !mt-0 mb-5">Choisissez la commune dans la liste ; si elle n’y figure pas, cochez la case pour la saisir.</p>
 
-    <!-- HEADER -->
-    <div class="text-center space-y-3">
+                    <div data-controller="ui">
+                        <div class="grid gap-x-4 sm:grid-cols-2">
+                            <div class="mb-5">
+                                <label for="p-pays" class="om-label">Pays</label>
+                                <select id="p-pays" class="om-input" data-cascade-target="select" data-cascade-name="pays" data-cascade-child="ville" data-action="cascade#change">
+                                    <option value="">Choisissez un pays</option>
+                                    {% for p in pays %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label for="p-ville" class="om-label">Ville</label>
+                                <select id="p-ville" class="om-input" data-cascade-target="select" data-cascade-name="ville" data-cascade-child="commune"
+                                        data-cascade-url="{{ path('api_localisations_villes') }}?pays=" data-action="cascade#change">
+                                    <option value="">Toutes les villes</option>
+                                </select>
+                            </div>
+                        </div>
+                        {{ form_row(form.commune, {attr: {'data-cascade-target': 'select', 'data-cascade-name': 'commune', 'data-cascade-filter': 'ville'}}) }}
 
-        <div class="h-14 w-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto shadow-md">
-            <i class="fa-solid fa-plus text-white"></i>
+                        {{ form_row(form.communeAbsente, {attr: {'data-action': 'change->ui#sync'}}) }}
+                        <div data-ui-target="panel" class="mb-5 grid gap-x-4 rounded-lg border border-dashed border-ink-300 bg-ink-50/60 p-4 pb-0 sm:grid-cols-3">
+                            {{ form_row(form.pays, {required: true}) }}
+                            {{ form_row(form.ville, {required: true}) }}
+                            {{ form_row(form.communeSaisie, {required: true}) }}
+                        </div>
+                    </div>
+
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {{ form_row(form.quartier) }}
+                        {{ form_row(form.adresse) }}
+                    </div>
+                </fieldset>
+
+                <fieldset class="om-fieldset">
+                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">3</span>Contacts de l’établissement</legend>
+                    <p class="om-help !mt-0 mb-5">Renseignez seulement ceux que vous connaissez.</p>
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {{ form_row(form.telephone) }}
+                        {{ form_row(form.email) }}
+                    </div>
+                </fieldset>
+
+                <fieldset class="om-fieldset">
+                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">4</span>Pour nous aider à vérifier</legend>
+                    <div class="mt-5">
+                        {{ form_row(form.source) }}
+                        <div class="grid gap-x-4 sm:grid-cols-2">
+                            {{ form_row(form.image) }}
+                            {{ form_row(form.document) }}
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="om-fieldset">
+                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">5</span>Vous</legend>
+                    <p class="om-help !mt-0 mb-5">Ces informations restent confidentielles et servent uniquement à la vérification.</p>
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {{ form_row(form.nomProposant) }}
+                        {{ form_row(form.contactProposant) }}
+                    </div>
+                    {{ form_row(form.consentement, {row_attr: {class: '!mb-0'}}) }}
+                </fieldset>
+
+                {{ form_rest(form) }}
+
+                <div class="flex flex-col-reverse gap-3 border-t border-ink-200 pt-6 sm:flex-row sm:justify-end">
+                    <a href="{{ path('home') }}" class="om-btn-ghost">Annuler</a>
+                    <button type="submit" class="om-btn-primary om-btn-lg" data-ui-target="submit" data-loading-label="Envoi en cours…">
+                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Envoyer la proposition
+                    </button>
+                </div>
+            {{ form_end(form) }}
         </div>
 
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
-            Proposer un <span class="text-orange-500">orphelinat</span>
-        </h1>
-
-        <p class="text-gray-500 max-w-xl mx-auto">
-            Les informations seront vérifiées avant publication.
-        </p>
+        <aside aria-labelledby="titre-ensuite">
+            <div class="om-card om-card-pad lg:sticky lg:top-[calc(var(--header-height)+1.5rem)]">
+                <h2 id="titre-ensuite" class="om-h3">Que se passe-t-il ensuite&nbsp;?</h2>
+                <ol class="mt-4 space-y-4 text-sm">
+                    {% for etape in [
+                        ['fa-inbox', 'Réception', 'Vous obtenez un lien privé pour suivre votre demande.'],
+                        ['fa-magnifying-glass', 'Vérification', 'L’équipe contrôle l’existence et les coordonnées de l’établissement.'],
+                        ['fa-circle-check', 'Décision', 'La fiche est publiée, ou la proposition refusée avec un motif.'],
+                    ] %}
+                        <li class="flex gap-3">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-trust-50 text-trust-700 ring-1 ring-trust-200" aria-hidden="true"><i class="fa-solid {{ etape[0] }} text-xs"></i></span>
+                            <div><p class="font-semibold text-ink-900">{{ etape[1] }}</p><p class="text-ink-600">{{ etape[2] }}</p></div>
+                        </li>
+                    {% endfor %}
+                </ol>
+                <p class="mt-5 rounded-md bg-brand-50 p-3 text-[13px] text-brand-900"><i class="fa-solid fa-shield-heart mr-1" aria-hidden="true"></i> Ne mentionnez aucun enfant et ne joignez pas de photo où un enfant est reconnaissable.</p>
+            </div>
+        </aside>
     </div>
-
-    {{ include('partials/_flashes.html.twig') }}
-
-    <!-- FORM -->
-    <div class="section-card shadow-sm">
-
-        {{ form_start(form, { attr: { novalidate: 'novalidate', class: 'space-y-8' } }) }}
-
-        <!-- SECTION 1 -->
-        <div>
-            <div class="form-title">
-                <i class="fa-solid fa-building text-orange-500"></i>
-                Informations générales
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-5 mt-5">
-
-                {{ form_row(form.nom, { attr: { class: 'form-control' } }) }}
-                {{ form_row(form.pays, { attr: { class: 'form-control' } }) }}
-                {{ form_row(form.ville, { attr: { class: 'form-control' } }) }}
-                {{ form_row(form.quartier, { attr: { class: 'form-control' } }) }}
-
-            </div>
-
-            <div class="mt-5">
-                {{ form_row(form.adresse, { attr: { class: 'form-control' } }) }}
-            </div>
-        </div>
-
-        <!-- SECTION 2 -->
-        <div>
-            <div class="form-title">
-                <i class="fa-solid fa-phone text-orange-500"></i>
-                Contact
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-5 mt-5">
-
-                {{ form_row(form.telephone, { attr: { class: 'form-control' } }) }}
-                {{ form_row(form.email, { attr: { class: 'form-control' } }) }}
-
-            </div>
-
-            <div class="mt-5">
-                {{ form_row(form.description, { attr: { class: 'form-control', rows: 5 } }) }}
-            </div>
-        </div>
-
-        <!-- SECTION 3 -->
-        <div>
-            <div class="form-title">
-                <i class="fa-solid fa-paperclip text-orange-500"></i>
-                Fichiers
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-5 mt-5">
-
-                {{ form_row(form.image, { attr: { class: 'form-control bg-white' } }) }}
-                {{ form_row(form.document, { attr: { class: 'form-control bg-white' } }) }}
-
-            </div>
-        </div>
-
-        <!-- SECTION 4 -->
-        <div>
-            <div class="form-title">
-                <i class="fa-solid fa-user text-orange-500"></i>
-                Proposant
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-5 mt-5">
-
-                {{ form_row(form.nomProposant, { attr: { class: 'form-control' } }) }}
-                {{ form_row(form.contactProposant, { attr: { class: 'form-control' } }) }}
-
-            </div>
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t">
-
-            <a href="{{ path('orphelinat_index') }}"
-               class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-4 rounded-xl transition">
-                Annuler
-            </a>
-
-            <button type="submit"
-                    class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-md transition">
-                <i class="fa-solid fa-paper-plane mr-2"></i>
-                Envoyer
-            </button>
-
-        </div>
-
-        {{ form_end(form) }}
-
-    </div>
-</div>
-
 {% endblock %}

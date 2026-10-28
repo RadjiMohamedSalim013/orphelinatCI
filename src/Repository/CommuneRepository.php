@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Commune;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -16,28 +17,32 @@ class CommuneRepository extends ServiceEntityRepository
         parent::__construct($registry, Commune::class);
     }
 
-    //    /**
-    //     * @return Commune[] Returns an array of Commune objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('c.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Commune[]
+     */
+    public function findByVilleId(?int $villeId): array
+    {
+        if (null === $villeId) {
+            return [];
+        }
 
-    //    public function findOneBySomeField($value): ?Commune
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        return $this->createQueryBuilder('c')
+            ->andWhere('IDENTITY(c.ville) = :ville')
+            ->setParameter('ville', $villeId)
+            ->orderBy('c.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** Toutes les communes avec ville et pays, triées pour les listes déroulantes. */
+    public function createOrderedQueryBuilder(): QueryBuilder
+    {
+        return $this->createQueryBuilder('c')
+            ->join('c.ville', 'v')
+            ->join('v.pays', 'p')
+            ->addSelect('v', 'p')
+            ->orderBy('p.nom', 'ASC')
+            ->addOrderBy('v.nom', 'ASC')
+            ->addOrderBy('c.nom', 'ASC');
+    }
 }

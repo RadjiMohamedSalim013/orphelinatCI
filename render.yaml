@@ -1,6 +1,35 @@
+# Déploiement Render (offre gratuite) — voir docs/DEPLOIEMENT.md
 services:
   - type: web
-    name: orphelinatci
-    env: php
-    buildCommand: composer install --no-dev --optimize-autoloader
-    startCommand: php -S 0.0.0.0:$PORT -t public
+    name: orphamap-ci
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /robots.txt
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_SECRET
+        generateValue: true
+      # Fournies par Aiven (voir la documentation) : non stockées dans le dépôt
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL_CA_PEM
+        sync: false
+      # Adresse publique, ex. https://orphamap-ci.onrender.com
+      - key: DEFAULT_URI
+        sync: false
+      # Disque éphémère sur l'offre gratuite : copie des photos dans la base
+      - key: FICHIERS_EN_BASE
+        value: "1"
+      - key: TRUSTED_PROXIES
+        value: "REMOTE_ADDR"
+      - key: MAILER_DSN
+        value: "null://null"
+      # Premier administrateur créé au démarrage ; supprimer ADMIN_PASSWORD ensuite
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

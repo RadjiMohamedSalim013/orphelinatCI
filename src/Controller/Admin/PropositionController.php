@@ -2,217 +2,151 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Orphelinat;
-use App\Repository\PropositionOrphelinatRepository;
 use App\Entity\PropositionOrphelinat;
-use App\Entity\Pays;
-use App\Entity\Ville;
-use App\Entity\Commune;
-use App\Entity\Quartier;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Enum\PropositionStatut;
+use App\Enum\VerificationStatut;
+use App\Repository\CommuneRepository;
+use App\Repository\PropositionOrphelinatRepository;
+use App\Service\DuplicateDetector;
+use App\Service\FileUploader;
+use App\Service\PropositionWorkflow;
+use App\Service\WorkflowException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/propositions')]
+#[IsGranted('ROLE_ADMIN')]
+#[Route('/propositions', name: 'admin_propositions_')]
 class PropositionController extends AbstractController
 {
     public function __construct(
-        private readonly PropositionOrphelinatRepository $propositionRepository,
-        private readonly EntityManagerInterface $entityManager
+        private readonly PropositionWorkflow $workflow,
     ) {
     }
 
-    #[Route('/', name: 'admin_propositions_index', methods: ['GET'])]
-    public function index(): Response
+    #[Route('', name: 'index', methods: ['GET'])]
+    public function index(Request $request, PropositionOrphelinatRepository $repository): Response
     {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-
-        $propositions = $this->propositionRepository->findPending();
-        $totalCount = is_array($propositions) ? count($propositions) : iterator_count($propositions);
+        $filtre = (string) $request->query->get('statut', 'ouvertes');
+        $statuts = match (true) {
+            'toutes' === $filtre => [],
+            null !== PropositionStatut::tryFrom($filtre) => [PropositionStatut::from($filtre)],
+            default => [PropositionStatut::EnAttente, PropositionStatut::EnVerification],
+        };
 
         return $this->render('admin/propositions/index.html.twig', [
-            'propositions' => $propositions,
-            'totalCount' => $totalCount,
+            'propositions' => $repository->findByStatuts($statuts),
+            'compteurs' => $repository->countByStatut(),
+            'filtre' => $statuts ? $filtre : 'toutes',
         ]);
-
     }
 
-    #[Route('/{id}', name: 'admin_propositions_show', methods: ['GET'])]
-    public function show(?PropositionOrphelinat $proposition): Response
+    #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(PropositionOrphelinat $proposition, DuplicateDetector $detector, CommuneRepository $communeRepository): Response
     {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-
-        if (!$proposition) {
-            $this->addFlash('error', 'Proposition introuvable');
-            return $this->redirectToRoute('admin_propositions_index');
-        }
-
-        $paysRepo = $this->entityManager->getRepository(Pays::class);
-        $villeRepo = $this->entityManager->getRepository(Ville::class);
-        $communeRepo = $this->entityManager->getRepository(Commune::class);
-        $quartierRepo = $this->entityManager->getRepository(Quartier::class);
-
         return $this->render('admin/propositions/show.html.twig', [
             'proposition' => $proposition,
-            'paysList' => $paysRepo->findAll(),
-            'villesList' => $villeRepo->findAll(),
-            'communesList' => $communeRepo->findAll(),
-            'quartiersList' => $quartierRepo->findAll(),
+            'doublons' => $detector->findSimilarOrphelinats($proposition),
+            'propositionsSimilaires' => $detector->findSimilarOpenPropositions($proposition),
+            'communes' => $communeRepository->createOrderedQueryBuilder()->getQuery()->getResult(),
         ]);
     }
 
-    #[Route('/{id}/valider', name: 'admin_propositions_valider', methods: ['POST'])]
-    public function valider(Request $request, PropositionOrphelinat $proposition): Response
+    #[Route('/{id}/verification', name: 'verification', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function verification(Request $request, PropositionOrphelinat $proposition): Response
     {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        return $this->transition($request, $proposition, 'verification', function () use ($request, $proposition): string {
+            $this->workflow->startVerification($proposition, $request->request->get('note'));
 
-        if ($proposition->getStatut() !== 'en_attente') {
-            $this->addFlash('error', 'Cette proposition ne peut pas être validée.');
-            return $this->redirectToRoute('admin_propositions_index');
-        }
-
-        if ($this->isCsrfTokenValid('valider_proposition_' . $proposition->getId(), $request->request->get('_token')) ) {
-            $orphelinat = new Orphelinat();
-            $orphelinat->setNom($proposition->getNom());
-            $orphelinat->setDescription($proposition->getDescription());
-            $orphelinat->setAdresse($proposition->getAdresse());
-            $orphelinat->setTelephone($proposition->getTelephone());
-            $orphelinat->setEmail($proposition->getEmail());
-            $orphelinat->setImage($proposition->getImage());
-            $orphelinat->setDocument($proposition->getDocument());
-            $orphelinat->setClear('');
-
-            // IMPORTANT: le formulaire de validation POST ne contient peut-être pas quartier_id.
-            // On fallback sur le quartier déjà associé à la proposition.
-            $quartier = null;
-
-            $quartierId = $request->request->getInt('quartier_id');
-            if ($quartierId > 0) {
-                $quartier = $this->entityManager->getRepository(Quartier::class)->find($quartierId);
-            }
-
-            if (!$quartier) {
-                // Si la proposition a déjà un quartier, on l’utilise.
-                // Attention : getQuartier() peut renvoyer une chaîne (ex: "Port Bouet")
-                // selon comment le champ est stocké dans PropositionOrphelinat.
-                $quartierFromProposition = $proposition->getQuartier();
-
-                if ($quartierFromProposition instanceof \App\Entity\Quartier) {
-                    $quartier = $quartierFromProposition;
-                } elseif (is_string($quartierFromProposition) && trim($quartierFromProposition) !== '') {
-                    $quartier = $this->entityManager->getRepository(Quartier::class)
-                        ->findOneBy(['nom' => $quartierFromProposition]);
-                }
-            }
-
-            if (!$quartier) {
-                // Si le quartier n’existe pas (ou que getQuartier renvoie un libellé),
-                // on le recrée en s’appuyant sur les libellés disponibles.
-                $quartierNom = $proposition->getQuartier();
-
-                if (is_string($quartierNom)) {
-                    $quartierNom = trim($quartierNom);
-                } else {
-                    $quartierNom = null;
-                }
-
-                $paysNom = method_exists($proposition, 'getPays') ? $proposition->getPays() : null;
-                $villeNom = method_exists($proposition, 'getVille') ? $proposition->getVille() : null;
-
-                // Dans ton formulaire, l’utilisateur saisit seulement pays/ville/quartier (pas commune).
-                // Donc on recrée une commune “fallback” pour pouvoir rattacher le quartier.
-                // (Tu peux remplacer le libellé si tu as un champ commune ailleurs.)
-                $communeNom = 'Commune (auto)';
-
-
-                // On crée uniquement si on a au moins le nom du quartier et de la ville/commune.
-                if ($quartierNom) {
-                    $pays = null;
-                    $ville = null;
-                    $commune = null;
-
-                    if (is_string($paysNom) && $paysNom !== '') {
-                        $pays = $this->entityManager->getRepository(Pays::class)->findOneBy(['nom' => $paysNom]);
-                        if (!$pays) {
-                            $pays = new Pays();
-                            $pays->setNom($paysNom);
-                            $this->entityManager->persist($pays);
-                        }
-                    }
-
-                    if (is_string($villeNom) && $villeNom !== '') {
-                        $villeRepo = $this->entityManager->getRepository(Ville::class);
-                        $ville = $pays ? $villeRepo->findOneBy(['nom' => $villeNom, 'pays' => $pays]) : $villeRepo->findOneBy(['nom' => $villeNom]);
-                        if (!$ville) {
-                            $ville = new Ville();
-                            $ville->setNom($villeNom);
-                            if ($pays) {
-                                $ville->setPays($pays);
-                            }
-                            $this->entityManager->persist($ville);
-                        }
-                    }
-
-                    if (is_string($communeNom) && $communeNom !== '') {
-                        $communeRepo = $this->entityManager->getRepository(Commune::class);
-                        $commune = $ville ? $communeRepo->findOneBy(['nom' => $communeNom, 'ville' => $ville]) : $communeRepo->findOneBy(['nom' => $communeNom]);
-                        if (!$commune) {
-                            $commune = new Commune();
-                            $commune->setNom($communeNom);
-                            if ($ville) {
-                                $commune->setVille($ville);
-                            }
-                            $this->entityManager->persist($commune);
-                        }
-                    }
-
-                    // On ne peut créer Quartier que s’il y a une commune.
-                    if ($commune) {
-                        $quartier = new \App\Entity\Quartier();
-                        $quartier->setNom($quartierNom);
-                        $quartier->setCommune($commune);
-                        $this->entityManager->persist($quartier);
-                    }
-                }
-            }
-
-            // Dernier garde-fou : ne pas tenter de setQuartier si toujours null.
-            if (!$quartier) {
-                $this->addFlash('error', 'Validation impossible : quartier introuvable et non recréable.');
-                return $this->redirectToRoute('admin_propositions_index');
-            }
-
-            $orphelinat->setQuartier($quartier);
-
-
-
-
-            $this->entityManager->persist($orphelinat);
-            $proposition->setStatut('valide');
-            $this->entityManager->persist($proposition);
-            $this->entityManager->flush();
-
-            $this->addFlash('success', 'Proposition validée ! Orphelinat créé.');
-        }
-
-        return $this->redirectToRoute('admin_propositions_index');
+            return 'Proposition passée en cours de vérification.';
+        });
     }
 
-    #[Route('/{id}/refuser', name: 'admin_propositions_refuser', methods: ['POST'])]
-    public function refuser(Request $request, PropositionOrphelinat $proposition): Response
+    #[Route('/{id}/note', name: 'note', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function note(Request $request, PropositionOrphelinat $proposition): Response
     {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        return $this->transition($request, $proposition, 'note', function () use ($request, $proposition): string {
+            $this->workflow->saveNote($proposition, $request->request->get('note'));
 
-        if ($this->isCsrfTokenValid('refuser_proposition_' . $proposition->getId(), $request->request->get('_token'))) {
-            $proposition->setStatut('refuse');
-            $this->entityManager->persist($proposition);
-            $this->entityManager->flush();
+            return 'Note enregistrée.';
+        });
+    }
 
-            $this->addFlash('success', 'Proposition refusée.');
+    #[Route('/{id}/accepter', name: 'accepter', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function accepter(Request $request, PropositionOrphelinat $proposition, CommuneRepository $communeRepository): Response
+    {
+        if (!$this->isCsrfTokenValid('accepter_'.$proposition->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Action expirée. Réessayez.');
+
+            return $this->redirectToRoute('admin_propositions_show', ['id' => $proposition->getId()]);
         }
 
-        return $this->redirectToRoute('admin_propositions_index');
+        $commune = $communeRepository->find($request->request->getInt('commune'));
+        if (null === $commune) {
+            $this->addFlash('error', 'Choisissez la commune de l\'établissement (ajoutez-la dans « Localisations » si elle manque).');
+
+            return $this->redirectToRoute('admin_propositions_show', ['id' => $proposition->getId()]);
+        }
+
+        $verification = $request->request->getBoolean('verifie') ? VerificationStatut::Verifie : VerificationStatut::NonVerifie;
+
+        try {
+            $orphelinat = $this->workflow->accept($proposition, $commune, $request->request->get('quartier'), $verification);
+        } catch (WorkflowException $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $this->redirectToRoute('admin_propositions_show', ['id' => $proposition->getId()]);
+        }
+
+        $this->addFlash('success', 'Proposition acceptée : la fiche a été créée. Complétez-la si nécessaire (coordonnées, photos…).');
+
+        return $this->redirectToRoute('admin_orphelinat_edit', ['id' => $orphelinat->getId()]);
+    }
+
+    #[Route('/{id}/refuser', name: 'refuser', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function refuser(Request $request, PropositionOrphelinat $proposition): Response
+    {
+        return $this->transition($request, $proposition, 'refuser', function () use ($request, $proposition): string {
+            $this->workflow->refuse($proposition, (string) $request->request->get('motif'));
+
+            return 'Proposition refusée.';
+        });
+    }
+
+    #[Route('/{id}/justificatif', name: 'justificatif', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function justificatif(PropositionOrphelinat $proposition, FileUploader $uploader): Response
+    {
+        $filename = $proposition->getDocument() ?? throw $this->createNotFoundException();
+
+        // Les propositions antérieures stockaient le justificatif dans le dossier public.
+        $path = $uploader->path($filename, FileUploader::PRIVATE)
+            ?? $uploader->path($filename, FileUploader::DOCUMENT)
+            ?? throw $this->createNotFoundException('Fichier introuvable sur le serveur.');
+
+        $response = new BinaryFileResponse($path);
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $filename);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->setPrivate();
+
+        return $response;
+    }
+
+    private function transition(Request $request, PropositionOrphelinat $proposition, string $action, callable $apply): Response
+    {
+        if (!$this->isCsrfTokenValid($action.'_'.$proposition->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Action expirée. Réessayez.');
+        } else {
+            try {
+                $this->addFlash('success', $apply());
+            } catch (WorkflowException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('admin_propositions_show', ['id' => $proposition->getId()]);
     }
 }

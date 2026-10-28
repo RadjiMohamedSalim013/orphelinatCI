@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% set messages = {
+    404: ['fa-map-location-dot', 'Page introuvable', 'Cette page n’existe pas ou plus. La fiche a peut-être été retirée de l’annuaire.'],
+    403: ['fa-lock', 'Accès refusé', 'Vous n’avez pas les droits nécessaires pour consulter cette page.'],
+    429: ['fa-hourglass-half', 'Trop de requêtes', 'Merci de patienter quelques instants avant de réessayer.'],
+    503: ['fa-screwdriver-wrench', 'Service momentanément indisponible', 'Le site est en maintenance ou surchargé. Réessayez dans quelques minutes.'],
+} %}
+{% set message = messages[status_code] ?? ['fa-triangle-exclamation', 'Une erreur est survenue', 'Ce n’est pas de votre fait : l’équipe en a été informée. Réessayez dans quelques instants.'] %}
+
+{% block title %}{{ message[1] }} — OrphaMap CI{% endblock %}
+{% block meta_robots %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block body %}
+    <div class="om-container flex max-w-xl flex-col items-center py-20 text-center sm:py-28">
+        <span class="flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-2xl text-brand-600 ring-1 ring-brand-200" aria-hidden="true">
+            <i class="fa-solid {{ message[0] }}"></i>
+        </span>
+        <p class="mt-6 font-mono text-sm font-semibold text-ink-400">Erreur {{ status_code }}</p>
+        <h1 class="om-h2 mt-1">{{ message[1] }}</h1>
+        <p class="om-lead mt-3">{{ message[2] }}</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-2">
+            <a href="{{ path('orphelinat_index') }}" class="om-btn-primary"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Rechercher un orphelinat</a>
+            <a href="{{ path('home') }}" class="om-btn-secondary">Retour à l’accueil</a>
+        </div>
+    </div>
+{% endblock %}

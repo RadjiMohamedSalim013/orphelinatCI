@@ -13,3 +13,10 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+
+when@prod:
+    framework:
+        # Hébergeurs derrière un proxy (Render…) : HTTPS et IP réelle du visiteur
+        # (URL absolues correctes, limitation des envois par IP).
+        trusted_proxies: '%env(default:trusted_proxies_defaut:TRUSTED_PROXIES)%'
+        trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']

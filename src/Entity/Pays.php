@@ -6,8 +6,12 @@ use App\Repository\PaysRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PaysRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_pays_nom', columns: ['nom'])]
+#[UniqueEntity(fields: ['nom'], message: 'Ce pays existe déjà.')]
 class Pays
 {
     #[ORM\Id]
@@ -16,17 +20,25 @@ class Pays
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private ?string $nom = null;
 
     /**
      * @var Collection<int, Ville>
      */
     #[ORM\OneToMany(targetEntity: Ville::class, mappedBy: 'pays')]
+    #[ORM\OrderBy(['nom' => 'ASC'])]
     private Collection $villes;
 
     public function __construct()
     {
         $this->villes = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->nom;
     }
 
     public function getId(): ?int
@@ -39,9 +51,9 @@ class Pays
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
-        $this->nom = $nom;
+        $this->nom = null === $nom ? null : trim($nom);
 
         return $this;
     }

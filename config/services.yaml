@@ -1,35 +1,54 @@
-# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
-
 # This file is the entry point to configure your own services.
 # Files in the packages/ subdirectory configure your dependencies.
-# See also https://symfony.com/doc/current/service_container/import.html
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Fichiers publiés (photos et documents officiels des établissements)
     uploads_images_directory: '%kernel.project_dir%/public/uploads/images'
     uploads_documents_directory: '%kernel.project_dir%/public/uploads/documents'
+    # Justificatifs envoyés par le public : jamais servis directement
+    uploads_private_directory: '%kernel.project_dir%/var/uploads/private'
+
+    # Carte : tuiles OpenStreetMap par défaut (usage modéré, attribution obligatoire).
+    # Pour un trafic important, configurer un fournisseur dédié via MAP_TILE_URL.
+    env(MAP_TILE_URL): 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+    env(MAP_ATTRIBUTION): '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    env(MAILER_FROM): 'no-reply@orphamap.ci'
+    # Copie des fichiers envoyés dans la base (hébergement au disque éphémère, ex. Render gratuit)
+    env(FICHIERS_EN_BASE): '0'
+    trusted_proxies_defaut: '127.0.0.1,REMOTE_ADDR'
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            string $imagesDirectory: '%uploads_images_directory%'
+            string $documentsDirectory: '%uploads_documents_directory%'
+            string $privateDirectory: '%uploads_private_directory%'
+            string $mailerFrom: '%env(MAILER_FROM)%'
+            bool $fichiersEnBase: '%env(bool:FICHIERS_EN_BASE)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
-
-    App\Controller\Admin\PropositionController:
-        arguments:
-            $propositionRepository: '@App\Repository\PropositionOrphelinatRepository'
-            $entityManager: '@doctrine.orm.entity_manager'
-
-    App\Controller\Public\PropositionController:
-        arguments:
-            $entityManager: '@doctrine.orm.entity_manager'
-            $slugger: '@slugger'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\BackupService:
+        arguments:
+            $params: '@parameter_bag'
+
+when@test:
+    parameters:
+        uploads_images_directory: '%kernel.project_dir%/var/test/uploads/images'
+        uploads_documents_directory: '%kernel.project_dir%/var/test/uploads/documents'
+        uploads_private_directory: '%kernel.project_dir%/var/test/uploads/private'

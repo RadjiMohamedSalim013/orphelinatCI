@@ -18,3 +18,9 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+###> orphamap ###
+# Fichiers envoyés par les utilisateurs : jamais dans le dépôt (données personnelles)
+/public/uploads/*
+!/public/uploads/.htaccess
+###< orphamap ###

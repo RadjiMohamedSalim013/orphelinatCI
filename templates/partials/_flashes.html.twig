@@ -1,27 +1,25 @@
-{% for label, messages in app.flashes(['success', 'error', 'warning', 'notice', 'info']) %}
-    {% for message in messages %}
-        {% set flashVars = label == 'success' ? ['check-circle', 'bg-green-500', 'border-green-400'] : 
-            label == 'error' ? ['x-circle', 'bg-red-500', 'border-red-400'] : 
-            label == 'warning' ? ['exclamation-triangle', 'bg-yellow-500', 'border-yellow-400'] : 
-            label == 'info' ? ['info', 'bg-blue-500', 'border-blue-400'] : 
-            ['help-circle', 'bg-gray-500', 'border-gray-400'] %}
-        {% set icon = flashVars[0] %}
-        {% set bg = flashVars[1] %}
-        {% set border = flashVars[2] %}
-        <div class="mb-4 flex items-start gap-3 rounded-2xl {{ bg }} {{ border }} p-4 shadow-lg ring-1 ring-white/20 backdrop-blur-sm animate-in slide-in-from-top-2 duration-300" role="alert">
-            <svg class="mt-0.5 h-6 w-6 flex-shrink-0 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <div class="flex flex-1 items-center justify-between">
-                <div>
-                    <p class="font-medium text-white">{{ message }}</p>
+{# Messages flash présentés en notifications. Les erreurs restent affichées jusqu'à fermeture. #}
+{% if app.request.hasPreviousSession and app.session.flashBag.peekAll is not empty %}
+    {% set styles = {
+        success: ['fa-circle-check', 'border-trust-200', 'text-trust-700', 'Succès'],
+        error: ['fa-circle-exclamation', 'border-red-200', 'text-red-700', 'Erreur'],
+        warning: ['fa-triangle-exclamation', 'border-amber-200', 'text-amber-700', 'Attention'],
+        info: ['fa-circle-info', 'border-sky-200', 'text-sky-700', 'Information'],
+    } %}
+    <div class="pointer-events-none fixed inset-x-3 top-3 z-50 ml-auto flex max-w-sm flex-col gap-2 sm:inset-x-auto sm:right-5 sm:top-5 sm:w-96" aria-live="polite">
+        {% for label, messages in app.flashes(['success', 'error', 'warning', 'info']) %}
+            {% set style = styles[label] %}
+            {% for message in messages %}
+                <div class="om-toast {{ style[1] }}" role="{{ label == 'error' ? 'alert' : 'status' }}"
+                     data-controller="toast" data-toast-delay-value="{{ label == 'error' ? 0 : 6000 }}"
+                     data-action="mouseenter->toast#pause mouseleave->toast#start focusin->toast#pause">
+                    <i class="fa-solid {{ style[0] }} mt-0.5 {{ style[2] }}" aria-hidden="true"></i>
+                    <p class="flex-1 text-ink-800"><span class="sr-only">{{ style[3] }} : </span>{{ message }}</p>
+                    <button type="button" class="-m-1 rounded p-1 text-ink-400 hover:text-ink-700" data-action="toast#dismiss">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Fermer</span>
+                    </button>
                 </div>
-                <button type="button" class="ml-4 flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/20 transition-colors" onclick="this.parentElement.parentElement.remove()">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    {% endfor %}
-{% endfor %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endif %}

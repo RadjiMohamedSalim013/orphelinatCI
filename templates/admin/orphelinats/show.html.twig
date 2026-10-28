@@ -1,0 +1,115 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ orphelinat.nom }} — Administration OrphaMap CI{% endblock %}
+
+{% block content %}
+    {% set statut = orphelinat.statut.value %}
+
+    {% embed 'admin/_page_header.html.twig' with {titre: orphelinat.nom, sous_titre: orphelinat.localisationLabel ~ ', ' ~ orphelinat.pays.nom, retour: {url: path('admin_orphelinat_list'), label: 'Établissements'}} %}
+        {% block surtitre %}
+            <div class="mb-2 flex flex-wrap gap-1.5">
+                {% include 'admin/_statut_badge.html.twig' with {statut: orphelinat.statut} %}
+                {% include 'partials/_verification_badge.html.twig' %}
+            </div>
+        {% endblock %}
+        {% block actions %}
+            {% if statut != 'archive' %}
+                <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="om-btn-secondary" target="_blank" rel="noopener"><i class="fa-solid fa-eye" aria-hidden="true"></i> Fiche publique</a>
+            {% endif %}
+            <a href="{{ path('admin_orphelinat_edit', {id: orphelinat.id}) }}" class="om-btn-primary"><i class="fa-solid fa-pen" aria-hidden="true"></i> Modifier</a>
+        {% endblock %}
+    {% endembed %}
+
+    <div class="grid gap-6 xl:grid-cols-[1fr_340px] [&>*]:min-w-0">
+        <div class="space-y-6">
+            <section class="om-card om-card-pad" aria-labelledby="titre-infos">
+                <h2 id="titre-infos" class="om-h3 !text-base">Informations</h2>
+                <dl class="om-dl mt-4">
+                    {% for libelle, valeur in {
+                        'Adresse': orphelinat.adresse,
+                        'Quartier': orphelinat.quartier ? orphelinat.quartier.nom,
+                        'Téléphone': orphelinat.telephone,
+                        'E-mail': orphelinat.email,
+                        'Site internet': orphelinat.siteWeb,
+                        'Réseau social': orphelinat.reseauSocial,
+                        'Coordonnées GPS': orphelinat.hasCoordinates ? orphelinat.latitude ~ ', ' ~ orphelinat.longitude,
+                        'Ajouté le': orphelinat.createdAt|date('d/m/Y à H:i'),
+                        'Vérifié le': orphelinat.verifiedAt ? orphelinat.verifiedAt|date('d/m/Y'),
+                        'Mis à jour le': orphelinat.updatedAt ? orphelinat.updatedAt|date('d/m/Y à H:i'),
+                    } %}
+                        <div><dt>{{ libelle }}</dt><dd>{{ valeur ?: '—' }}</dd></div>
+                    {% endfor %}
+                </dl>
+            </section>
+
+            <section class="om-card om-card-pad" aria-labelledby="titre-presentation">
+                <h2 id="titre-presentation" class="om-h3 !text-base">Présentation</h2>
+                <div class="mt-3 text-sm leading-relaxed text-ink-700 [overflow-wrap:anywhere]">{{ orphelinat.description ? orphelinat.description|nl2br : 'Aucune présentation.' }}</div>
+                {% if orphelinat.services %}
+                    <h3 class="mt-5 text-sm font-semibold text-ink-900">Services et accompagnement</h3>
+                    <div class="mt-1 text-sm leading-relaxed text-ink-700">{{ orphelinat.services|nl2br }}</div>
+                {% endif %}
+            </section>
+
+            {% if orphelinat.image or orphelinat.photos is not empty %}
+                <section class="om-card om-card-pad" aria-labelledby="titre-photos">
+                    <h2 id="titre-photos" class="om-h3 !text-base">Photos</h2>
+                    <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {% if orphelinat.image %}
+                            <figure class="relative"><img src="{{ image_url(orphelinat.image, 640) }}" alt="Photo principale" class="aspect-[4/3] w-full rounded-md object-cover ring-2 ring-brand-500"><figcaption class="absolute left-1.5 top-1.5 om-badge-brand !bg-white">Principale</figcaption></figure>
+                        {% endif %}
+                        {% for photo in orphelinat.photos %}<img src="{{ image_url(photo.filename, 640) }}" alt="Photo de la galerie" loading="lazy" class="aspect-[4/3] w-full rounded-md object-cover">{% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+
+        <aside class="space-y-4">
+            <section class="om-card om-card-pad" aria-labelledby="titre-situation">
+                <h2 id="titre-situation" class="om-h3 !text-base">Situation</h2>
+                <p class="mt-1 text-sm text-ink-500">L’archivage retire la fiche du site tout en conservant son historique.</p>
+                <div class="mt-4 grid gap-2">
+                    {% set actions = {
+                        actif: {label: 'Réactiver la fiche', icon: 'fa-rotate-left', message: 'La fiche redeviendra visible dans l’annuaire.'},
+                        ferme: {label: 'Marquer comme fermé', icon: 'fa-door-closed', message: 'La fiche restera consultable mais sortira des résultats de recherche.'},
+                        archive: {label: 'Archiver', icon: 'fa-box-archive', message: 'La fiche ne sera plus visible sur le site public. Vous pourrez la réactiver.'},
+                    } %}
+                    {% for valeur, action in actions %}
+                        {% if valeur != statut %}
+                            <form method="post" action="{{ path('admin_orphelinat_statut', {id: orphelinat.id}) }}" data-confirm="{{ action.message }}" data-confirm-title="{{ action.label }} ?" data-confirm-label="{{ action.label }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('statut_orphelinat_' ~ orphelinat.id) }}">
+                                <input type="hidden" name="statut" value="{{ valeur }}">
+                                <button class="om-btn-secondary w-full !justify-start"><i class="fa-solid {{ action.icon }} w-4 text-ink-500" aria-hidden="true"></i> {{ action.label }}</button>
+                            </form>
+                        {% endif %}
+                    {% endfor %}
+                    {% if statut == 'archive' %}
+                        <form method="post" action="{{ path('admin_orphelinat_delete', {id: orphelinat.id}) }}" class="mt-2 border-t border-ink-100 pt-4"
+                              data-confirm="La fiche, ses photos et son document seront supprimés. Cette action est irréversible." data-confirm-title="Supprimer définitivement ?" data-confirm-label="Supprimer" data-confirm-variant="danger">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_orphelinat_' ~ orphelinat.id) }}">
+                            <button class="om-btn-danger w-full"><i class="fa-solid fa-trash" aria-hidden="true"></i> Supprimer définitivement</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="om-card" aria-labelledby="titre-signalements">
+                <h2 id="titre-signalements" class="om-h3 !text-base px-5 pt-5">Signalements</h2>
+                {% if orphelinat.signalements is empty %}
+                    <p class="px-5 pb-5 pt-1 text-sm text-ink-500">Aucun signalement.</p>
+                {% else %}
+                    <ul class="mt-3 divide-y divide-ink-100 border-t border-ink-100 text-sm">
+                        {% for s in orphelinat.signalements %}
+                            <li>
+                                <a class="flex items-center justify-between gap-2 px-5 py-3 hover:bg-ink-50" href="{{ path('admin_signalements_show', {id: s.id}) }}">
+                                    <span class="min-w-0"><span class="block truncate font-medium text-ink-900">{{ s.type.label }}</span><span class="text-xs text-ink-500">{{ s.createdAt|date('d/m/Y') }}</span></span>
+                                    {% include 'admin/_statut_badge.html.twig' with {statut: s.statut} %}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </section>
+        </aside>
+    </div>
+{% endblock %}

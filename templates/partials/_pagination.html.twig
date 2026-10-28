@@ -1,0 +1,41 @@
+{# Variables : page, pages, route, params ; total (facultatif) #}
+{% if pages > 1 %}
+    {% set debut = max(1, page - 1) %}
+    {% set fin = min(pages, page + 1) %}
+    <nav class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between" aria-label="Pagination">
+        <p class="text-sm text-ink-500">Page <strong class="text-ink-800">{{ page }}</strong> sur {{ pages }}</p>
+        <ul class="flex items-center gap-1">
+            <li>
+                {% if page > 1 %}
+                    <a class="om-btn-secondary om-btn-sm" href="{{ path(route, params|merge({page: page - 1})) }}" rel="prev"><i class="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i><span class="max-sm:sr-only">Précédente</span></a>
+                {% else %}
+                    <span class="om-btn-secondary om-btn-sm pointer-events-none opacity-50" aria-disabled="true"><i class="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i><span class="max-sm:sr-only">Précédente</span></span>
+                {% endif %}
+            </li>
+            {% if debut > 1 %}
+                <li><a class="om-btn-ghost om-btn-sm" href="{{ path(route, params|merge({page: 1})) }}" aria-label="Page 1">1</a></li>
+                {% if debut > 2 %}<li class="px-1 text-ink-400" aria-hidden="true">…</li>{% endif %}
+            {% endif %}
+            {% for p in debut..fin %}
+                <li>
+                    {% if p == page %}
+                        <span class="om-btn om-btn-sm bg-ink-900 text-white" aria-current="page">{{ p }}</span>
+                    {% else %}
+                        <a class="om-btn-ghost om-btn-sm" href="{{ path(route, params|merge({page: p})) }}" aria-label="Page {{ p }}">{{ p }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            {% if fin < pages %}
+                {% if fin < pages - 1 %}<li class="px-1 text-ink-400" aria-hidden="true">…</li>{% endif %}
+                <li><a class="om-btn-ghost om-btn-sm" href="{{ path(route, params|merge({page: pages})) }}" aria-label="Page {{ pages }}">{{ pages }}</a></li>
+            {% endif %}
+            <li>
+                {% if page < pages %}
+                    <a class="om-btn-secondary om-btn-sm" href="{{ path(route, params|merge({page: page + 1})) }}" rel="next"><span class="max-sm:sr-only">Suivante</span><i class="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i></a>
+                {% else %}
+                    <span class="om-btn-secondary om-btn-sm pointer-events-none opacity-50" aria-disabled="true"><span class="max-sm:sr-only">Suivante</span><i class="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i></span>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+{% endif %}

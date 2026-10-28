@@ -1,0 +1,15 @@
+.git
+.env.local
+.env.*.local
+var/
+vendor/
+public/assets/
+public/uploads/*
+!public/uploads/.htaccess
+tests/
+docs/
+.phpunit.cache/
+node_modules/
+compose*.yaml
+TODO.md
+SPEC_ORPHAMAP.txt

@@ -1,0 +1,18 @@
+{#
+    En-tête de page d'administration (à utiliser avec embed).
+    Variables : titre, sous_titre, retour {url, label} ; bloc « actions ».
+#}
+<header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div class="min-w-0">
+        {% if retour|default(false) %}
+            <a href="{{ retour.url }}" class="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 hover:text-brand-700">
+                <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i>{{ retour.label }}
+            </a>
+        {% endif %}
+        {% block surtitre %}{% endblock %}
+        <h1 class="om-h2 !text-2xl sm:!text-[1.75rem]">{{ titre }}</h1>
+        {% if sous_titre|default(false) %}<p class="mt-1 text-sm text-ink-500">{{ sous_titre }}</p>{% endif %}
+    </div>
+    {% set _actions %}{% block actions %}{% endblock %}{% endset %}
+    {% if _actions|trim %}<div class="flex flex-wrap gap-2">{{ _actions }}</div>{% endif %}
+</header>

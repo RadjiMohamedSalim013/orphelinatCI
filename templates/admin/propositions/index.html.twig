@@ -1,211 +1,62 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Orphelinats - OrphaMap Admin{% endblock %}
+{% block title %}Propositions — Administration OrphaMap CI{% endblock %}
 
 {% block content %}
+    {% embed 'admin/_page_header.html.twig' with {titre: 'Propositions du public', sous_titre: 'Aucune proposition n’est publiée sans validation.'} %}{% endembed %}
 
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% set onglets = [
+        {cle: 'ouvertes', label: 'À traiter', n: compteurs.en_attente + compteurs.en_verification},
+        {cle: 'en_attente', label: 'En attente', n: compteurs.en_attente},
+        {cle: 'en_verification', label: 'En vérification', n: compteurs.en_verification},
+        {cle: 'acceptee', label: 'Acceptées', n: compteurs.acceptee},
+        {cle: 'refusee', label: 'Refusées', n: compteurs.refusee},
+        {cle: 'toutes', label: 'Toutes', n: null},
+    ] %}
+    <nav class="om-tabs" aria-label="Filtrer par statut">
+        {% for o in onglets %}
+            <a href="{{ path('admin_propositions_index', {statut: o.cle}) }}" class="om-tab" {% if filtre == o.cle %}aria-current="page"{% endif %}>
+                {{ o.label }}{% if o.n is not null %}<span class="rounded-full bg-ink-100 px-1.5 text-xs font-semibold text-ink-600">{{ o.n }}</span>{% endif %}
+            </a>
+        {% endfor %}
+    </nav>
 
-<div class="space-y-8">
-
-    <!-- ================= HEADER ================= -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-        <div class="flex items-center gap-4">
-
-            <div class="h-12 w-12 bg-orange-50 rounded-xl flex items-center justify-center">
-                <i class="fa-solid fa-building text-orange-500"></i>
+    <div class="om-card mt-5 overflow-hidden">
+        {% if propositions is empty %}
+            <div class="flex flex-col items-center px-6 py-14 text-center">
+                <span class="om-empty-icon" aria-hidden="true"><i class="fa-solid fa-inbox"></i></span>
+                <p class="font-semibold text-ink-900">Aucune proposition dans cette catégorie.</p>
+                {% if filtre == 'ouvertes' %}<p class="mt-1 text-sm text-ink-500">Tout est traité.</p>{% endif %}
             </div>
-
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Orphelinats</h1>
-
-                <p class="text-gray-500 text-sm mt-1">
-                    <i class="fa-solid fa-database mr-1 text-gray-400"></i>
-                    {{ totalCount }} enregistrement(s)
-                </p>
-            </div>
-
-        </div>
-
-        <a href="{{ path('admin_orphelinat_create') }}"
-           class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 text-white font-semibold
-                  hover:bg-orange-600 transition shadow-sm hover:-translate-y-0.5">
-
-            <i class="fa-solid fa-plus"></i>
-            Nouvel orphelinat
-        </a>
-
-    </div>
-
-    <!-- ================= SEARCH ================= -->
-    <div class="bg-white rounded-2xl border shadow-sm p-5">
-
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-
-            <div>
-                <h3 class="font-semibold text-gray-800">
-                    <i class="fa-solid fa-filter text-orange-500 mr-1"></i>
-                    Recherche
-                </h3>
-                <p class="text-sm text-gray-500">Filtrer les résultats instantanément</p>
-            </div>
-
-            <div class="relative w-full lg:max-w-md">
-
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-
-                <input type="text"
-                       id="searchInput"
-                       placeholder="Nom, téléphone, adresse..."
-                       class="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl
-                              focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-
-                <button id="clearSearch"
-                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- ================= TABLE ================= -->
-    {% if propositions|length > 0 %}
-
-    <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
-
-        <div class="overflow-x-auto">
-
-            <table class="w-full">
-
-                <thead class="bg-gray-50 text-xs uppercase text-gray-500">
-
+        {% else %}
+            <table class="om-table">
+                <caption class="sr-only">Propositions</caption>
+                <thead>
                     <tr>
-                        <th class="text-left p-4">
-                            <i class="fa-solid fa-building mr-1"></i> Orphelinat
-                        </th>
-                        <th class="text-left p-4 hidden md:table-cell">
-                            <i class="fa-solid fa-location-dot mr-1"></i> Adresse
-                        </th>
-                        <th class="text-left p-4">
-                            <i class="fa-solid fa-phone mr-1"></i> Contact
-                        </th>
-                        <th class="text-right p-4">
-                            Actions
-                        </th>
+                        <th scope="col">Établissement proposé</th>
+                        <th scope="col">Localisation</th>
+                        <th scope="col">Reçue le</th>
+                        <th scope="col">Statut</th>
                     </tr>
-
                 </thead>
-
-                <tbody class="divide-y divide-gray-100">
-
-{% for orphelinat in propositions %}
-
-                    <tr class="orphelinat-row hover:bg-orange-50/40 transition">
-
-                        <!-- ORPHELINAT -->
-                        <td class="p-4">
-
-                            <div class="flex items-center gap-4">
-
-                                {% if orphelinat.image %}
-                                    <img src="/uploads/images/{{ orphelinat.image }}"
-                                         class="h-12 w-12 rounded-xl object-cover border">
-                                {% else %}
-                                    <div class="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                                        {{ orphelinat.nom|slice(0,1)|upper }}
-                                    </div>
-                                {% endif %}
-
-                                <div>
-                                    <div class="font-semibold text-gray-800">
-                                        {{ orphelinat.nom }}
-                                    </div>
-
-                                    <div class="text-xs text-gray-500 flex items-center gap-1">
-                                        <i class="fa-solid fa-envelope text-gray-400"></i>
-                                        {{ orphelinat.email ?: '-' }}
-                                    </div>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <!-- ADRESSE -->
-                        <td class="p-4 hidden md:table-cell text-gray-600 text-sm">
-                            <i class="fa-solid fa-location-dot text-orange-400 mr-1"></i>
-                            {{ orphelinat.adresse ?: '-' }}
-                        </td>
-
-                        <!-- CONTACT -->
-                        <td class="p-4">
-                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm">
-                                <i class="fa-solid fa-phone text-xs"></i>
-                                {{ orphelinat.telephone ?: '-' }}
-                            </span>
-                        </td>
-
-                        <!-- ACTIONS -->
-                        <td class="p-4">
-
-                            <div class="flex justify-end gap-2">
-
-                                <a href="{{ path('admin_propositions_show', {'id': orphelinat.id}) }}"
-
-                                   class="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-
-                                <a href="{{ path('admin_orphelinat_edit', {'id': orphelinat.id}) }}"
-                                   class="p-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600">
-                                    <i class="fa-solid fa-pen"></i>
-                                </a>
-
-                                <form method="post"
-                                      action="{{ path('admin_orphelinat_delete', {'id': orphelinat.id}) }}"
-                                      onsubmit="return confirm('Supprimer cet orphelinat ?');">
-
-                                    <input type="hidden"
-                                           name="_token"
-                                           value="{{ csrf_token('delete_orphelinat_' ~ orphelinat.id) }}">
-
-                                    <button type="submit"
-                                            class="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-
-                                </form>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
+                <tbody>
+                    {% for p in propositions %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('admin_propositions_show', {id: p.id}) }}" class="font-semibold text-ink-900 hover:text-brand-700">{{ p.nom }}</a>
+                                <span class="mt-0.5 block font-mono text-xs text-ink-400">{{ p.reference }}</span>
+                            </td>
+                            <td data-label="Localisation">
+                                {{ p.communeLabel ?: '—' }}
+                                {% if not p.commune %}<span class="om-badge-warning ml-1"><i class="fa-solid fa-circle-question text-[10px]" aria-hidden="true"></i> hors référentiel</span>{% endif %}
+                                <span class="block text-xs text-ink-500">{{ p.ville }}, {{ p.pays }}</span>
+                            </td>
+                            <td data-label="Reçue le" class="whitespace-nowrap tabular-nums text-ink-600">{{ p.createdAt|date('d/m/Y H:i') }}</td>
+                            <td data-label="Statut">{% include 'admin/_statut_badge.html.twig' with {statut: p.statut} %}</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
-
             </table>
-
-        </div>
-
+        {% endif %}
     </div>
-
-    {% else %}
-
-        <div class="bg-white border rounded-2xl p-12 text-center text-gray-500">
-            <i class="fa-solid fa-inbox text-3xl mb-3 text-gray-300"></i>
-            <p>Aucun orphelinat trouvé</p>
-        </div>
-
-    {% endif %}
-
-</div>
-
 {% endblock %}

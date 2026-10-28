@@ -1,0 +1,16 @@
+{# Badge pour PropositionStatut, SignalementStatut ou OrphelinatStatut : couleur + icône + libellé #}
+{% set styles = {
+    en_attente: ['om-badge-warning', 'fa-hourglass-half'],
+    nouveau: ['om-badge-warning', 'fa-bell'],
+    en_verification: ['om-badge-info', 'fa-magnifying-glass'],
+    en_cours: ['om-badge-info', 'fa-spinner'],
+    acceptee: ['om-badge-trust', 'fa-check'],
+    traite: ['om-badge-trust', 'fa-check'],
+    actif: ['om-badge-trust', 'fa-circle'],
+    refusee: ['om-badge-danger', 'fa-xmark'],
+    rejete: ['om-badge-neutral', 'fa-ban'],
+    ferme: ['om-badge-danger', 'fa-door-closed'],
+    archive: ['om-badge-neutral', 'fa-box-archive'],
+} %}
+{% set style = styles[statut.value] ?? ['om-badge-neutral', 'fa-circle'] %}
+<span class="{{ style[0] }}"><i class="fa-solid {{ style[1] }} text-[10px]" aria-hidden="true"></i>{{ statut.label }}</span>

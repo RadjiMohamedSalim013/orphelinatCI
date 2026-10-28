@@ -1,177 +1,99 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Dashboard - OrphaMap Admin{% endblock %}
+{% block title %}Tableau de bord — Administration OrphaMap CI{% endblock %}
 
 {% block content %}
+    {% set ouvertes = propositions.en_attente + propositions.en_verification %}
 
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% embed 'admin/_page_header.html.twig' with {titre: 'Tableau de bord', sous_titre: 'Indicateurs calculés en temps réel à partir de la base de données.'} %}
+        {% block actions %}
+            <a href="{{ path('admin_orphelinat_create') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Ajouter un établissement</a>
+        {% endblock %}
+    {% endembed %}
 
-<div class="space-y-10">
+    <section aria-label="Indicateurs clés" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {% set kpis = [
+            {label: 'Établissements dans l’annuaire', valeur: orphelinats.actifs, detail: orphelinats.fermes ~ ' fermé(s) · ' ~ orphelinats.archives ~ ' archivé(s)', icone: 'fa-house-chimney-window', ton: 'bg-ink-100 text-ink-700', lien: path('admin_orphelinat_list', {statut: 'actif'})},
+            {label: 'Fiches vérifiées', valeur: orphelinats.verifies, detail: orphelinats.actifs > 0 ? (orphelinats.verifies / orphelinats.actifs * 100)|round ~ ' % des fiches actives' : 'Aucune fiche active', icone: 'fa-circle-check', ton: 'bg-trust-50 text-trust-700', lien: path('admin_orphelinat_list', {verification: 'verifie'})},
+            {label: 'Propositions à traiter', valeur: ouvertes, detail: propositions.en_attente ~ ' en attente · ' ~ propositions.en_verification ~ ' en vérification', icone: 'fa-inbox', ton: ouvertes > 0 ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-700', lien: path('admin_propositions_index')},
+            {label: 'Signalements à traiter', valeur: signalementsOuverts, detail: 'Nouveaux ou en cours', icone: 'fa-flag', ton: signalementsOuverts > 0 ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-700', lien: path('admin_signalements_index')},
+        ] %}
+        {% for kpi in kpis %}
+            <a href="{{ kpi.lien }}" class="om-card-interactive group p-5">
+                <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm font-medium text-ink-600">{{ kpi.label }}</p>
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md {{ kpi.ton }}" aria-hidden="true"><i class="fa-solid {{ kpi.icone }} text-sm"></i></span>
+                </div>
+                <p class="mt-2 font-display text-3xl font-extrabold text-ink-900">{{ kpi.valeur }}</p>
+                <p class="mt-1 text-xs text-ink-500">{{ kpi.detail }}</p>
+            </a>
+        {% endfor %}
+    </section>
 
-    <!-- HEADER -->
-    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-
-        <div>
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 flex items-center gap-3">
-                <i class="fa-solid fa-gauge-high text-orange-500"></i>
-                Dashboard Admin
-            </h1>
-
-            <p class="text-gray-500 mt-2">
-                Vue globale de la plateforme OrphaMap
-            </p>
-        </div>
-
-        <div class="flex gap-3">
-
-            <div class="bg-white border rounded-xl px-4 py-2 text-sm text-gray-600 shadow-sm">
-                <i class="fa-solid fa-clock text-orange-500 mr-2"></i>
-                Aujourd’hui
-            </div>
-
-        </div>
-
+    <div class="mt-6 grid gap-6 xl:grid-cols-2 [&>*]:min-w-0">
+        {% for bloc in [
+            {titre: 'Propositions en attente', items: dernieresPropositions, vide: 'Aucune proposition à traiter. Tout est à jour.', lien: path('admin_propositions_index'), type: 'proposition'},
+            {titre: 'Signalements ouverts', items: derniersSignalements, vide: 'Aucun signalement à traiter.', lien: path('admin_signalements_index'), type: 'signalement'},
+        ] %}
+            <section class="om-card" aria-labelledby="bloc-{{ bloc.type }}">
+                <div class="flex items-center justify-between border-b border-ink-100 px-5 py-4">
+                    <h2 id="bloc-{{ bloc.type }}" class="om-h3 !text-base">{{ bloc.titre }}</h2>
+                    <a href="{{ bloc.lien }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">Tout voir</a>
+                </div>
+                {% if bloc.items is empty %}
+                    <p class="flex items-center gap-2 px-5 py-8 text-sm text-ink-500"><i class="fa-solid fa-circle-check text-trust-600" aria-hidden="true"></i>{{ bloc.vide }}</p>
+                {% else %}
+                    <ul class="divide-y divide-ink-100">
+                        {% for item in bloc.items %}
+                            {% set url = bloc.type == 'proposition' ? path('admin_propositions_show', {id: item.id}) : path('admin_signalements_show', {id: item.id}) %}
+                            <li>
+                                <a href="{{ url }}" class="flex items-center justify-between gap-3 px-5 py-3 transition hover:bg-ink-50">
+                                    <span class="min-w-0">
+                                        <span class="block truncate font-semibold text-ink-900">{{ bloc.type == 'proposition' ? item.nom : item.orphelinat.nom }}</span>
+                                        <span class="block truncate text-xs text-ink-500">
+                                            {% if bloc.type == 'proposition' %}{{ item.communeLabel }}, {{ item.ville }}{% else %}{{ item.type.label }}{% endif %} · {{ item.createdAt|date('d/m/Y') }}
+                                        </span>
+                                    </span>
+                                    {% include 'admin/_statut_badge.html.twig' with {statut: item.statut} %}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </section>
+        {% endfor %}
     </div>
 
-    <!-- QUICK ACTIONS -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <a href="{{ path('admin_propositions_index') }}"
-           class="group bg-white border rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition">
-
-            <div class="flex items-center justify-between">
-
-                <div class="flex items-center gap-3">
-
-                    <div class="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center
-                                group-hover:bg-orange-500 transition">
-
-                        <i class="fa-solid fa-inbox text-orange-500 group-hover:text-white"></i>
-
-                    </div>
-
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Propositions</h3>
-                        <p class="text-sm text-gray-500">À valider</p>
-                    </div>
-
-                </div>
-
-                <span class="text-xs bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-semibold">
-                    {{ propositions|length }}
-                </span>
-
-            </div>
-
-        </a>
-
-        <a href="{{ path('admin_orphelinat_list') }}"
-           class="group bg-white border rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition">
-
-            <div class="flex items-center justify-between">
-
-                <div class="flex items-center gap-3">
-
-                    <div class="h-12 w-12 rounded-xl bg-green-50 flex items-center justify-center
-                                group-hover:bg-green-500 transition">
-
-                        <i class="fa-solid fa-building text-green-500 group-hover:text-white"></i>
-
-                    </div>
-
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Orphelinats</h3>
-                        <p class="text-sm text-gray-500">Base de données</p>
-                    </div>
-
-                </div>
-
-                <span class="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full font-semibold">
-                    {{ totalOrphelinats }}
-                </span>
-
-            </div>
-
-        </a>
-
-        <div class="bg-white border rounded-2xl p-6 shadow-sm">
-
-            <div class="flex items-center justify-between">
-
-                <div class="flex items-center gap-3">
-
-                    <div class="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
-                        <i class="fa-solid fa-users text-blue-500"></i>
-                    </div>
-
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Utilisateurs</h3>
-                        <p class="text-sm text-gray-500">Comptes actifs</p>
-                    </div>
-
-                </div>
-
-                <span class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-semibold">
-                    {{ totalUsers }}
-                </span>
-
-            </div>
-
+    <section class="om-card mt-6" aria-labelledby="titre-repartition">
+        <div class="border-b border-ink-100 px-5 py-4">
+            <h2 id="titre-repartition" class="om-h3 !text-base">Répartition des établissements actifs par commune</h2>
         </div>
-
-    </div>
-
-    <!-- STATS GRID -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-        <!-- CARD -->
-        <div class="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-
-            <div class="flex items-center justify-between">
-                <i class="fa-solid fa-chart-line text-orange-500 text-xl"></i>
-                <span class="text-2xl font-bold">{{ propositions|length }}</span>
-            </div>
-
-            <p class="text-gray-500 mt-3 text-sm">Propositions en attente</p>
-
-        </div>
-
-        <div class="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-
-            <div class="flex items-center justify-between">
-                <i class="fa-solid fa-building text-green-500 text-xl"></i>
-                <span class="text-2xl font-bold">{{ totalOrphelinats }}</span>
-            </div>
-
-            <p class="text-gray-500 mt-3 text-sm">Orphelinats enregistrés</p>
-
-        </div>
-
-        <div class="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-
-            <div class="flex items-center justify-between">
-                <i class="fa-solid fa-user text-blue-500 text-xl"></i>
-                <span class="text-2xl font-bold">{{ totalUsers }}</span>
-            </div>
-
-            <p class="text-gray-500 mt-3 text-sm">Utilisateurs actifs</p>
-
-        </div>
-
-        <div class="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-lg transition">
-
-            <div class="flex items-center justify-between">
-                <i class="fa-solid fa-layer-group text-orange-500 text-xl"></i>
-                <span class="text-2xl font-bold">{{ totalPropositions }}</span>
-            </div>
-
-            <p class="text-gray-500 mt-3 text-sm">Total propositions</p>
-
-        </div>
-
-    </div>
-
-</div>
-
+        {% if repartition is empty %}
+            <p class="px-5 py-8 text-sm text-ink-500">Aucun établissement actif pour le moment.</p>
+        {% else %}
+            {% set maximum = repartition|first.total %}
+            <table class="w-full text-sm">
+                <caption class="sr-only">Nombre d’établissements actifs par commune</caption>
+                <thead class="sr-only"><tr><th scope="col">Commune</th><th scope="col">Établissements</th></tr></thead>
+                <tbody>
+                    {% for ligne in repartition %}
+                        <tr class="border-b border-ink-50 last:border-0">
+                            <th scope="row" class="w-40 px-5 py-2.5 text-left font-medium sm:w-56">
+                                <a class="text-ink-900 hover:text-brand-700" href="{{ path('admin_orphelinat_list', {commune: ligne.communeId}) }}">{{ ligne.commune }}</a>
+                                <span class="block text-xs font-normal text-ink-500">{{ ligne.ville }}</span>
+                            </th>
+                            <td class="py-2.5 pr-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-2 flex-1 overflow-hidden rounded-full bg-ink-100" aria-hidden="true">
+                                        <div class="h-full rounded-full bg-brand-500" style="width: {{ (ligne.total / maximum * 100)|round }}%"></div>
+                                    </div>
+                                    <span class="w-6 text-right font-semibold tabular-nums text-ink-800">{{ ligne.total }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
 {% endblock %}

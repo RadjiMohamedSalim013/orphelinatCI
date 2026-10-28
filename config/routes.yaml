@@ -1,12 +1,15 @@
+# Contrôleurs publics (le dossier Admin est importé séparément avec son préfixe)
 controllers:
-    resource: ../src/Controller/
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
     type: attribute
+    exclude: '../src/Controller/Admin/'
 
 admin_controllers:
-    resource: ../src/Controller/Admin/
+    resource:
+        path: ../src/Controller/Admin/
+        namespace: App\Controller\Admin
     type: attribute
-    prefix: /admin/
-
-admin_dashboard:
-    path: /admin
-    controller: App\Controller\AdminDashboardController::index
+    prefix: /admin
+    trailing_slash_on_root: false

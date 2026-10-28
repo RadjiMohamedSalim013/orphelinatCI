@@ -1,0 +1,15 @@
+framework:
+    rate_limiter:
+        # Propositions et signalements publics : 5 envois par heure et par IP
+        public_submission:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+
+when@test:
+    framework:
+        rate_limiter:
+            public_submission:
+                policy: sliding_window
+                limit: 1000
+                interval: '1 hour'

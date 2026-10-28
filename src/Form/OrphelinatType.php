@@ -2,99 +2,149 @@
 
 namespace App\Form;
 
+use App\Entity\Commune;
 use App\Entity\Orphelinat;
 use App\Entity\Quartier;
+use App\Enum\OrphelinatStatut;
+use App\Enum\VerificationStatut;
+use App\Repository\CommuneRepository;
+use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\Constraints\Count;
 use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Constraints\Length;
 
+/**
+ * Fiche d'établissement côté administration.
+ */
 class OrphelinatType extends AbstractType
 {
+    private const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('nom', TextType::class, [
-                'label' => 'Nom de l\'orphelinat',
+                'label' => 'Nom officiel',
             ])
-            ->add('description', TextareaType::class, [
-                'label' => 'Description',
-                'attr' => ['rows' => 5],
+            ->add('commune', EntityType::class, [
+                'label' => 'Commune',
+                'class' => Commune::class,
+                'query_builder' => static fn (CommuneRepository $r) => $r->createOrderedQueryBuilder(),
+                'choice_label' => 'nom',
+                'group_by' => static fn (Commune $c) => sprintf('%s (%s)', $c->getVille()?->getNom(), $c->getVille()?->getPays()?->getNom()),
+                'placeholder' => 'Choisir une commune',
             ])
-            ->add('adresse', TextType::class, [
-                'label' => 'Adresse complète',
+            ->add('quartier', EntityType::class, [
+                'label' => 'Quartier existant',
+                'class' => Quartier::class,
+                'query_builder' => static fn (EntityRepository $r) => $r->createQueryBuilder('q')->orderBy('q.nom', 'ASC'),
+                'choice_label' => 'nom',
+                'choice_attr' => static fn (Quartier $q) => ['data-commune' => $q->getCommune()?->getId()],
+                'placeholder' => 'Aucun',
+                'required' => false,
             ])
-            ->add('telephone', TextType::class, [
-                'label' => 'Téléphone',
-            ])
-            ->add('email', EmailType::class, [
-                'label' => 'Email',
-            ])
-            ->add('image', FileType::class, [
-                'label' => 'Photo (JPG, PNG)',
+            ->add('nouveauQuartier', TextType::class, [
+                'label' => 'ou nouveau quartier',
                 'mapped' => false,
                 'required' => false,
-                'attr' => ['accept' => 'image/*'],
+                'constraints' => [new Length(max: 255)],
+                'attr' => ['placeholder' => 'Créé dans la commune choisie'],
+            ])
+            ->add('adresse', TextType::class, [
+                'label' => 'Adresse ou repères',
+            ])
+            ->add('latitude', TextType::class, [
+                'label' => 'Latitude',
+                'required' => false,
+                'attr' => ['inputmode' => 'decimal', 'placeholder' => 'Ex. : 5.3364'],
+            ])
+            ->add('longitude', TextType::class, [
+                'label' => 'Longitude',
+                'required' => false,
+                'attr' => ['inputmode' => 'decimal', 'placeholder' => 'Ex. : -4.0267'],
+            ])
+            ->add('telephone', TelType::class, [
+                'label' => 'Téléphone',
+                'required' => false,
+            ])
+            ->add('email', EmailType::class, [
+                'label' => 'E-mail',
+                'required' => false,
+            ])
+            ->add('siteWeb', UrlType::class, [
+                'label' => 'Site internet',
+                'required' => false,
+                'default_protocol' => 'https',
+            ])
+            ->add('reseauSocial', UrlType::class, [
+                'label' => 'Page officielle (réseau social)',
+                'required' => false,
+                'default_protocol' => 'https',
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Présentation',
+                'required' => false,
+                'attr' => ['rows' => 5],
+            ])
+            ->add('services', TextareaType::class, [
+                'label' => 'Services et accompagnement',
+                'required' => false,
+                'help' => 'Uniquement des informations vérifiées (scolarisation, santé, accueil…).',
+                'attr' => ['rows' => 3],
+            ])
+            ->add('verification', EnumType::class, [
+                'class' => VerificationStatut::class,
+                'label' => 'Vérification',
+                'choice_label' => static fn (VerificationStatut $v) => $v->label(),
+                'help' => 'Ne cochez « Vérifié » qu\'après confirmation directe (visite, appel, document officiel).',
+            ])
+            ->add('statut', EnumType::class, [
+                'class' => OrphelinatStatut::class,
+                'label' => 'Situation',
+                'choice_label' => static fn (OrphelinatStatut $s) => $s->label(),
+            ])
+            ->add('image', FileType::class, [
+                'label' => 'Photo principale',
+                'mapped' => false,
+                'required' => false,
+                'attr' => ['accept' => implode(',', self::IMAGE_MIMES)],
                 'constraints' => [
-                    new File([
-                        'maxSize' => '5m',
-                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/webp'],
-                        'mimeTypesMessage' => 'Veuillez uploader une image valide (JPG, PNG).',
-                    ])
+                    new File(maxSize: '5M', mimeTypes: self::IMAGE_MIMES, mimeTypesMessage: 'Image JPG, PNG ou WEBP attendue.'),
+                ],
+            ])
+            ->add('photos', FileType::class, [
+                'label' => 'Ajouter des photos à la galerie',
+                'mapped' => false,
+                'required' => false,
+                'multiple' => true,
+                'attr' => ['accept' => implode(',', self::IMAGE_MIMES)],
+                'constraints' => [
+                    new Count(max: 10, maxMessage: '10 photos maximum par envoi.'),
+                    new All([new File(maxSize: '5M', mimeTypes: self::IMAGE_MIMES, mimeTypesMessage: 'Image JPG, PNG ou WEBP attendue.')]),
                 ],
             ])
             ->add('document', FileType::class, [
-                'label' => 'Document (PDF)',
+                'label' => 'Document officiel public (PDF)',
                 'mapped' => false,
                 'required' => false,
-                'attr' => ['accept' => '.pdf'],
+                'help' => 'Visible par tous sur la fiche. Ne pas y mettre de justificatif privé.',
+                'attr' => ['accept' => 'application/pdf'],
                 'constraints' => [
-                    new File([
-                        'maxSize' => '10m',
-                        'mimeTypes' => ['application/pdf'],
-                        'mimeTypesMessage' => 'Veuillez uploader un PDF valide.',
-                    ])
+                    new File(maxSize: '10M', mimeTypes: ['application/pdf'], mimeTypesMessage: 'PDF attendu.'),
                 ],
-            ])
-            ->add('quartier', EntityType::class, [
-                'class' => Quartier::class,
-                'choice_label' => function (Quartier $q) {
-                    return $q->getNom() . ' (' . $q->getCommune()->getNom() . ', ' . $q->getCommune()->getVille()->getNom() . ', ' . $q->getCommune()->getVille()->getPays()->getNom() . ')';
-                },
-                'placeholder' => '-- Choisir un quartier existant --',
-                'required' => false,
-            ])
-            ->add('nouveau_pays', TextType::class, [
-                'label' => 'Nouveau pays',
-                'mapped' => false,
-                'required' => false,
-                'attr' => ['placeholder' => 'Ex: Côte d\'Ivoire'],
-            ])
-            ->add('nouvelle_ville', TextType::class, [
-                'label' => 'Nouvelle ville',
-                'mapped' => false,
-                'required' => false,
-                'attr' => ['placeholder' => 'Ex: Abidjan'],
-            ])
-            ->add('nouvelle_commune', TextType::class, [
-                'label' => 'Nouvelle commune',
-                'mapped' => false,
-                'required' => false,
-                'attr' => ['placeholder' => 'Ex: Cocody'],
-            ])
-            ->add('nouveau_quartier', TextType::class, [
-                'label' => 'Nouveau quartier',
-                'mapped' => false,
-                'required' => false,
-                'attr' => ['placeholder' => 'Ex: Deux-Plateaux'],
-            ])
-        ;
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

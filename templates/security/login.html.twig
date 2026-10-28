@@ -1,132 +1,41 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Connexion Admin - OrphaMap{% endblock %}
+{% block title %}Connexion — Administration OrphaMap CI{% endblock %}
+{% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
-{% block body %}
+{% block page %}
+    <main id="contenu" class="flex min-h-screen flex-col items-center justify-center bg-page px-4 py-12">
+        <a href="{{ path('home') }}" class="rounded-md" aria-label="OrphaMap CI, accueil">{% include 'partials/_logo.html.twig' %}</a>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4 relative overflow-hidden">
+        <div class="om-card mt-8 w-full max-w-sm p-6 shadow-raised sm:p-8">
+            <h1 class="om-h3 !text-xl">Espace d’administration</h1>
+            <p class="mt-1 text-sm text-ink-500">Réservé à l’équipe OrphaMap CI.</p>
 
-    <!-- BACKGROUND DECOR -->
-    <div class="absolute inset-0">
-        <div class="absolute -top-32 -right-32 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-60"></div>
-        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-gray-200 rounded-full blur-3xl opacity-40"></div>
-    </div>
-
-    <!-- CARD -->
-    <div class="relative w-full max-w-md">
-
-        <!-- HEADER -->
-        <div class="text-center mb-8">
-
-            <div class="h-14 w-14 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-                <i class="fa-solid fa-lock text-white"></i>
-            </div>
-
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mt-4">
-                OrphaMap <span class="text-orange-500">Admin</span>
-            </h1>
-
-            <p class="text-gray-500 text-sm mt-2">
-                Accédez à votre espace d’administration
-            </p>
-
-        </div>
-
-        <!-- FORM CARD -->
-        <div class="bg-white border border-gray-200 rounded-3xl shadow-xl p-8 space-y-6 backdrop-blur-xl">
-
-            <!-- ERROR -->
-            {% if error %}
-                <div class="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700">
-
-                    <i class="fa-solid fa-circle-exclamation mt-1"></i>
-
-                    <p class="text-sm font-medium">
-                        {{ error.messageKey|trans(error.messageData, 'security') }}
-                    </p>
-
-                </div>
-            {% endif %}
-
-            <!-- USER LOGGED -->
-            {% if app.user %}
-                <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 text-sm">
-                    Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>
-                </div>
-            {% endif %}
-
-            <!-- FORM -->
-            <form method="post" class="space-y-5">
-
-                <!-- EMAIL -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700">Email</label>
-
-                    <div class="relative mt-2">
-                        <i class="fa-solid fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-
-                        <input type="email"
-                               name="email"
-                               value="{{ last_username }}"
-                               required
-                               autofocus
-                               placeholder="admin@orphamap.com"
-                               class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50
-                                      focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100
-                                      transition outline-none">
+            <form method="post" class="mt-6 space-y-5" data-controller="ui" data-action="submit->ui#loading">
+                {% if error %}
+                    <div class="om-alert-error" role="alert">
+                        <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                        <p>{{ error.messageKey == 'Invalid credentials.' ? 'E-mail ou mot de passe incorrect.' : error.messageKey|trans(error.messageData, 'security') }}</p>
                     </div>
-                </div>
+                {% endif %}
 
-                <!-- PASSWORD -->
                 <div>
-                    <label class="text-sm font-medium text-gray-700">Mot de passe</label>
-
-                    <div class="relative mt-2">
-                        <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-
-                        <input type="password"
-                               name="password"
-                               required
-                               placeholder="••••••••"
-                               class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50
-                                      focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100
-                                      transition outline-none">
-                    </div>
+                    <label for="email" class="om-label">E-mail</label>
+                    <input type="email" id="email" name="email" value="{{ last_username }}" required autofocus autocomplete="username" class="om-input">
+                </div>
+                <div>
+                    <label for="password" class="om-label">Mot de passe</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" class="om-input">
                 </div>
 
-                <!-- CSRF -->
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                <!-- BUTTON -->
-                <button type="submit"
-                        class="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600
-                               text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg
-                               transition active:scale-[0.98]">
-
-                    <i class="fa-solid fa-right-to-bracket"></i>
+                <button type="submit" class="om-btn-primary w-full" data-ui-target="submit" data-loading-label="Connexion…">
                     Se connecter
-
                 </button>
-
             </form>
-
         </div>
 
-        <!-- FOOT LINK -->
-        <div class="text-center mt-6">
-
-            <a href="{{ path('orphelinat_index') }}"
-               class="text-sm text-gray-500 hover:text-orange-500 flex items-center justify-center gap-2 transition">
-
-                <i class="fa-solid fa-arrow-left"></i>
-                Retour au site public
-
-            </a>
-
-        </div>
-
-    </div>
-
-</div>
-
+        <a href="{{ path('home') }}" class="om-btn-ghost om-btn-sm mt-6"><i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Retour au site public</a>
+    </main>
 {% endblock %}

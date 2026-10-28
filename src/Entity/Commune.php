@@ -6,8 +6,12 @@ use App\Repository\CommuneRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommuneRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_commune_ville_nom', columns: ['ville_id', 'nom'])]
+#[UniqueEntity(fields: ['ville', 'nom'], message: 'Cette commune existe déjà pour cette ville.', errorPath: 'nom')]
 class Commune
 {
     #[ORM\Id]
@@ -16,21 +20,44 @@ class Commune
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private ?string $nom = null;
 
     #[ORM\ManyToOne(inversedBy: 'communes')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
     private ?Ville $ville = null;
 
     /**
      * @var Collection<int, Quartier>
      */
     #[ORM\OneToMany(targetEntity: Quartier::class, mappedBy: 'commune')]
+    #[ORM\OrderBy(['nom' => 'ASC'])]
     private Collection $quartiers;
+
+    /**
+     * @var Collection<int, Orphelinat>
+     */
+    #[ORM\OneToMany(targetEntity: Orphelinat::class, mappedBy: 'commune')]
+    private Collection $orphelinats;
+
+    /**
+     * @var Collection<int, PropositionOrphelinat>
+     */
+    #[ORM\OneToMany(targetEntity: PropositionOrphelinat::class, mappedBy: 'commune')]
+    private Collection $propositionsOrphelinat;
 
     public function __construct()
     {
         $this->quartiers = new ArrayCollection();
+        $this->orphelinats = new ArrayCollection();
+        $this->propositionsOrphelinat = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->nom;
     }
 
     public function getId(): ?int
@@ -43,9 +70,9 @@ class Commune
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
-        $this->nom = $nom;
+        $this->nom = null === $nom ? null : trim($nom);
 
         return $this;
     }
@@ -60,6 +87,12 @@ class Commune
         $this->ville = $ville;
 
         return $this;
+    }
+
+    /** Libellé complet, utile dans les listes déroulantes de l'administration. */
+    public function getLibelleComplet(): string
+    {
+        return sprintf('%s — %s (%s)', $this->nom, $this->ville?->getNom(), $this->ville?->getPays()?->getNom());
     }
 
     /**
@@ -90,5 +123,21 @@ class Commune
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Orphelinat>
+     */
+    public function getOrphelinats(): Collection
+    {
+        return $this->orphelinats;
+    }
+
+    /**
+     * @return Collection<int, PropositionOrphelinat>
+     */
+    public function getPropositionsOrphelinat(): Collection
+    {
+        return $this->propositionsOrphelinat;
     }
 }
