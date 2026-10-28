@@ -1,0 +1,125 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Statistiques — Administration OrphaMap CI{% endblock %}
+
+{% macro evolution(valeur) %}
+    {% if valeur is null %}
+        <span class="text-xs text-ink-400">Pas de période de comparaison</span>
+    {% else %}
+        <span class="inline-flex items-center gap-1 text-xs font-semibold {{ valeur > 0 ? 'text-trust-700' : (valeur < 0 ? 'text-red-700' : 'text-ink-500') }}">
+            <i class="fa-solid {{ valeur > 0 ? 'fa-arrow-trend-up' : (valeur < 0 ? 'fa-arrow-trend-down' : 'fa-minus') }}" aria-hidden="true"></i>
+            {{ valeur > 0 ? '+' }}{{ valeur }} % <span class="font-normal text-ink-500">vs période précédente</span>
+        </span>
+    {% endif %}
+{% endmacro %}
+
+{% block content %}
+    {% embed 'admin/_page_header.html.twig' with {
+        titre: 'Statistiques de visite',
+        sous_titre: 'Du ' ~ stats.debut|date('d/m/Y') ~ ' au ' ~ stats.fin|date('d/m/Y') ~ ' · mesure interne, sans cookie.',
+        periodes: periodes, stats: stats,
+    } %}
+        {% block actions %}
+            <nav class="inline-flex rounded-lg border border-ink-200 bg-white p-1 shadow-sm" aria-label="Période">
+                {% for p in periodes %}
+                    <a href="{{ path('admin_statistiques', {periode: p}) }}"
+                       class="rounded-md px-3 py-1.5 text-sm font-semibold transition {{ stats.jours == p ? 'bg-ink-900 text-white' : 'text-ink-600 hover:bg-ink-50' }}"
+                       {% if stats.jours == p %}aria-current="page"{% endif %}>{{ p }} jours</a>
+                {% endfor %}
+            </nav>
+        {% endblock %}
+    {% endembed %}
+
+    {% import _self as m %}
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-label="Indicateurs de la période">
+        {% for kpi in [
+            {libelle: 'Visiteurs uniques', valeur: stats.totaux.visiteurs, icone: 'fa-user-group', evo: stats.evolution.visiteurs, ton: 'bg-brand-50 text-brand-700'},
+            {libelle: 'Pages vues', valeur: stats.totaux.vues, icone: 'fa-eye', evo: stats.evolution.vues, ton: 'bg-ink-100 text-ink-700'},
+            {libelle: 'Pages par visiteur', valeur: stats.pagesParVisiteur, icone: 'fa-layer-group', evo: false, ton: 'bg-ink-100 text-ink-700'},
+            {libelle: 'Propositions reçues', valeur: stats.contributions.propositions, icone: 'fa-inbox', evo: false, ton: 'bg-trust-50 text-trust-700'},
+            {libelle: 'Signalements reçus', valeur: stats.contributions.signalements, icone: 'fa-flag', evo: false, ton: 'bg-amber-50 text-amber-700'},
+        ] %}
+            <div class="om-card p-5" data-reveal style="--i: {{ loop.index0 }}">
+                <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm font-medium text-ink-600">{{ kpi.libelle }}</p>
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ kpi.ton }}" aria-hidden="true"><i class="fa-solid {{ kpi.icone }} text-sm"></i></span>
+                </div>
+                <p class="mt-2 font-display text-3xl font-extrabold tabular-nums text-ink-900">{{ kpi.valeur }}</p>
+                <div class="mt-1 min-h-[1rem]">{% if kpi.evo is not same as(false) %}{{ m.evolution(kpi.evo) }}{% else %}<span class="text-xs text-ink-400">Sur la période</span>{% endif %}</div>
+            </div>
+        {% endfor %}
+    </section>
+
+    {% if stats.totaux.vues == 0 %}
+        <div class="om-alert-info mt-6">
+            <i class="fa-solid fa-circle-info mt-0.5" aria-hidden="true"></i>
+            <p>Aucune visite mesurée sur cette période. Les statistiques se remplissent au fil des visites du site public (vos propres visites en tant qu’administrateur ne sont pas comptées).</p>
+        </div>
+    {% endif %}
+
+    {# ───── Évolution ───── #}
+    <section class="om-card mt-6 p-5 sm:p-6" aria-labelledby="titre-evolution" data-reveal>
+        <div class="mb-5 flex flex-wrap items-end justify-between gap-2">
+            <div>
+                <h2 id="titre-evolution" class="om-h3 !text-base">Visiteurs uniques par jour</h2>
+                <p class="text-sm text-ink-500">Survolez une barre pour le détail du jour.</p>
+            </div>
+            <p class="text-sm text-ink-600">Moyenne : <strong class="tabular-nums text-ink-900">{{ (stats.totaux.visiteurs / stats.jours)|round(1) }}</strong> visiteur(s) / jour</p>
+        </div>
+        {% include 'admin/_graphique_jours.html.twig' with {serie: stats.serie, cle: 'visiteurs', libelle: 'Visiteurs uniques'} %}
+    </section>
+
+    {# ───── Contenus ───── #}
+    <div class="mt-6 grid gap-6 xl:grid-cols-2">
+        <section class="om-card p-5 sm:p-6" aria-labelledby="titre-fiches" data-reveal>
+            <h2 id="titre-fiches" class="om-h3 !text-base"><i class="fa-solid fa-house-chimney-window mr-2 text-brand-600" aria-hidden="true"></i>Fiches les plus consultées</h2>
+            <div class="mt-5">
+                {% include 'admin/_classement.html.twig' with {
+                    lignes: stats.fiches|map(f => {libelle: f.nom, detail: f.commune, total: f.total, lien: path('orphelinat_show', {id: f.id, slug: f.slug})}),
+                    vide: 'Aucune fiche consultée sur la période.', unite: 'consultations',
+                } %}
+            </div>
+        </section>
+
+        <section class="om-card p-5 sm:p-6" aria-labelledby="titre-communes" data-reveal style="--i: 1">
+            <h2 id="titre-communes" class="om-h3 !text-base"><i class="fa-solid fa-location-dot mr-2 text-brand-600" aria-hidden="true"></i>Communes les plus recherchées</h2>
+            <div class="mt-5">
+                {% include 'admin/_classement.html.twig' with {
+                    lignes: stats.communes|map(c => {libelle: c.nom, detail: c.ville, total: c.total}),
+                    vide: 'Aucune recherche par commune sur la période.', unite: 'recherches',
+                } %}
+            </div>
+        </section>
+    </div>
+
+    {# ───── Audience ───── #}
+    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+        <section class="om-card p-5 sm:p-6" aria-labelledby="titre-appareils" data-reveal>
+            <h2 id="titre-appareils" class="om-h3 !text-base">Appareils utilisés</h2>
+            <div class="mt-5">
+                {% include 'admin/_classement.html.twig' with {
+                    lignes: stats.appareils|filter(a => a.total > 0)|map(a => {libelle: a.libelle, icone: a.icone, total: a.total}),
+                    vide: 'Pas encore de données.', unite: 'visiteurs',
+                } %}
+            </div>
+        </section>
+        <section class="om-card p-5 sm:p-6" aria-labelledby="titre-sources" data-reveal style="--i: 1">
+            <h2 id="titre-sources" class="om-h3 !text-base">D’où viennent les visiteurs</h2>
+            <div class="mt-5">
+                {% include 'admin/_classement.html.twig' with {lignes: stats.sources, vide: 'Pas encore de données.', unite: 'visiteurs'} %}
+            </div>
+        </section>
+        <section class="om-card p-5 sm:p-6" aria-labelledby="titre-pages" data-reveal style="--i: 2">
+            <h2 id="titre-pages" class="om-h3 !text-base">Pages consultées</h2>
+            <div class="mt-5">
+                {% include 'admin/_classement.html.twig' with {lignes: stats.pages, vide: 'Pas encore de données.', unite: 'pages vues'} %}
+            </div>
+        </section>
+    </div>
+
+    <p class="mt-6 flex items-start gap-2 text-xs text-ink-500">
+        <i class="fa-solid fa-shield-halved mt-0.5" aria-hidden="true"></i>
+        Mesure respectueuse de la vie privée : aucun cookie, aucune adresse IP conservée, aucun service tiers. Les robots, les administrateurs et les navigateurs demandant à ne pas être suivis sont exclus.
+    </p>
+{% endblock %}

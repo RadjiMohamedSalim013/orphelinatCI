@@ -1,0 +1,33 @@
+{#
+    Fenêtre modale d'action (à utiliser avec embed) : un formulaire POST protégé par jeton CSRF.
+    Variables : id, titre, icone, ton ('trust' | 'danger' | 'brand'), sous_titre,
+                action et jeton (facultatifs : complétés par modal#ouvrir pour une fenêtre partagée)
+    Blocs : corps, pied
+#}
+{% set tons = {
+    trust: 'bg-trust-50 text-trust-700 ring-trust-200',
+    danger: 'bg-red-50 text-red-700 ring-red-200',
+    brand: 'bg-brand-50 text-brand-700 ring-brand-200',
+} %}
+<dialog id="{{ id }}" class="om-modal" aria-labelledby="{{ id }}-titre">
+    <form method="post" action="{{ action|default('') }}" data-controller="ui" data-action="submit->ui#loading">
+        <input type="hidden" name="_token" value="{{ jeton|default('') }}">
+        <div class="flex items-start gap-4 border-b border-ink-100 px-6 py-5">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 {{ tons[ton|default('brand')] }}" aria-hidden="true">
+                <i class="fa-solid {{ icone|default('fa-circle-info') }}"></i>
+            </span>
+            <div class="min-w-0 flex-1">
+                <h2 id="{{ id }}-titre" class="font-display text-lg font-bold text-ink-900">{{ titre }}</h2>
+                <p class="mt-0.5 truncate text-sm text-ink-500" data-modal-texte="sous_titre">{{ sous_titre|default('') }}</p>
+            </div>
+            <button type="button" class="om-btn-icon om-btn-ghost -mr-2 -mt-1" data-action="modal#fermer">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Fermer</span>
+            </button>
+        </div>
+        <div class="max-h-[65vh] overflow-y-auto px-6 py-5">{% block corps %}{% endblock %}</div>
+        <div class="flex flex-col-reverse gap-2 rounded-b-2xl border-t border-ink-100 bg-ink-50/70 px-6 py-4 sm:flex-row sm:justify-end">
+            <button type="button" class="om-btn-secondary" data-action="modal#fermer">Annuler</button>
+            {% block pied %}{% endblock %}
+        </div>
+    </form>
+</dialog>

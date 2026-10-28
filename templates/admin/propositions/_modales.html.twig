@@ -1,0 +1,89 @@
+{#
+    Fenêtres « Accepter » et « Refuser ».
+    Variables : communes ; proposition (facultatif — sinon action, jeton et valeurs
+    sont fournis par le bouton qui ouvre la fenêtre, depuis la liste).
+#}
+{% set p = proposition ?? null %}
+
+{% embed 'admin/_modal.html.twig' with {
+    id: 'modale-accepter', titre: 'Accepter la proposition', icone: 'fa-check', ton: 'trust',
+    sous_titre: p ? p.nom : '',
+    action: p ? path('admin_propositions_accepter', {id: p.id}) : '',
+    jeton: p ? csrf_token('accepter_' ~ p.id) : '',
+    p: p, communes: communes, doublons: doublons_fiche|default([]),
+} %}
+    {% block corps %}
+        <p class="text-sm text-ink-600">La fiche sera créée et publiée dans l’annuaire. Vous pourrez la compléter ensuite (position GPS, photos…).</p>
+
+        <div class="om-alert-warning mt-4" data-modal-masquer-si-vide {{ doublons is empty ? 'hidden' }}>
+            <i class="fa-solid fa-clone mt-0.5" aria-hidden="true"></i>
+            <p><strong>Attention :</strong> <span data-modal-texte="doublons">{{ doublons is not empty ? doublons|length ~ ' établissement(s) similaire(s) déjà dans l’annuaire. Vérifiez qu’il ne s’agit pas d’un doublon.' }}</span></p>
+        </div>
+
+        <label for="acc-commune" class="om-label mt-5">Commune <span class="text-red-700" aria-hidden="true">*</span></label>
+        <select id="acc-commune" name="commune" class="om-input" required aria-required="true">
+            <option value="">Choisir la commune…</option>
+            {% set villeCourante = null %}
+            {% for c in communes %}
+                {% if c.ville.nom != villeCourante %}
+                    {% if villeCourante is not null %}</optgroup>{% endif %}
+                    <optgroup label="{{ c.ville.nom }}">
+                    {% set villeCourante = c.ville.nom %}
+                {% endif %}
+                <option value="{{ c.id }}" {{ p and p.commune and p.commune.id == c.id ? 'selected' }}>{{ c.nom }}</option>
+                {% if loop.last %}</optgroup>{% endif %}
+            {% endfor %}
+        </select>
+        <p class="om-help" data-modal-masquer-si-vide {{ not (p and not p.commune) ? 'hidden' }}>
+            Saisie du proposant : « <span data-modal-texte="commune_saisie">{{ p and not p.commune ? p.communeSaisie ~ ', ' ~ p.ville }}</span> ».
+            Absente de la liste&nbsp;? <a class="om-link" href="{{ path('admin_localisations_index') }}">Ajoutez-la</a>.
+        </p>
+
+        <label for="acc-quartier" class="om-label mt-5">Quartier <span class="font-normal text-ink-400">(facultatif)</span></label>
+        <input id="acc-quartier" name="quartier" class="om-input" value="{{ p ? p.quartier }}" maxlength="255">
+
+        <label class="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-trust-200 bg-trust-50/60 p-4 text-sm text-ink-800">
+            <input type="checkbox" name="verifie" value="1" class="om-checkbox">
+            <span><strong class="text-trust-800">Publier comme « Vérifié »</strong><br>
+                <span class="text-ink-600">J’ai confirmé l’existence et les coordonnées de l’établissement (appel, visite ou document officiel).</span></span>
+        </label>
+    {% endblock %}
+    {% block pied %}
+        <button type="submit" class="om-btn-success" data-ui-target="submit" data-loading-label="Création de la fiche…">
+            <i class="fa-solid fa-check" aria-hidden="true"></i> Accepter et créer la fiche
+        </button>
+    {% endblock %}
+{% endembed %}
+
+{% embed 'admin/_modal.html.twig' with {
+    id: 'modale-refuser', titre: 'Refuser la proposition', icone: 'fa-xmark', ton: 'danger',
+    sous_titre: p ? p.nom : '',
+    action: p ? path('admin_propositions_refuser', {id: p.id}) : '',
+    jeton: p ? csrf_token('refuser_' ~ p.id) : '',
+} %}
+    {% block corps %}
+        <p class="text-sm text-ink-600">Le motif est affiché au proposant sur sa page de suivi{{ p and p.contactProposantEmail ? ' et lui est envoyé par e-mail' }}. Cette décision est définitive.</p>
+
+        <p class="om-label mt-5">Motifs fréquents</p>
+        <div class="flex flex-wrap gap-2">
+            {% for motif in [
+                'Établissement déjà répertorié dans l’annuaire.',
+                'Informations insuffisantes ou impossibles à vérifier.',
+                'L’établissement n’existe plus ou a fermé.',
+                'Il ne s’agit pas d’un orphelinat ou d’une structure d’accueil.',
+            ] %}
+                <button type="button" class="om-chip !pr-3 hover:!border-brand-300 hover:!bg-brand-50 hover:!text-brand-800"
+                        data-action="modal#remplir" data-modal-champ-param="motif" data-modal-texte-param="{{ motif }}">{{ motif|split(' ')|slice(0, 4)|join(' ') }}…</button>
+            {% endfor %}
+        </div>
+
+        <label for="ref-motif" class="om-label mt-5">Motif <span class="text-red-700" aria-hidden="true">*</span></label>
+        <textarea id="ref-motif" name="motif" rows="4" class="om-input" required aria-required="true" minlength="5" maxlength="1000"
+                  placeholder="Expliquez brièvement la décision au proposant…"></textarea>
+    {% endblock %}
+    {% block pied %}
+        <button type="submit" class="om-btn-danger" data-ui-target="submit" data-loading-label="Enregistrement…">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Refuser la proposition
+        </button>
+    {% endblock %}
+{% endembed %}

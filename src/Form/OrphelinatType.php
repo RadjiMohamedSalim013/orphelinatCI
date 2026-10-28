@@ -77,7 +77,7 @@ class OrphelinatType extends AbstractType
             ])
             ->add('telephone', TelType::class, [
                 'label' => 'Téléphone',
-                'required' => false,
+                'attr' => ['inputmode' => 'tel', 'placeholder' => '+225 07 00 00 00 00'],
             ])
             ->add('email', EmailType::class, [
                 'label' => 'E-mail',

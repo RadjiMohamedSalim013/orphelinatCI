@@ -8,7 +8,8 @@
     {% set admin_nav_compteurs = admin_compteurs() %}
     {% set admin_sections = [
         {titre: 'Pilotage', liens: [
-            {route: 'admin_dashboard', prefix: 'admin_dashboard', label: 'Tableau de bord', icon: 'fa-chart-simple'},
+            {route: 'admin_dashboard', prefix: 'admin_dashboard', label: 'Tableau de bord', icon: 'fa-gauge'},
+            {route: 'admin_statistiques', prefix: 'admin_statistiques', label: 'Statistiques', icon: 'fa-chart-simple'},
         ]},
         {titre: 'À traiter', liens: [
             {route: 'admin_propositions_index', prefix: 'admin_propositions', label: 'Propositions', icon: 'fa-inbox', compteur: admin_nav_compteurs.propositions},

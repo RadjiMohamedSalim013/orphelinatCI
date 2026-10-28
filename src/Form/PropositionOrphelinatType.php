@@ -74,8 +74,8 @@ class PropositionOrphelinatType extends AbstractType
             ])
             ->add('telephone', TelType::class, [
                 'label' => 'Téléphone de l\'établissement',
-                'required' => false,
-                'attr' => ['placeholder' => '+225 07 00 00 00 00', 'inputmode' => 'tel'],
+                'help' => 'Indispensable pour que l’équipe puisse vérifier l’établissement.',
+                'attr' => ['placeholder' => '+225 07 00 00 00 00', 'inputmode' => 'tel', 'autocomplete' => 'tel'],
             ])
             ->add('email', EmailType::class, [
                 'label' => 'E-mail de l\'établissement',

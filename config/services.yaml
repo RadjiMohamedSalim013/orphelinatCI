@@ -29,6 +29,7 @@ services:
             string $documentsDirectory: '%uploads_documents_directory%'
             string $privateDirectory: '%uploads_private_directory%'
             string $mailerFrom: '%env(MAILER_FROM)%'
+            string $secret: '%kernel.secret%'
             bool $fichiersEnBase: '%env(bool:FICHIERS_EN_BASE)%'
 
     # makes classes in src/ available to be used as services

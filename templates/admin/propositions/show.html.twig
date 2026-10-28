@@ -4,154 +4,201 @@
 
 {% block content %}
     {% set ouverte = proposition.statut.open %}
+    {% set statut = proposition.statut.value %}
 
     {% embed 'admin/_page_header.html.twig' with {titre: proposition.nom, sous_titre: proposition.reference ~ ' · reçue le ' ~ proposition.createdAt|date('d/m/Y à H:i'), retour: {url: path('admin_propositions_index'), label: 'Propositions'}} %}
         {% block surtitre %}<div class="mb-2">{% include 'admin/_statut_badge.html.twig' with {statut: proposition.statut} %}</div>{% endblock %}
     {% endembed %}
 
-    {% if doublons is not empty %}
-        <div class="om-alert-warning mb-4" role="alert">
-            <i class="fa-solid fa-clone mt-0.5" aria-hidden="true"></i>
-            <div class="min-w-0">
-                <p class="font-semibold">{{ doublons|length }} doublon{{ doublons|length > 1 ? 's' }} possible{{ doublons|length > 1 ? 's' }} dans l’annuaire</p>
-                <ul class="mt-2 space-y-1.5">
-                    {% for d in doublons %}
-                        <li><a class="font-semibold underline" href="{{ path('admin_orphelinat_show', {id: d.id}) }}">{{ d.nom }}</a> <span class="text-amber-800">— {{ d.commune }}, {{ d.ville }} · {{ d.raisons|join(' · ') }}</span></li>
-                    {% endfor %}
-                </ul>
-                <p class="mt-2">Vérifiez qu’il ne s’agit pas du même établissement avant d’accepter.</p>
-            </div>
-        </div>
-    {% endif %}
-    {% if propositionsSimilaires is not empty %}
-        <div class="om-alert-info mb-4">
-            <i class="fa-solid fa-code-compare mt-0.5" aria-hidden="true"></i>
-            <p>Autres propositions ouvertes au nom proche :
-                {% for s in propositionsSimilaires %}<a class="font-semibold underline" href="{{ path('admin_propositions_show', {id: s.id}) }}">{{ s.nom }}</a>{{ not loop.last ? ', ' }}{% endfor %}
-            </p>
-        </div>
-    {% endif %}
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]" data-controller="modal">
+        {# ───── Colonne principale : ce qui a été soumis ───── #}
+        <div class="min-w-0 space-y-6">
+            {% if doublons is not empty %}
+                <section class="overflow-hidden rounded-xl border border-amber-300 bg-amber-50" aria-labelledby="titre-doublons">
+                    <div class="flex items-center gap-3 border-b border-amber-200 px-5 py-3">
+                        <i class="fa-solid fa-clone text-amber-700" aria-hidden="true"></i>
+                        <h2 id="titre-doublons" class="font-semibold text-amber-950">{{ doublons|length }} établissement{{ doublons|length > 1 ? 's' }} similaire{{ doublons|length > 1 ? 's' }} déjà dans l’annuaire</h2>
+                    </div>
+                    <ul class="divide-y divide-amber-200/70">
+                        {% for d in doublons %}
+                            <li class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm">
+                                <span class="min-w-0">
+                                    <a class="font-semibold text-amber-950 underline decoration-amber-400 underline-offset-2" href="{{ path('admin_orphelinat_show', {id: d.id}) }}" target="_blank" rel="noopener">{{ d.nom }}</a>
+                                    <span class="text-amber-800"> — {{ d.commune }}, {{ d.ville }}</span>
+                                </span>
+                                <span class="flex flex-wrap gap-1">{% for r in d.raisons %}<span class="om-badge bg-white text-amber-900 ring-amber-300">{{ r }}</span>{% endfor %}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+            {% if propositionsSimilaires is not empty %}
+                <div class="om-alert-info">
+                    <i class="fa-solid fa-code-compare mt-0.5" aria-hidden="true"></i>
+                    <p>Autres propositions en cours au nom proche :
+                        {% for s in propositionsSimilaires %}<a class="font-semibold underline" href="{{ path('admin_propositions_show', {id: s.id}) }}">{{ s.nom }}</a>{{ not loop.last ? ', ' }}{% endfor %}
+                    </p>
+                </div>
+            {% endif %}
 
-    <div class="grid gap-6 xl:grid-cols-[1fr_380px] [&>*]:min-w-0">
-        <div class="space-y-6">
-            <section class="om-card om-card-pad" aria-labelledby="titre-infos">
-                <h2 id="titre-infos" class="om-h3 !text-base">Informations soumises</h2>
-                <dl class="om-dl mt-4">
-                    {% for libelle, valeur in {
-                        'Pays': proposition.pays,
-                        'Ville': proposition.ville,
-                        'Commune': proposition.communeLabel ~ (proposition.commune ? '' : ' (saisie libre)'),
-                        'Quartier': proposition.quartier,
-                        'Adresse / repères': proposition.adresse,
-                        'Téléphone': proposition.telephone,
-                        'E-mail': proposition.email,
-                    } %}
-                        <div><dt>{{ libelle }}</dt><dd>{{ (valeur ?? '')|trim ?: '—' }}</dd></div>
-                    {% endfor %}
-                </dl>
-                <h3 class="mt-6 text-[13px] font-medium text-ink-500">Présentation</h3>
-                <div class="mt-1 text-sm text-ink-800 [overflow-wrap:anywhere]">{{ proposition.description ? proposition.description|nl2br : '—' }}</div>
+            <section class="om-card overflow-hidden" aria-labelledby="titre-infos">
+                <div class="grid sm:grid-cols-[220px_1fr]">
+                    <div class="relative min-h-[180px] bg-ink-100">
+                        {% if proposition.image %}
+                            <a href="{{ image_url(proposition.image, 1600) }}" target="_blank" rel="noopener" class="absolute inset-0">
+                                <span class="absolute inset-0 flex items-center justify-center text-xs text-ink-500">Photo introuvable</span>
+                                <img src="{{ image_url(proposition.image, 640) }}" alt="Photo jointe par le proposant" class="relative h-full w-full bg-ink-100 object-cover" onerror="this.remove()">
+                                <span class="sr-only"> (agrandir)</span>
+                            </a>
+                        {% else %}
+                            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-ink-400">
+                                <i class="fa-solid fa-image text-2xl" aria-hidden="true"></i><span class="text-xs">Aucune photo</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="p-5 sm:p-6">
+                        <h2 id="titre-infos" class="om-h3 !text-base">Informations soumises</h2>
+                        <dl class="om-dl mt-4">
+                            {% for libelle, valeur in {
+                                'Commune': proposition.communeLabel ~ (proposition.commune ? '' : ' (hors liste)'),
+                                'Ville / pays': proposition.ville ~ ', ' ~ proposition.pays,
+                                'Quartier': proposition.quartier,
+                                'Adresse / repères': proposition.adresse,
+                                'Téléphone': proposition.telephone,
+                                'E-mail': proposition.email,
+                            } %}
+                                <div><dt>{{ libelle }}</dt><dd class="{{ libelle == 'Téléphone' ? 'tabular-nums' }}">{{ (valeur ?? '')|trim ?: '—' }}</dd></div>
+                            {% endfor %}
+                        </dl>
+                    </div>
+                </div>
+                <div class="border-t border-ink-100 p-5 sm:p-6">
+                    <h3 class="text-[13px] font-medium text-ink-500">Présentation</h3>
+                    <div class="mt-1 text-sm leading-relaxed text-ink-800 [overflow-wrap:anywhere]">{{ proposition.description ? proposition.description|nl2br : '—' }}</div>
+                </div>
             </section>
 
             <section class="om-card om-card-pad" aria-labelledby="titre-pieces">
-                <h2 id="titre-pieces" class="om-h3 !text-base">Justification et pièces</h2>
-                <h3 class="mt-4 text-[13px] font-medium text-ink-500">Source indiquée</h3>
-                <div class="mt-1 text-sm text-ink-800 [overflow-wrap:anywhere]">{{ proposition.source|nl2br }}</div>
-                <div class="mt-5 flex flex-wrap items-start gap-3">
-                    {% if proposition.image %}
-                        <a href="{{ image_url(proposition.image, 1600) }}" target="_blank" rel="noopener" class="relative block h-32 w-48 overflow-hidden rounded-md bg-ink-100 ring-1 ring-ink-200">
-                            <span class="absolute inset-0 flex items-center justify-center text-xs text-ink-500">Fichier introuvable</span>
-                            <img src="{{ image_url(proposition.image, 640) }}" alt="Photo jointe par le proposant" class="relative h-full w-full bg-ink-100 object-cover" onerror="this.remove()">
-                        </a>
-                    {% endif %}
+                <h2 id="titre-pieces" class="om-h3 !text-base">Pour vérifier</h2>
+                <h3 class="mt-4 text-[13px] font-medium text-ink-500">Source indiquée par le proposant</h3>
+                <blockquote class="mt-2 border-l-4 border-brand-200 pl-4 text-sm leading-relaxed text-ink-800 [overflow-wrap:anywhere]">{{ proposition.source|nl2br }}</blockquote>
+                <div class="mt-5 flex flex-wrap gap-2">
                     {% if proposition.document %}
-                        <a href="{{ path('admin_propositions_justificatif', {id: proposition.id}) }}" target="_blank" rel="noopener" class="om-btn-secondary">
-                            <i class="fa-solid fa-file-shield" aria-hidden="true"></i> Ouvrir le justificatif<span class="sr-only"> (nouvel onglet)</span>
+                        <a href="{{ path('admin_propositions_justificatif', {id: proposition.id}) }}" target="_blank" rel="noopener" class="om-btn-secondary om-btn-sm">
+                            <i class="fa-solid fa-file-shield text-xs" aria-hidden="true"></i> Ouvrir le justificatif<span class="sr-only"> (nouvel onglet)</span>
                         </a>
+                    {% else %}
+                        <span class="text-sm text-ink-500">Aucun justificatif joint.</span>
                     {% endif %}
-                    {% if not proposition.image and not proposition.document %}<p class="text-sm text-ink-500">Aucune pièce jointe.</p>{% endif %}
+                    {% if proposition.telephone %}
+                        <a href="tel:{{ proposition.telephone|replace({' ': '', '.': '', '-': ''}) }}" class="om-btn-secondary om-btn-sm"><i class="fa-solid fa-phone text-xs" aria-hidden="true"></i> Appeler l’établissement</a>
+                    {% endif %}
                 </div>
             </section>
 
             <section class="om-card om-card-pad" aria-labelledby="titre-proposant">
                 <h2 id="titre-proposant" class="om-h3 !text-base">Proposant <span class="om-badge-neutral ml-1 align-middle"><i class="fa-solid fa-lock text-[10px]" aria-hidden="true"></i> Confidentiel</span></h2>
-                <p class="mt-3 text-sm text-ink-900">{{ proposition.nomProposant }} · {{ proposition.contactProposant }}</p>
-                {% if not proposition.contactProposantEmail %}<p class="om-help">Pas d’adresse e-mail : aucune notification automatique ne sera envoyée.</p>{% endif %}
+                <div class="mt-3 flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-ink-900 text-sm font-bold uppercase text-white" aria-hidden="true">{{ proposition.nomProposant|first }}</span>
+                    <div class="text-sm">
+                        <p class="font-semibold text-ink-900">{{ proposition.nomProposant }}</p>
+                        <p class="text-ink-600">{{ proposition.contactProposant }}</p>
+                    </div>
+                </div>
+                {% if not proposition.contactProposantEmail %}<p class="om-help">Pas d’adresse e-mail : la décision ne pourra pas lui être notifiée automatiquement.</p>{% endif %}
             </section>
 
             <section class="om-card om-card-pad" aria-labelledby="titre-notes">
                 <h2 id="titre-notes" class="om-h3 !text-base">Notes internes</h2>
                 {% if proposition.noteAdmin %}
-                    <div class="mt-3 whitespace-pre-line rounded-md bg-ink-50 p-3 text-sm text-ink-800">{{ proposition.noteAdmin }}</div>
+                    <ol class="mt-3 space-y-2">
+                        {% for ligne in proposition.noteAdmin|split("\n")|filter(l => l|trim) %}
+                            <li class="rounded-md bg-ink-50 px-3 py-2 text-sm text-ink-800">{{ ligne }}</li>
+                        {% endfor %}
+                    </ol>
                 {% endif %}
-                <form method="post" action="{{ path('admin_propositions_note', {id: proposition.id}) }}" class="mt-3" data-controller="ui" data-action="submit->ui#loading">
+                <form method="post" action="{{ path('admin_propositions_note', {id: proposition.id}) }}" class="mt-3 flex flex-col gap-2 sm:flex-row" data-controller="ui" data-action="submit->ui#loading">
                     <input type="hidden" name="_token" value="{{ csrf_token('note_' ~ proposition.id) }}">
                     <label for="note" class="sr-only">Ajouter une note interne</label>
-                    <textarea id="note" name="note" rows="2" class="om-input" placeholder="Appel passé, visite prévue, information à confirmer…" required></textarea>
-                    <button class="om-btn-secondary om-btn-sm mt-2" data-ui-target="submit" data-loading-label="Ajout…">Ajouter la note</button>
+                    <input id="note" name="note" class="om-input" placeholder="Appel passé, visite prévue, information à confirmer…" required>
+                    <button class="om-btn-secondary shrink-0" data-ui-target="submit" data-loading-label="Ajout…">Ajouter la note</button>
                 </form>
             </section>
         </div>
 
-        <aside class="space-y-4">
-            {% if ouverte %}
-                {% if proposition.statut.value == 'en_attente' %}
-                    <form method="post" action="{{ path('admin_propositions_verification', {id: proposition.id}) }}" class="om-card om-card-pad" data-controller="ui" data-action="submit->ui#loading">
-                        <h2 class="om-h3 !text-base"><i class="fa-solid fa-magnifying-glass mr-1.5 text-sky-700" aria-hidden="true"></i>Commencer la vérification</h2>
-                        <p class="mt-1 text-sm text-ink-500">Le proposant verra que sa demande est en cours d’examen.</p>
-                        <input type="hidden" name="_token" value="{{ csrf_token('verification_' ~ proposition.id) }}">
-                        <label for="note-verif" class="om-label mt-4">Note interne <span class="font-normal text-ink-400">(facultatif)</span></label>
-                        <input id="note-verif" name="note" class="om-input" placeholder="Ex. : appel prévu lundi">
-                        <button class="om-btn-secondary mt-3 w-full" data-ui-target="submit" data-loading-label="Mise à jour…">Passer en vérification</button>
-                    </form>
-                {% endif %}
-
-                <form method="post" action="{{ path('admin_propositions_accepter', {id: proposition.id}) }}" class="om-card om-card-pad border-trust-200"
-                      data-confirm="La fiche sera créée et publiée dans l’annuaire à partir de cette proposition." data-confirm-title="Accepter la proposition ?" data-confirm-label="Accepter et publier">
-                    <h2 class="om-h3 !text-base"><i class="fa-solid fa-check mr-1.5 text-trust-700" aria-hidden="true"></i>Accepter</h2>
-                    <p class="mt-1 text-sm text-ink-500">Crée la fiche publique. Vous pourrez la compléter ensuite.</p>
-                    <input type="hidden" name="_token" value="{{ csrf_token('accepter_' ~ proposition.id) }}">
-
-                    <label for="acc-commune" class="om-label mt-4">Commune <span class="text-red-700" aria-hidden="true">*</span></label>
-                    <select id="acc-commune" name="commune" class="om-input" required aria-required="true">
-                        <option value="">Choisir…</option>
-                        {% for c in communes %}
-                            <option value="{{ c.id }}" {{ proposition.commune and proposition.commune.id == c.id ? 'selected' }}>{{ c.nom }} — {{ c.ville.nom }}</option>
-                        {% endfor %}
-                    </select>
-                    {% if not proposition.commune %}
-                        <p class="om-help">Saisie du proposant : « {{ proposition.communeSaisie }} » ({{ proposition.ville }}). Absente&nbsp;? Ajoutez-la dans <a class="om-link" href="{{ path('admin_localisations_index') }}">Localisations</a>.</p>
-                    {% endif %}
-
-                    <label for="acc-quartier" class="om-label mt-4">Quartier <span class="font-normal text-ink-400">(facultatif)</span></label>
-                    <input id="acc-quartier" name="quartier" class="om-input" value="{{ proposition.quartier }}">
-
-                    <label class="mt-4 flex cursor-pointer items-start gap-3 rounded-md bg-trust-50/60 p-3 text-sm text-ink-800">
-                        <input type="checkbox" name="verifie" value="1" class="om-checkbox">
-                        <span>J’ai confirmé l’existence et les coordonnées de l’établissement : publier la fiche comme <strong>vérifiée</strong>.</span>
-                    </label>
-                    <button class="om-btn-success mt-4 w-full">Accepter et créer la fiche</button>
-                </form>
-
-                <form method="post" action="{{ path('admin_propositions_refuser', {id: proposition.id}) }}" class="om-card om-card-pad"
-                      data-confirm="Le motif sera communiqué au proposant. Cette décision est définitive." data-confirm-title="Refuser la proposition ?" data-confirm-label="Refuser" data-confirm-variant="danger">
-                    <h2 class="om-h3 !text-base"><i class="fa-solid fa-xmark mr-1.5 text-red-700" aria-hidden="true"></i>Refuser</h2>
-                    <input type="hidden" name="_token" value="{{ csrf_token('refuser_' ~ proposition.id) }}">
-                    <label for="motif" class="om-label mt-4">Motif <span class="text-red-700" aria-hidden="true">*</span></label>
-                    <textarea id="motif" name="motif" rows="3" class="om-input" required aria-required="true" aria-describedby="motif-aide" placeholder="Ex. : établissement déjà répertorié, informations invérifiables…"></textarea>
-                    <p id="motif-aide" class="om-help">Communiqué au proposant sur sa page de suivi.</p>
-                    <button class="om-btn-danger mt-3 w-full">Refuser</button>
-                </form>
-            {% else %}
-                <section class="om-card om-card-pad text-sm" aria-labelledby="titre-decision">
+        {# ───── Panneau de décision ───── #}
+        <aside class="space-y-4 xl:sticky xl:top-6 xl:self-start">
+            <section class="om-card overflow-hidden" aria-labelledby="titre-decision">
+                <div class="border-b border-ink-100 bg-gradient-to-br from-ink-50 to-white px-5 py-4">
                     <h2 id="titre-decision" class="om-h3 !text-base">Décision</h2>
-                    <p class="mt-2 text-ink-700">{{ proposition.statut.label }}{% if proposition.traiteeAt %} le {{ proposition.traiteeAt|date('d/m/Y') }}{% endif %}.</p>
-                    {% if proposition.motifRefus %}<p class="mt-3 rounded-md bg-ink-50 p-3 text-ink-800"><strong>Motif :</strong> {{ proposition.motifRefus }}</p>{% endif %}
-                    {% if proposition.orphelinat %}
-                        <a class="om-btn-secondary mt-4 w-full" href="{{ path('admin_orphelinat_show', {id: proposition.orphelinat.id}) }}">Voir la fiche créée</a>
+                    {% set rang = {en_attente: 0, en_verification: 1, acceptee: 2, refusee: 2}[statut] %}
+                    <ol class="mt-3 flex items-center text-xs font-semibold" aria-label="Avancement">
+                        {% for etape in ['Reçue', 'Vérification', statut == 'refusee' ? 'Refusée' : 'Acceptée'] %}
+                            {% set fait = loop.index0 <= rang %}
+                            <li class="flex items-center {{ not loop.last ? 'flex-1' }}" {% if loop.index0 == rang %}aria-current="step"{% endif %}>
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ fait ? (loop.last and statut == 'refusee' ? 'bg-red-600 text-white' : 'bg-trust-600 text-white') : 'bg-ink-200 text-ink-500' }}">
+                                    <i class="fa-solid {{ fait ? (loop.last and statut == 'refusee' ? 'fa-xmark' : 'fa-check') : 'fa-circle' }} text-[9px]" aria-hidden="true"></i>
+                                </span>
+                                <span class="ml-1.5 {{ fait ? 'text-ink-800' : 'text-ink-400' }}">{{ etape }}</span>
+                                {% if not loop.last %}<span class="mx-2 h-px flex-1 {{ loop.index0 < rang ? 'bg-trust-400' : 'bg-ink-200' }}" aria-hidden="true"></span>{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+
+                <div class="space-y-3 p-5">
+                    {% if ouverte %}
+                        <button type="button" class="om-btn om-btn-lg w-full bg-trust-700 text-white shadow-[0_8px_20px_-8px_rgb(15_118_110/.6)] hover:-translate-y-px hover:bg-trust-800"
+                                data-action="modal#ouvrir" data-modal-cible-param="modale-accepter">
+                            <i class="fa-solid fa-check" aria-hidden="true"></i> Accepter…
+                        </button>
+                        <button type="button" class="om-btn w-full border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50"
+                                data-action="modal#ouvrir" data-modal-cible-param="modale-refuser">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Refuser…
+                        </button>
+
+                        {% if statut == 'en_attente' %}
+                            <form method="post" action="{{ path('admin_propositions_verification', {id: proposition.id}) }}" class="border-t border-ink-100 pt-4" data-controller="ui" data-action="submit->ui#loading">
+                                <input type="hidden" name="_token" value="{{ csrf_token('verification_' ~ proposition.id) }}">
+                                <p class="text-sm text-ink-600">Besoin de temps pour vérifier ? Le proposant verra que sa demande est en cours.</p>
+                                <label for="note-verif" class="sr-only">Note interne (facultatif)</label>
+                                <input id="note-verif" name="note" class="om-input mt-2" placeholder="Note interne (facultatif)">
+                                <button class="om-btn-secondary mt-2 w-full" data-ui-target="submit" data-loading-label="Mise à jour…">
+                                    <i class="fa-solid fa-magnifying-glass text-xs" aria-hidden="true"></i> Passer en vérification
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-sm text-ink-700">{{ proposition.statut.label }}{% if proposition.traiteeAt %} le {{ proposition.traiteeAt|date('d/m/Y à H:i') }}{% endif %}.</p>
+                        {% if proposition.motifRefus %}<p class="rounded-md bg-ink-50 p-3 text-sm text-ink-800"><strong>Motif :</strong> {{ proposition.motifRefus }}</p>{% endif %}
+                        {% if proposition.orphelinat %}
+                            <a class="om-btn-secondary w-full" href="{{ path('admin_orphelinat_show', {id: proposition.orphelinat.id}) }}"><i class="fa-solid fa-house-chimney-window text-xs" aria-hidden="true"></i> Voir la fiche créée</a>
+                        {% endif %}
                     {% endif %}
-                </section>
-            {% endif %}
+                </div>
+            </section>
+
+            <section class="om-card om-card-pad text-sm" aria-labelledby="titre-controle">
+                <h2 id="titre-controle" class="font-semibold text-ink-900">Points de contrôle</h2>
+                <ul class="mt-3 space-y-2">
+                    {% for point in [
+                        {ok: proposition.telephone is not empty, texte: proposition.telephone ? 'Téléphone de l’établissement fourni' : 'Téléphone de l’établissement manquant'},
+                        {ok: proposition.commune is not null, texte: proposition.commune ? 'Commune présente dans le référentiel' : 'Commune absente du référentiel'},
+                        {ok: doublons is empty, texte: doublons is empty ? 'Aucun doublon détecté' : doublons|length ~ ' doublon(s) possible(s) à examiner'},
+                        {ok: proposition.document is not empty, texte: proposition.document ? 'Justificatif joint' : 'Aucun justificatif joint'},
+                        {ok: proposition.contactProposantEmail is not null, texte: proposition.contactProposantEmail ? 'Proposant joignable par e-mail' : 'Proposant sans adresse e-mail'},
+                    ] %}
+                        <li class="flex items-start gap-2 {{ point.ok ? 'text-ink-700' : 'text-ink-500' }}">
+                            <i class="fa-solid {{ point.ok ? 'fa-circle-check text-trust-600' : 'fa-circle-exclamation text-amber-600' }} mt-0.5" aria-hidden="true"></i>
+                            <span>{{ point.texte }}<span class="sr-only"> : {{ point.ok ? 'oui' : 'non' }}</span></span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
         </aside>
+
+        {% if ouverte %}
+            {% include 'admin/propositions/_modales.html.twig' with {proposition: proposition, doublons_fiche: doublons} %}
+        {% endif %}
     </div>
 {% endblock %}

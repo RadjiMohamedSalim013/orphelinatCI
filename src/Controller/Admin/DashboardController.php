@@ -7,6 +7,7 @@ use App\Enum\SignalementStatut;
 use App\Repository\OrphelinatRepository;
 use App\Repository\PropositionOrphelinatRepository;
 use App\Repository\SignalementRepository;
+use App\Service\StatistiquesAudience;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,7 @@ class DashboardController extends AbstractController
         OrphelinatRepository $orphelinatRepository,
         PropositionOrphelinatRepository $propositionRepository,
         SignalementRepository $signalementRepository,
+        StatistiquesAudience $statistiques,
     ): Response {
         return $this->render('admin/dashboard/index.html.twig', [
             'orphelinats' => $orphelinatRepository->countByStatus(),
@@ -28,6 +30,7 @@ class DashboardController extends AbstractController
             'repartition' => $orphelinatRepository->countActiveByCommune(),
             'dernieresPropositions' => $propositionRepository->findByStatuts([PropositionStatut::EnAttente, PropositionStatut::EnVerification], 5),
             'derniersSignalements' => $signalementRepository->findByStatuts([SignalementStatut::Nouveau, SignalementStatut::EnCours], 5),
+            'audience' => $statistiques->periode(7),
         ]);
     }
 }

@@ -1,0 +1,62 @@
+{#
+    Histogramme d'une série quotidienne (une seule série, une seule échelle).
+    Variables : serie (liste {jour, visiteurs, vues}), cle ('visiteurs'), libelle, hauteur (classe Tailwind)
+#}
+{% set valeurs = serie|map(p => attribute(p, cle)) %}
+{% set maxi = max(valeurs|merge([0])) %}
+{% set haut = echelle_graphique(maxi) %}
+
+<figure class="relative">
+    <div class="flex gap-3">
+        {# Axe vertical : graduations discrètes #}
+        <div class="flex {{ hauteur|default('h-56') }} flex-col justify-between pb-0 text-right text-[11px] tabular-nums text-ink-400" aria-hidden="true">
+            {% for i in 4..0 %}<span class="-translate-y-1/2 leading-none first:translate-y-0 last:translate-y-0">{{ (haut / 4 * i)|round }}</span>{% endfor %}
+        </div>
+
+        <div class="relative min-w-0 flex-1">
+            <div class="pointer-events-none absolute inset-0 flex flex-col justify-between" aria-hidden="true">
+                {% for i in 0..4 %}<span class="border-t {{ loop.last ? 'border-ink-300' : 'border-dashed border-ink-200/80' }}"></span>{% endfor %}
+            </div>
+
+            <ol class="relative flex {{ hauteur|default('h-56') }} items-end gap-[2px]" aria-label="{{ libelle }} par jour">
+                {% for point in serie %}
+                    {% set valeur = attribute(point, cle) %}
+                    <li class="group relative flex h-full flex-1 items-end outline-none" tabindex="0"
+                        aria-label="{{ point.jour|date('d/m/Y') }} : {{ point.visiteurs }} visiteur{{ point.visiteurs > 1 ? 's' }}, {{ point.vues }} page{{ point.vues > 1 ? 's' }} vue{{ point.vues > 1 ? 's' }}">
+                        {# Zone de survol plus large que la barre #}
+                        <span class="absolute inset-x-0 bottom-0 top-0 rounded-sm transition group-hover:bg-brand-50/70 group-focus-visible:bg-brand-50/70" aria-hidden="true"></span>
+                        <span class="relative w-full rounded-t-[4px] bg-brand-500 transition-[height,background-color] duration-500 group-hover:bg-brand-600 group-focus-visible:bg-brand-600 {{ valeur == 0 ? '!bg-ink-200' }}"
+                              style="height: {{ valeur > 0 ? max(2, (valeur / haut * 100)|round(1)) : 0.6 }}%" aria-hidden="true"></span>
+                        <span class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink-900 px-3 py-2 text-xs text-white shadow-raised group-hover:block group-focus-visible:block" aria-hidden="true">
+                            <span class="block font-semibold">{{ point.jour|date('d/m/Y') }}</span>
+                            <span class="block text-ink-200">{{ point.visiteurs }} visiteur{{ point.visiteurs > 1 ? 's' }} · {{ point.vues }} page{{ point.vues > 1 ? 's' }}</span>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ol>
+
+            <div class="mt-2 flex justify-between text-[11px] text-ink-500" aria-hidden="true">
+                <span>{{ (serie|first).jour|date('d/m') }}</span>
+                {% if serie|length > 2 %}<span>{{ serie[(serie|length / 2)|round(0, 'floor')].jour|date('d/m') }}</span>{% endif %}
+                <span>{{ (serie|last).jour|date('d/m') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <details class="mt-4 text-sm">
+        <summary class="cursor-pointer select-none text-ink-500 hover:text-ink-800">Voir les données sous forme de tableau</summary>
+        <div class="mt-3 max-h-64 overflow-y-auto rounded-lg border border-ink-200">
+            <table class="w-full text-sm">
+                <caption class="sr-only">{{ libelle }} par jour</caption>
+                <thead class="sticky top-0 bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-500">
+                    <tr><th scope="col" class="px-3 py-2">Jour</th><th scope="col" class="px-3 py-2 text-right">Visiteurs</th><th scope="col" class="px-3 py-2 text-right">Pages vues</th></tr>
+                </thead>
+                <tbody class="divide-y divide-ink-100">
+                    {% for point in serie|reverse %}
+                        <tr><td class="px-3 py-1.5">{{ point.jour|date('d/m/Y') }}</td><td class="px-3 py-1.5 text-right tabular-nums">{{ point.visiteurs }}</td><td class="px-3 py-1.5 text-right tabular-nums">{{ point.vues }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </details>
+</figure>

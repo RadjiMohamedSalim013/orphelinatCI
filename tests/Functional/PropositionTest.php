@@ -52,7 +52,11 @@ class PropositionTest extends AppWebTestCase
         // 3. Elle apparaît dans l'administration
         $this->loginAdmin();
         $this->client->request('GET', '/admin/propositions');
-        self::assertSelectorTextContains('table', 'Orphelinat Bon Berger');
+        self::assertSelectorTextContains('main', 'Orphelinat Bon Berger');
+        // Actions rapides depuis la liste : fenêtres Accepter / Refuser préparées pour cette proposition
+        self::assertSelectorExists(sprintf('button[data-modal-action-param="/admin/propositions/%d/accepter"]', $proposition->getId()));
+        self::assertSelectorExists('dialog#modale-accepter select[name="commune"]');
+        self::assertSelectorExists('dialog#modale-refuser textarea[name="motif"]');
 
         // 4. L'administrateur la passe en vérification puis l'accepte
         $crawler = $this->client->request('GET', '/admin/propositions/'.$proposition->getId());
@@ -127,7 +131,7 @@ class PropositionTest extends AppWebTestCase
 
         $this->loginAdmin();
         $this->client->request('GET', '/admin/propositions/'.$proposition->getId());
-        self::assertSelectorTextContains('body', 'doublon possible');
+        self::assertSelectorTextContains('body', 'similaire déjà dans l’annuaire');
         self::assertSelectorTextContains('body', 'Même numéro de téléphone');
     }
 
@@ -144,7 +148,7 @@ class PropositionTest extends AppWebTestCase
 
         self::assertResponseStatusCodeSame(422);
         $texte = $this->client->getCrawler()->filter('main')->text();
-        foreach (['au moins 3 caractères', 'adresse ou des repères', 'Adresse e-mail invalide', 'Choisissez une commune', 'Votre nom est requis', 'exactitude des informations'] as $message) {
+        foreach (['au moins 3 caractères', 'adresse ou des repères', 'Adresse e-mail invalide', 'Choisissez une commune', 'Votre nom est requis', 'numéro de téléphone', 'exactitude des informations'] as $message) {
             self::assertStringContainsString($message, $texte);
         }
         self::assertSame(0, $this->em->getRepository(PropositionOrphelinat::class)->count([]));

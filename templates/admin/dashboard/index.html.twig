@@ -30,6 +30,23 @@
         {% endfor %}
     </section>
 
+    <section class="om-card mt-6 p-5 sm:p-6" aria-labelledby="titre-audience" data-reveal>
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h2 id="titre-audience" class="om-h3 !text-base">Audience des 7 derniers jours</h2>
+                <p class="mt-1 text-sm text-ink-600">
+                    <strong class="tabular-nums text-ink-900">{{ audience.totaux.visiteurs }}</strong> visiteur{{ audience.totaux.visiteurs > 1 ? 's' }} unique{{ audience.totaux.visiteurs > 1 ? 's' }}
+                    · <strong class="tabular-nums text-ink-900">{{ audience.totaux.vues }}</strong> page{{ audience.totaux.vues > 1 ? 's' }} vue{{ audience.totaux.vues > 1 ? 's' }}
+                    {% if audience.evolution.visiteurs is not null %}
+                        · <span class="font-semibold {{ audience.evolution.visiteurs >= 0 ? 'text-trust-700' : 'text-red-700' }}">{{ audience.evolution.visiteurs > 0 ? '+' }}{{ audience.evolution.visiteurs }} %</span> vs semaine précédente
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{{ path('admin_statistiques') }}" class="om-btn-secondary om-btn-sm">Statistiques détaillées <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i></a>
+        </div>
+        {% include 'admin/_graphique_jours.html.twig' with {serie: audience.serie, cle: 'visiteurs', libelle: 'Visiteurs uniques', hauteur: 'h-36'} %}
+    </section>
+
     <div class="mt-6 grid gap-6 xl:grid-cols-2 [&>*]:min-w-0">
         {% for bloc in [
             {titre: 'Propositions en attente', items: dernieresPropositions, vide: 'Aucune proposition à traiter. Tout est à jour.', lien: path('admin_propositions_index'), type: 'proposition'},

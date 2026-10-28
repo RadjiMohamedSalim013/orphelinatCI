@@ -39,6 +39,7 @@ class Orphelinat
     private ?string $adresse = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Assert\NotBlank(message: 'Le numéro de téléphone de l\'établissement est requis.')]
     #[Assert\Length(max: 50)]
     #[Assert\Regex(pattern: '/^[0-9+\s().-]{6,50}$/', message: 'Numéro de téléphone invalide.')]
     private ?string $telephone = null;

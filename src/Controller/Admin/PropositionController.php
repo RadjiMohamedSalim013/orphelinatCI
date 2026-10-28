@@ -29,7 +29,7 @@ class PropositionController extends AbstractController
     }
 
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(Request $request, PropositionOrphelinatRepository $repository): Response
+    public function index(Request $request, PropositionOrphelinatRepository $repository, DuplicateDetector $detector, CommuneRepository $communeRepository): Response
     {
         $filtre = (string) $request->query->get('statut', 'ouvertes');
         $statuts = match (true) {
@@ -38,10 +38,22 @@ class PropositionController extends AbstractController
             default => [PropositionStatut::EnAttente, PropositionStatut::EnVerification],
         };
 
+        $propositions = $repository->findByStatuts($statuts);
+
+        // Doublons probables des propositions encore à traiter, affichés dans la liste et la fenêtre d'acceptation.
+        $doublons = [];
+        foreach ($propositions as $proposition) {
+            if ($proposition->getStatut()->isOpen()) {
+                $doublons[$proposition->getId()] = count($detector->findSimilarOrphelinats($proposition));
+            }
+        }
+
         return $this->render('admin/propositions/index.html.twig', [
-            'propositions' => $repository->findByStatuts($statuts),
+            'propositions' => $propositions,
             'compteurs' => $repository->countByStatut(),
             'filtre' => $statuts ? $filtre : 'toutes',
+            'doublons' => $doublons,
+            'communes' => $communeRepository->createOrderedQueryBuilder()->getQuery()->getResult(),
         ]);
     }
 

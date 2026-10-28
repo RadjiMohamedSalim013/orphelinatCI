@@ -1,0 +1,32 @@
+{#
+    Classement horizontal (une seule mesure) : valeur écrite en texte, barre en appui.
+    Variables : lignes (liste {libelle, detail?, total, lien?, icone?}), vide (texte), unite (texte)
+#}
+{% if lignes is empty %}
+    <p class="py-6 text-center text-sm text-ink-500">{{ vide }}</p>
+{% else %}
+    {% set maxi = max(lignes|map(l => l.total)) %}
+    {% set somme = lignes|reduce((s, l) => s + l.total, 0) %}
+    <ol class="space-y-3">
+        {% for ligne in lignes %}
+            <li>
+                <div class="flex items-baseline justify-between gap-3 text-sm">
+                    <span class="min-w-0 truncate">
+                        {% if ligne.icone is defined %}<i class="fa-solid {{ ligne.icone }} mr-1.5 w-4 text-center text-ink-400" aria-hidden="true"></i>{% endif %}
+                        {% if ligne.lien is defined %}
+                            <a href="{{ ligne.lien }}" class="font-medium text-ink-900 hover:text-brand-700" target="_blank" rel="noopener">{{ ligne.libelle }}</a>
+                        {% else %}
+                            <span class="font-medium text-ink-900">{{ ligne.libelle }}</span>
+                        {% endif %}
+                        {% if ligne.detail is defined and ligne.detail %}<span class="text-ink-500"> · {{ ligne.detail }}</span>{% endif %}
+                    </span>
+                    <span class="shrink-0 tabular-nums text-ink-700"><strong class="font-semibold text-ink-900">{{ ligne.total }}</strong>{% if somme > 0 %} <span class="text-xs text-ink-400">({{ (ligne.total / somme * 100)|round }} %)</span>{% endif %}</span>
+                </div>
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink-100" aria-hidden="true">
+                    <div class="h-full rounded-full bg-brand-500" style="width: {{ (ligne.total / max(maxi, 1) * 100)|round }}%"></div>
+                </div>
+            </li>
+        {% endfor %}
+    </ol>
+    <p class="sr-only">Unité : {{ unite|default('consultations') }}.</p>
+{% endif %}

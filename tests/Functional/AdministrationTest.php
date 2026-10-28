@@ -83,6 +83,7 @@ class AdministrationTest extends AppWebTestCase
             'orphelinat[commune]' => (string) $this->ref['cocody']->getId(),
             'orphelinat[nouveauQuartier]' => 'Angré',
             'orphelinat[adresse]' => 'Route d’Angré',
+            'orphelinat[telephone]' => '+225 07 08 09 10 11',
             'orphelinat[latitude]' => '5.3911',
             'orphelinat[longitude]' => '-3.9812',
             'orphelinat[siteWeb]' => 'exemple.org',
@@ -117,6 +118,7 @@ class AdministrationTest extends AppWebTestCase
         $texte = $this->client->getCrawler()->filter('main')->text();
         self::assertStringContainsString('Le nom est requis', $texte);
         self::assertStringContainsString('La commune est requise', $texte);
+        self::assertStringContainsString('Le numéro de téléphone de l’établissement est requis', str_replace("'", '’', $texte));
         self::assertStringContainsString('latitude doit être comprise', $texte);
         self::assertStringContainsString('à la fois la latitude et la longitude', $texte);
     }

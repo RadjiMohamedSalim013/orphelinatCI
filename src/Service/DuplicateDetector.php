@@ -20,6 +20,9 @@ class DuplicateDetector
 
     private AsciiSlugger $slugger;
 
+    /** @var list<array<string, mixed>>|null */
+    private ?array $candidats = null;
+
     public function __construct(
         private readonly OrphelinatRepository $orphelinatRepository,
         private readonly PropositionOrphelinatRepository $propositionRepository,
@@ -37,7 +40,10 @@ class DuplicateDetector
         $communeId = $proposition->getCommune()?->getId();
 
         $matches = [];
-        foreach ($this->orphelinatRepository->findDuplicateCandidates() as $candidate) {
+        // Chargés une seule fois par requête : la liste des propositions interroge le détecteur pour chaque ligne.
+        $this->candidats ??= $this->orphelinatRepository->findDuplicateCandidates();
+
+        foreach ($this->candidats as $candidate) {
             $raisons = [];
             $score = $this->similarity($nom, $this->normalize($candidate['nom']));
 
