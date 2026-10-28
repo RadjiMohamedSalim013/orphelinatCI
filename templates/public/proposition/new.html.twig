@@ -1,135 +1,191 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Proposer un orphelinat — OrphaMap CI{% endblock %}
+{% block meta_description %}Un orphelinat manque à l’annuaire ? Proposez-le en quelques minutes : l’équipe OrphaMap CI le vérifie avant publication.{% endblock %}
+
+{% macro entete(etape, numero) %}
+    <legend class="om-fieldset-title outline-none">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-brand-100" aria-hidden="true"><i class="fa-solid {{ etape.icone }}"></i></span>
+        <span><span class="block text-xs font-semibold uppercase tracking-wider text-ink-400">Étape {{ numero }}</span>{{ etape.titre }}</span>
+    </legend>
+    <p class="om-help !mt-2 mb-6">{{ etape.aide }}</p>
+{% endmacro %}
 
 {% block body %}
-    <section class="border-b border-ink-200/70 bg-white">
-        <div class="om-container py-8 sm:py-10">
-            <p class="om-eyebrow">Contribuer</p>
-            <h1 class="om-h2 mt-1">Proposer un orphelinat</h1>
-            <p class="om-lead mt-2 max-w-2xl">Indiquez ce que vous savez de l’établissement. L’équipe le vérifie avant toute publication.</p>
+    {% set etapes = [
+        {titre: 'L’établissement', icone: 'fa-house-chimney-window', aide: 'Son nom et, si vous le souhaitez, quelques mots pour le présenter.'},
+        {titre: 'Où se trouve-t-il ?', icone: 'fa-location-dot', aide: 'Choisissez la commune, puis indiquez l’adresse ou un repère connu.'},
+        {titre: 'Comment le joindre ?', icone: 'fa-phone', aide: 'Renseignez seulement ce que vous connaissez. Tout est facultatif ici.'},
+        {titre: 'Pour nous aider à vérifier', icone: 'fa-magnifying-glass', aide: 'Comment le connaissez-vous ? Une photo ou un document accélère la vérification.'},
+        {titre: 'Vous', icone: 'fa-user', aide: 'Pour vous informer de la décision. Ces informations ne sont jamais publiées.'},
+    ] %}
+
+    <section class="relative overflow-hidden border-b border-ink-200/70 bg-white">
+        <div class="om-halo -right-24 -top-32 h-80 w-80 bg-brand-100/70" aria-hidden="true"></div>
+        <div class="om-halo -bottom-40 left-1/3 h-72 w-72 bg-trust-100/60" style="animation-delay: -6s" aria-hidden="true"></div>
+        <div class="om-container relative py-10 sm:py-12">
+            <p class="om-eyebrow" data-reveal>Contribuer à l’annuaire</p>
+            <h1 class="om-h1 mt-2 !text-3xl sm:!text-4xl" data-reveal style="--i: 1">Faites connaître un orphelinat</h1>
+            <p class="om-lead mt-3 max-w-2xl" data-reveal style="--i: 2">5 courtes étapes, environ 3 minutes. Votre proposition est vérifiée par l’équipe avant d’être publiée.</p>
         </div>
     </section>
 
-    <div class="om-container grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div class="om-container grid gap-8 py-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div class="min-w-0">
             {% if form.vars.submitted and not form.vars.valid %}
                 <div class="om-alert-error mb-6" role="alert" tabindex="-1" data-controller="focus-on-connect">
                     <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
                     <div>
-                        <p class="font-semibold">Certaines informations sont à compléter ou corriger.</p>
-                        <p class="mt-0.5">Les champs concernés sont signalés ci-dessous. Vos saisies ont été conservées{% if form.image.vars.data is not null or form.document.vars.data is not null %}, mais les fichiers doivent être joints à nouveau{% endif %}.</p>
+                        <p class="font-semibold">Il reste quelques informations à compléter.</p>
+                        <p class="mt-0.5">Nous vous ramenons à l’étape concernée. Vos saisies ont été conservées{% if form.image.vars.data is not null or form.document.vars.data is not null %}, mais les fichiers doivent être joints à nouveau{% endif %}.</p>
                         {{ form_errors(form) }}
                     </div>
                 </div>
             {% endif %}
 
-            <p class="mb-4 text-sm text-ink-500">Les champs marqués <span class="text-red-700">*</span> sont obligatoires.</p>
+            {{ form_start(form, {attr: {class: 'scroll-mt-24', novalidate: 'novalidate', 'data-controller': 'ui assistant champs', 'data-action': 'submit->assistant#envoyer submit->ui#loading'}}) }}
 
-            {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate', 'data-controller': 'ui', 'data-action': 'submit->ui#loading'}}) }}
+                {# Progression : masquée sans JavaScript (toutes les étapes sont alors visibles) #}
+                <div class="mb-6 hidden" data-assistant-target="navigation">
+                    <div class="flex items-center justify-between text-sm">
+                        <p class="font-semibold text-ink-900" data-assistant-target="compteur" aria-live="polite">Étape 1 sur {{ etapes|length }}</p>
+                        <p class="text-ink-500"><span class="text-red-700">*</span> obligatoire</p>
+                    </div>
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-ink-100" aria-hidden="true">
+                        <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-[width] duration-500 ease-out" style="width: 20%" data-assistant-target="barre"></div>
+                    </div>
+                    <ol class="mt-4 grid grid-cols-5 gap-1" aria-label="Étapes">
+                        {% for etape in etapes %}
+                            <li>
+                                <button type="button" data-assistant-target="pastille" data-action="assistant#aller" data-etape="{{ loop.index0 }}"
+                                        class="group flex w-full flex-col items-center gap-1.5 rounded-md p-1 text-center disabled:cursor-not-allowed">
+                                    <span class="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm transition duration-300
+                                                 group-data-[etat=avenir]:border-ink-200 group-data-[etat=avenir]:bg-white group-data-[etat=avenir]:text-ink-400
+                                                 group-data-[etat=actuel]:scale-110 group-data-[etat=actuel]:border-brand-600 group-data-[etat=actuel]:bg-brand-600 group-data-[etat=actuel]:text-white group-data-[etat=actuel]:shadow-[0_0_0_4px_rgb(var(--brand-100))]
+                                                 group-data-[etat=fait]:border-trust-600 group-data-[etat=fait]:bg-trust-600 group-data-[etat=fait]:text-white" aria-hidden="true">
+                                        <i class="fa-solid {{ etape.icone }} text-xs group-data-[etat=fait]:hidden"></i>
+                                        <i class="fa-solid fa-check hidden text-xs group-data-[etat=fait]:inline"></i>
+                                    </span>
+                                    <span class="hidden text-[11px] font-medium leading-tight text-ink-500 group-data-[etat=actuel]:text-ink-900 sm:block">{{ etape.titre }}</span>
+                                    <span class="sr-only">Étape {{ loop.index }} : {{ etape.titre }}</span>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </div>
 
-                <fieldset class="om-fieldset">
-                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">1</span>L’établissement</legend>
-                    <div class="mt-5">
+                <div class="space-y-6">
+                    {% import _self as m %}
+
+                    <fieldset class="om-fieldset" data-assistant-target="etape">
+                        {{ m.entete(etapes[0], 1) }}
                         {{ form_row(form.nom) }}
-                        {{ form_row(form.description) }}
-                    </div>
-                </fieldset>
+                        {{ form_row(form.description, {row_attr: {class: '!mb-0'}}) }}
+                    </fieldset>
 
-                <fieldset class="om-fieldset" data-controller="cascade">
-                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">2</span>Localisation</legend>
-                    <p class="om-help !mt-0 mb-5">Choisissez la commune dans la liste ; si elle n’y figure pas, cochez la case pour la saisir.</p>
+                    <fieldset class="om-fieldset" data-assistant-target="etape" data-regle="localisation" data-controller="cascade">
+                        {{ m.entete(etapes[1], 2) }}
+                        <div data-controller="ui">
+                            <div class="grid gap-x-4 sm:grid-cols-2">
+                                <div class="mb-5">
+                                    <label for="p-pays" class="om-label">Pays</label>
+                                    <select id="p-pays" class="om-input" data-cascade-target="select" data-cascade-name="pays" data-cascade-child="ville" data-action="cascade#change">
+                                        <option value="">Choisissez un pays</option>
+                                        {% for p in pays %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-5">
+                                    <label for="p-ville" class="om-label">Ville</label>
+                                    <select id="p-ville" class="om-input" data-cascade-target="select" data-cascade-name="ville" data-cascade-child="commune"
+                                            data-cascade-url="{{ path('api_localisations_villes') }}?pays=" data-action="cascade#change">
+                                        <option value="">Toutes les villes</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {{ form_row(form.commune, {mention_obligatoire: true, help: 'Absente de la liste ? Cochez la case ci-dessous pour la saisir.', attr: {'data-cascade-target': 'select', 'data-cascade-name': 'commune', 'data-cascade-filter': 'ville'}}) }}
 
-                    <div data-controller="ui">
+                            {{ form_row(form.communeAbsente, {attr: {'data-action': 'change->ui#sync'}}) }}
+                            <div data-ui-target="panel" class="mb-5 grid gap-x-4 rounded-lg border border-dashed border-brand-200 bg-brand-50/40 p-4 pb-0 sm:grid-cols-3">
+                                {{ form_row(form.pays, {required: true}) }}
+                                {{ form_row(form.ville, {required: true}) }}
+                                {{ form_row(form.communeSaisie, {required: true}) }}
+                            </div>
+                        </div>
                         <div class="grid gap-x-4 sm:grid-cols-2">
-                            <div class="mb-5">
-                                <label for="p-pays" class="om-label">Pays</label>
-                                <select id="p-pays" class="om-input" data-cascade-target="select" data-cascade-name="pays" data-cascade-child="ville" data-action="cascade#change">
-                                    <option value="">Choisissez un pays</option>
-                                    {% for p in pays %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-5">
-                                <label for="p-ville" class="om-label">Ville</label>
-                                <select id="p-ville" class="om-input" data-cascade-target="select" data-cascade-name="ville" data-cascade-child="commune"
-                                        data-cascade-url="{{ path('api_localisations_villes') }}?pays=" data-action="cascade#change">
-                                    <option value="">Toutes les villes</option>
-                                </select>
-                            </div>
+                            {{ form_row(form.quartier) }}
+                            {{ form_row(form.adresse) }}
                         </div>
-                        {{ form_row(form.commune, {attr: {'data-cascade-target': 'select', 'data-cascade-name': 'commune', 'data-cascade-filter': 'ville'}}) }}
+                    </fieldset>
 
-                        {{ form_row(form.communeAbsente, {attr: {'data-action': 'change->ui#sync'}}) }}
-                        <div data-ui-target="panel" class="mb-5 grid gap-x-4 rounded-lg border border-dashed border-ink-300 bg-ink-50/60 p-4 pb-0 sm:grid-cols-3">
-                            {{ form_row(form.pays, {required: true}) }}
-                            {{ form_row(form.ville, {required: true}) }}
-                            {{ form_row(form.communeSaisie, {required: true}) }}
+                    <fieldset class="om-fieldset" data-assistant-target="etape">
+                        {{ m.entete(etapes[2], 3) }}
+                        <div class="grid gap-x-4 sm:grid-cols-2">
+                            {{ form_row(form.telephone) }}
+                            {{ form_row(form.email) }}
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="grid gap-x-4 sm:grid-cols-2">
-                        {{ form_row(form.quartier) }}
-                        {{ form_row(form.adresse) }}
-                    </div>
-                </fieldset>
-
-                <fieldset class="om-fieldset">
-                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">3</span>Contacts de l’établissement</legend>
-                    <p class="om-help !mt-0 mb-5">Renseignez seulement ceux que vous connaissez.</p>
-                    <div class="grid gap-x-4 sm:grid-cols-2">
-                        {{ form_row(form.telephone) }}
-                        {{ form_row(form.email) }}
-                    </div>
-                </fieldset>
-
-                <fieldset class="om-fieldset">
-                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">4</span>Pour nous aider à vérifier</legend>
-                    <div class="mt-5">
+                    <fieldset class="om-fieldset" data-assistant-target="etape">
+                        {{ m.entete(etapes[3], 4) }}
                         {{ form_row(form.source) }}
                         <div class="grid gap-x-4 sm:grid-cols-2">
                             {{ form_row(form.image) }}
                             {{ form_row(form.document) }}
                         </div>
-                    </div>
-                </fieldset>
+                    </fieldset>
 
-                <fieldset class="om-fieldset">
-                    <legend class="om-fieldset-title"><span class="om-step" aria-hidden="true">5</span>Vous</legend>
-                    <p class="om-help !mt-0 mb-5">Ces informations restent confidentielles et servent uniquement à la vérification.</p>
-                    <div class="grid gap-x-4 sm:grid-cols-2">
-                        {{ form_row(form.nomProposant) }}
-                        {{ form_row(form.contactProposant) }}
-                    </div>
-                    {{ form_row(form.consentement, {row_attr: {class: '!mb-0'}}) }}
-                </fieldset>
+                    <fieldset class="om-fieldset" data-assistant-target="etape">
+                        {{ m.entete(etapes[4], 5) }}
+                        <div class="grid gap-x-4 sm:grid-cols-2">
+                            {{ form_row(form.nomProposant) }}
+                            {{ form_row(form.contactProposant) }}
+                        </div>
+
+                        <div class="mb-5 rounded-lg border border-trust-200 bg-trust-50/60 p-4" data-recap-bloc hidden>
+                            <p class="mb-3 flex items-center gap-2 text-sm font-semibold text-trust-900"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Récapitulatif avant envoi</p>
+                            <div data-assistant-target="recap"></div>
+                        </div>
+
+                        {{ form_row(form.consentement, {row_attr: {class: '!mb-0'}}) }}
+                    </fieldset>
+                </div>
 
                 {{ form_rest(form) }}
 
-                <div class="flex flex-col-reverse gap-3 border-t border-ink-200 pt-6 sm:flex-row sm:justify-end">
-                    <a href="{{ path('home') }}" class="om-btn-ghost">Annuler</a>
-                    <button type="submit" class="om-btn-primary om-btn-lg" data-ui-target="submit" data-loading-label="Envoi en cours…">
-                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Envoyer la proposition
-                    </button>
+                <div class="mt-6 flex flex-col-reverse gap-3 border-t border-ink-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <button type="button" class="om-btn-ghost hidden" data-assistant-target="precedent navigation" data-action="assistant#precedent" hidden>
+                            <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Précédent
+                        </button>
+                    </div>
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row">
+                        <button type="button" class="om-btn-primary om-btn-lg hidden" data-assistant-target="suivant navigation" data-action="assistant#suivant">
+                            Continuer <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
+                        </button>
+                        <button type="submit" class="om-btn-primary om-btn-lg" data-ui-target="submit" data-assistant-target="envoi" data-loading-label="Envoi en cours…">
+                            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Envoyer la proposition
+                        </button>
+                    </div>
                 </div>
             {{ form_end(form) }}
         </div>
 
         <aside aria-labelledby="titre-ensuite">
-            <div class="om-card om-card-pad lg:sticky lg:top-[calc(var(--header-height)+1.5rem)]">
+            <div class="om-card om-card-pad lg:sticky lg:top-[calc(var(--header-height)+1.5rem)]" data-reveal="zoom">
                 <h2 id="titre-ensuite" class="om-h3">Que se passe-t-il ensuite&nbsp;?</h2>
-                <ol class="mt-4 space-y-4 text-sm">
+                <ol class="relative mt-5 space-y-5 text-sm before:absolute before:bottom-3 before:left-4 before:top-3 before:w-px before:bg-trust-200">
                     {% for etape in [
                         ['fa-inbox', 'Réception', 'Vous obtenez un lien privé pour suivre votre demande.'],
                         ['fa-magnifying-glass', 'Vérification', 'L’équipe contrôle l’existence et les coordonnées de l’établissement.'],
                         ['fa-circle-check', 'Décision', 'La fiche est publiée, ou la proposition refusée avec un motif.'],
                     ] %}
-                        <li class="flex gap-3">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-trust-50 text-trust-700 ring-1 ring-trust-200" aria-hidden="true"><i class="fa-solid {{ etape[0] }} text-xs"></i></span>
+                        <li class="relative flex gap-3">
+                            <span class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-trust-700 ring-2 ring-trust-200" aria-hidden="true"><i class="fa-solid {{ etape[0] }} text-xs"></i></span>
                             <div><p class="font-semibold text-ink-900">{{ etape[1] }}</p><p class="text-ink-600">{{ etape[2] }}</p></div>
                         </li>
                     {% endfor %}
                 </ol>
-                <p class="mt-5 rounded-md bg-brand-50 p-3 text-[13px] text-brand-900"><i class="fa-solid fa-shield-heart mr-1" aria-hidden="true"></i> Ne mentionnez aucun enfant et ne joignez pas de photo où un enfant est reconnaissable.</p>
+                <p class="mt-6 rounded-md bg-brand-50 p-3 text-[13px] text-brand-900"><i class="fa-solid fa-shield-heart mr-1" aria-hidden="true"></i> Ne mentionnez aucun enfant et ne joignez pas de photo où un enfant est reconnaissable.</p>
             </div>
         </aside>
     </div>

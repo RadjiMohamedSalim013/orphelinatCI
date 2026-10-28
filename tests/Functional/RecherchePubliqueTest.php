@@ -20,7 +20,8 @@ class RecherchePubliqueTest extends AppWebTestCase
         self::assertCount(1, $crawler->filter('form[role="search"] select[name="pays"]'));
         self::assertSelectorTextContains('body', 'Orphelinat Saint-Joseph');
         // Statistiques réelles : 3 actifs, 1 vérifié, archivé et fermé exclus
-        self::assertSelectorTextContains('body', 'Établissements');
+        self::assertSelectorExists('[data-compteur-cible-value="3"]');
+        self::assertSelectorExists('[data-compteur-cible-value="1"]');
         self::assertStringNotContainsString('Orphelinat Archivé', $crawler->filter('main')->text());
     }
 

@@ -178,7 +178,7 @@ class PropositionTest extends AppWebTestCase
         // Envoi instantané
         $crawler = $this->client->request('GET', '/proposer-orphelinat');
         $form = $crawler->selectButton('Envoyer la proposition')->form();
-        $this->client->submit($form, $this->valeursValides());
+        $this->client->submit($form, ['proposition_orphelinat[rendu_le]' => (string) time()] + $this->valeursValides());
         self::assertSelectorTextContains('body', 'Envoi trop rapide');
 
         self::assertSame(0, $this->em->getRepository(PropositionOrphelinat::class)->count([]));

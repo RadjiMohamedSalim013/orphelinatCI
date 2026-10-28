@@ -34,7 +34,7 @@
         {% set filtres = filtres|merge([{label: '« ' ~ criteres.recherche ~ ' »', icone: 'fa-signature', sans: criteres.toQuery|filter((v, k) => k != 'q')}]) %}
     {% endif %}
 
-    <section class="border-b border-ink-200/70 bg-white">
+    <section class="relative overflow-hidden border-b border-ink-200/70 bg-gradient-to-b from-brand-50/70 to-white">
         <div class="om-container py-8 sm:py-10">
             <h1 class="om-h2">{{ lieu ? 'Orphelinats à ' ~ lieu : 'Rechercher un orphelinat' }}</h1>
             <p class="mt-1 text-ink-600">Utilisez un ou plusieurs critères : les listes s’adaptent au pays puis à la ville choisis.</p>
@@ -97,7 +97,7 @@
                         {% if resultats.items is not empty %}
                             <ul class="grid gap-4">
                                 {% for orphelinat in resultats.items %}
-                                    <li>{% include 'partials/_orphelinat_card.html.twig' with {ligne: true} %}</li>
+                                    <li data-reveal style="--i: {{ loop.index0 % 6 }}">{% include 'partials/_orphelinat_card.html.twig' with {ligne: true} %}</li>
                                 {% endfor %}
                             </ul>
                             {% include 'partials/_pagination.html.twig' with {page: resultats.page, pages: resultats.pages, total: resultats.total, route: 'orphelinat_index', params: criteres.toQuery} %}

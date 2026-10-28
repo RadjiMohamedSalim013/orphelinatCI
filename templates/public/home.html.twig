@@ -34,64 +34,112 @@
 {% endblock %}
 
 {% block body %}
-    {# ───── Recherche (au-dessus de la ligne de flottaison) ───── #}
-    <section class="relative overflow-hidden border-b border-ink-200/70 bg-white">
-        <div class="pointer-events-none absolute -right-40 -top-40 h-[28rem] w-[28rem] rounded-full bg-brand-50 blur-3xl" aria-hidden="true"></div>
-        <div class="om-container relative grid gap-8 py-10 sm:py-14 lg:grid-cols-[1.3fr_1fr] lg:gap-x-12 lg:py-16">
-            <div class="self-center">
-                <p class="om-eyebrow">Annuaire des orphelinats · Côte d’Ivoire</p>
-                <h1 class="om-h1 mt-3">
-                    Trouvez les orphelinats<br class="hidden sm:block">
-                    <span class="text-brand-600">près de chez vous.</span>
-                </h1>
-                <p class="om-lead mt-4 max-w-xl">
-                    Choisissez votre ville et votre commune&nbsp;: OrphaMap vous indique les établissements d’accueil, leur adresse et comment les joindre.
+    {# ───── Accueil : promesse + recherche immédiate ───── #}
+    <section class="relative isolate overflow-hidden bg-gradient-to-b from-brand-50/70 via-white to-white">
+        <div class="om-halo -right-32 -top-40 -z-10 h-[30rem] w-[30rem] bg-brand-200/50" aria-hidden="true"></div>
+        <div class="om-halo -left-40 top-32 -z-10 h-96 w-96 bg-trust-100/70" style="animation-delay: -7s" aria-hidden="true"></div>
+        <div class="absolute inset-0 -z-10 opacity-[.35] [background-image:radial-gradient(rgb(var(--ink-300))_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden="true"></div>
+
+        <div class="om-container grid items-center gap-10 pb-10 pt-10 sm:pt-16 lg:grid-cols-[1.25fr_1fr] lg:gap-x-14 lg:pb-14 lg:pt-20">
+            <div>
+                <p class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-brand-800 shadow-sm backdrop-blur" data-reveal>
+                    <span class="relative flex h-2 w-2" aria-hidden="true">
+                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-trust-500 opacity-60"></span>
+                        <span class="relative inline-flex h-2 w-2 rounded-full bg-trust-600"></span>
+                    </span>
+                    Annuaire des orphelinats · Côte d’Ivoire
                 </p>
-            </div>
-            <div class="mx-auto hidden w-full max-w-sm lg:row-span-1 lg:block">
-                {% include 'partials/_hero_illustration.html.twig' %}
+
+                <h1 class="mt-5 font-display text-[2.35rem] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink-900 sm:text-6xl">
+                    {% for mot in 'Trouvez les orphelinats'|split(' ') %}<span class="om-mot" style="--i: {{ loop.index0 }}">{{ mot }}</span> {% endfor %}
+                    <span class="relative inline-block whitespace-nowrap text-brand-600">
+                        {% for mot in 'près de chez vous.'|split(' ') %}<span class="om-mot" style="--i: {{ loop.index0 + 3 }}">{{ mot }}</span>{{ not loop.last ? ' ' }}{% endfor %}
+                        <svg class="absolute -bottom-2 left-0 h-3 w-full text-brand-300" viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden="true">
+                            <path d="M2 9C80 2 220 2 298 8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" class="om-souligne"/>
+                        </svg>
+                    </span>
+                </h1>
+
+                <p class="om-lead mt-6 max-w-xl" data-reveal style="--i: 6">
+                    Choisissez votre ville et votre commune : nous vous montrons les établissements d’accueil, leur adresse et comment les joindre.
+                </p>
+
+                <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-600" data-reveal style="--i: 7">
+                    <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-trust-600" aria-hidden="true"></i>Fiches vérifiées par l’équipe</span>
+                    <span class="inline-flex items-center gap-2"><i class="fa-solid fa-lock text-trust-600" aria-hidden="true"></i>Aucune donnée sur les enfants</span>
+                    <span class="inline-flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-trust-600" aria-hidden="true"></i>Gratuit et ouvert à tous</span>
+                </div>
             </div>
 
-            <div class="lg:col-span-2 lg:-mt-6">
-                <div class="om-card relative z-10 p-4 shadow-raised sm:p-6">
-                    <h2 class="sr-only">Rechercher un orphelinat</h2>
+            <div class="relative mx-auto hidden w-full max-w-md lg:block" data-reveal="zoom" style="--i: 3">
+                {% include 'partials/_hero_illustration.html.twig' %}
+                {% if stats.actifs > 0 %}
+                    <div class="om-flotte absolute -left-8 top-16 rounded-xl border border-ink-200 bg-white/95 px-4 py-3 shadow-raised backdrop-blur" aria-hidden="true">
+                        <p class="font-display text-2xl font-extrabold text-ink-900">{{ stats.actifs }}</p>
+                        <p class="text-xs font-medium text-ink-500">établissement{{ stats.actifs > 1 ? 's' }} répertorié{{ stats.actifs > 1 ? 's' }}</p>
+                    </div>
+                    <div class="om-flotte om-flotte-2 absolute -right-4 bottom-14 flex items-center gap-3 rounded-xl border border-trust-200 bg-white/95 px-4 py-3 shadow-raised backdrop-blur" aria-hidden="true">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-trust-50 text-trust-700"><i class="fa-solid fa-circle-check"></i></span>
+                        <div>
+                            <p class="font-display text-lg font-extrabold leading-none text-ink-900">{{ stats.communes }}</p>
+                            <p class="text-xs font-medium text-ink-500">commune{{ stats.communes > 1 ? 's' }} couverte{{ stats.communes > 1 ? 's' }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="om-container relative pb-12 sm:pb-16" data-reveal style="--i: 8">
+            <div class="relative rounded-2xl bg-gradient-to-r from-brand-200/60 via-white to-trust-200/60 p-px shadow-[0_24px_60px_-24px_rgb(194_65_12/.35)]">
+                <div class="rounded-[calc(1rem-1px)] bg-white p-4 sm:p-6">
+                    <h2 class="mb-4 flex items-center gap-2 font-display text-lg font-bold text-ink-900">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white" aria-hidden="true"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+                        Où cherchez-vous&nbsp;?
+                    </h2>
                     {% include 'partials/_search_form.html.twig' with {pays: pays, villes: [], communes: [], criteres: null} %}
                 </div>
-
-                {% if stats.actifs > 0 %}
-                    <dl class="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
-                        <div class="flex items-baseline gap-2">
-                            <dt class="sr-only">Établissements répertoriés</dt>
-                            <dd class="flex items-baseline gap-2"><span class="font-display text-2xl font-extrabold text-ink-900">{{ stats.actifs }}</span>
-                            <span class="text-ink-600" aria-hidden="true">établissement{{ stats.actifs > 1 ? 's' }} répertorié{{ stats.actifs > 1 ? 's' }}</span></dd>
-                        </div>
-                        <div class="flex items-baseline gap-2">
-                            <dt class="sr-only">Établissements vérifiés</dt>
-                            <dd class="flex items-baseline gap-2"><span class="font-display text-2xl font-extrabold text-trust-700">{{ stats.verifies }}</span>
-                            <span class="text-ink-600" aria-hidden="true">vérifié{{ stats.verifies > 1 ? 's' }} par l’équipe</span></dd>
-                        </div>
-                        <div class="flex items-baseline gap-2">
-                            <dt class="sr-only">Communes couvertes</dt>
-                            <dd class="flex items-baseline gap-2"><span class="font-display text-2xl font-extrabold text-ink-900">{{ stats.communes }}</span>
-                            <span class="text-ink-600" aria-hidden="true">commune{{ stats.communes > 1 ? 's' }} couverte{{ stats.communes > 1 ? 's' }}</span></dd>
-                        </div>
-                    </dl>
-                {% endif %}
             </div>
         </div>
     </section>
 
-    {# ───── Accès direct par commune (données réelles) ───── #}
+    {# ───── Chiffres réels ───── #}
+    {% if stats.actifs > 0 %}
+        <section class="border-y border-ink-200/70 bg-white" aria-label="L’annuaire en chiffres">
+            <dl class="om-container grid grid-cols-3 divide-x divide-ink-100 py-8 text-center">
+                {% for chiffre in [
+                    {valeur: stats.actifs, libelle: 'établissement' ~ (stats.actifs > 1 ? 's') ~ ' répertorié' ~ (stats.actifs > 1 ? 's'), ton: 'text-ink-900'},
+                    {valeur: stats.verifies, libelle: 'vérifié' ~ (stats.verifies > 1 ? 's') ~ ' par l’équipe', ton: 'text-trust-700'},
+                    {valeur: stats.communes, libelle: 'commune' ~ (stats.communes > 1 ? 's') ~ ' couverte' ~ (stats.communes > 1 ? 's'), ton: 'text-brand-700'},
+                ] %}
+                    <div class="flex flex-col-reverse px-2" data-reveal style="--i: {{ loop.index0 }}">
+                        <dt class="mt-1 text-xs font-medium text-ink-500 sm:text-sm">{{ chiffre.libelle }}</dt>
+                        <dd class="font-display text-3xl font-extrabold sm:text-5xl {{ chiffre.ton }}" data-controller="compteur" data-compteur-cible-value="{{ chiffre.valeur }}">{{ chiffre.valeur }}</dd>
+                    </div>
+                {% endfor %}
+            </dl>
+        </section>
+    {% endif %}
+
+    {# ───── Accès direct par commune ───── #}
     {% if communes is not empty %}
-        <section class="om-container pt-12 sm:pt-16" aria-labelledby="titre-communes">
-            <h2 id="titre-communes" class="om-h3">Explorer par commune</h2>
-            <ul class="mt-4 flex flex-wrap gap-2">
+        <section class="om-container pt-14 sm:pt-20" aria-labelledby="titre-communes">
+            <div data-reveal>
+                <p class="om-eyebrow">Accès rapide</p>
+                <h2 id="titre-communes" class="om-h2 mt-1">Explorer par commune</h2>
+            </div>
+            <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {% for c in communes %}
-                    <li>
+                    <li data-reveal style="--i: {{ loop.index0 }}">
                         <a href="{{ path('orphelinat_index', {pays: c.paysId, ville: c.villeId, commune: c.communeId}) }}"
-                           class="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-ink-200 bg-white px-4 text-sm font-medium text-ink-800 shadow-card transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800">
-                            {{ c.commune }} <span class="text-ink-400">· {{ c.ville }}</span>
-                            <span class="rounded-full bg-ink-100 px-2 text-xs font-semibold text-ink-700">{{ c.total }}</span>
+                           class="group flex items-center gap-3 rounded-xl border border-ink-200 bg-white p-4 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-raised">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition duration-300 group-hover:bg-brand-600 group-hover:text-white" aria-hidden="true">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate font-semibold text-ink-900">{{ c.commune }}</span>
+                                <span class="block text-xs text-ink-500">{{ c.ville }} · {{ c.total }} établissement{{ c.total > 1 ? 's' }}</span>
+                            </span>
+                            <i class="fa-solid fa-arrow-right text-xs text-ink-300 transition duration-300 group-hover:translate-x-1 group-hover:text-brand-600" aria-hidden="true"></i>
                         </a>
                     </li>
                 {% endfor %}
@@ -100,19 +148,19 @@
     {% endif %}
 
     {# ───── Derniers ajouts ───── #}
-    <section class="om-container om-section !pt-12" aria-labelledby="titre-recents">
-        <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <section class="om-container om-section !pt-14" aria-labelledby="titre-recents">
+        <div class="mb-8 flex flex-wrap items-end justify-between gap-3" data-reveal>
             <div>
                 <p class="om-eyebrow">Annuaire</p>
                 <h2 id="titre-recents" class="om-h2 mt-1">Ajoutés récemment</h2>
             </div>
-            <a href="{{ path('orphelinat_index') }}" class="om-btn-secondary om-btn-sm">Tout l’annuaire <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i></a>
+            <a href="{{ path('orphelinat_index') }}" class="group om-btn-secondary om-btn-sm">Tout l’annuaire <i class="fa-solid fa-arrow-right text-xs transition group-hover:translate-x-0.5" aria-hidden="true"></i></a>
         </div>
 
         {% if recents is not empty %}
-            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 max-sm:[&>*:nth-child(n+4)]:hidden">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-sm:[&>*:nth-child(n+4)]:hidden">
                 {% for orphelinat in recents %}
-                    {% include 'partials/_orphelinat_card.html.twig' %}
+                    <div data-reveal style="--i: {{ loop.index0 % 3 }}">{% include 'partials/_orphelinat_card.html.twig' %}</div>
                 {% endfor %}
             </div>
         {% else %}
@@ -122,64 +170,68 @@
         {% endif %}
     </section>
 
-    {# ───── Fonctionnement et vérification ───── #}
-    <section id="fonctionnement" class="border-y border-ink-200/70 bg-white" aria-labelledby="titre-fonctionnement">
-        <div class="om-container om-section grid gap-12 lg:grid-cols-[1fr_1.1fr]">
-            <div>
-                <p class="om-eyebrow">Comment ça marche</p>
-                <h2 id="titre-fonctionnement" class="om-h2 mt-1">Un annuaire construit avec vous, vérifié par l’équipe</h2>
-                <p class="om-lead mt-4">Chacun peut proposer un établissement ou signaler une information erronée. Rien n’est publié ni modifié sans contrôle.</p>
-
-                {% if verifies is not empty %}
-                    <div class="mt-8">
-                        <h3 class="text-sm font-semibold text-ink-900">Dernières fiches vérifiées</h3>
-                        <ul class="mt-3 divide-y divide-ink-100 rounded-lg border border-ink-200">
-                            {% for o in verifies %}
-                                <li>
-                                    <a href="{{ path('orphelinat_show', {id: o.id, slug: o.slug}) }}" class="flex min-h-[56px] items-center justify-between gap-3 px-4 py-2 transition hover:bg-ink-50">
-                                        <span class="min-w-0">
-                                            <span class="block truncate font-semibold text-ink-900">{{ o.nom }}</span>
-                                            <span class="block truncate text-xs text-ink-500">{{ o.localisationLabel }}</span>
-                                        </span>
-                                        <span class="om-badge-trust"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Vérifié</span>
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
+    {# ───── Fonctionnement ───── #}
+    <section id="fonctionnement" class="relative overflow-hidden bg-ink-900 text-white" aria-labelledby="titre-fonctionnement">
+        <div class="om-halo -right-24 top-0 h-80 w-80 bg-brand-600/30" aria-hidden="true"></div>
+        <div class="om-halo -left-24 bottom-0 h-80 w-80 bg-trust-600/20" style="animation-delay: -9s" aria-hidden="true"></div>
+        <div class="om-container om-section relative">
+            <div class="max-w-2xl" data-reveal>
+                <p class="text-xs font-semibold uppercase tracking-[.12em] text-brand-300">Comment ça marche</p>
+                <h2 id="titre-fonctionnement" class="mt-2 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">Un annuaire construit avec vous, vérifié par l’équipe</h2>
+                <p class="mt-4 text-lg text-ink-300">Chacun peut proposer un établissement ou signaler une erreur. Rien n’est publié ni modifié sans contrôle.</p>
             </div>
 
-            <ol class="grid gap-4">
+            <ol class="mt-12 grid gap-6 md:grid-cols-3">
                 {% for etape in [
-                    {icone: 'fa-map-location-dot', titre: 'Cherchez par lieu', texte: 'Pays, ville puis commune : seuls les établissements correspondants s’affichent, avec leur position sur la carte quand elle est connue.'},
-                    {icone: 'fa-address-card', titre: 'Consultez la fiche', texte: 'Adresse, téléphone, présentation et statut de vérification. Les fiches non vérifiées sont clairement signalées.'},
-                    {icone: 'fa-hand-holding-heart', titre: 'Contribuez', texte: 'Proposez un établissement manquant ou signalez une erreur. L’équipe contrôle chaque information avant publication.'},
+                    {icone: 'fa-map-location-dot', titre: 'Cherchez par lieu', texte: 'Pays, ville puis commune : seuls les établissements correspondants s’affichent, sur une liste et sur la carte.'},
+                    {icone: 'fa-address-card', titre: 'Consultez la fiche', texte: 'Adresse, téléphone, itinéraire et statut de vérification. Les fiches non vérifiées sont clairement signalées.'},
+                    {icone: 'fa-hand-holding-heart', titre: 'Contribuez', texte: 'Proposez un établissement manquant ou signalez une erreur. L’équipe contrôle chaque information.'},
                 ] %}
-                    <li class="flex gap-4 rounded-lg border border-ink-200 bg-page p-5">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-white text-brand-600 shadow-card ring-1 ring-ink-200" aria-hidden="true">
+                    <li class="group relative rounded-2xl border border-white/10 bg-white/[.04] p-6 backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand-400/40 hover:bg-white/[.07]" data-reveal style="--i: {{ loop.index0 }}">
+                        <span class="absolute right-5 top-4 font-display text-5xl font-extrabold text-white/[.06]" aria-hidden="true">{{ loop.index }}</span>
+                        <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-[0_8px_24px_-8px_rgb(234_88_12/.8)] transition duration-300 group-hover:scale-110 group-hover:rotate-[-4deg]" aria-hidden="true">
                             <i class="fa-solid {{ etape.icone }}"></i>
                         </span>
-                        <div>
-                            <h3 class="font-display font-bold text-ink-900"><span class="sr-only">Étape {{ loop.index }} : </span>{{ etape.titre }}</h3>
-                            <p class="mt-1 text-sm text-ink-600">{{ etape.texte }}</p>
-                        </div>
+                        <h3 class="mt-5 font-display text-lg font-bold text-white"><span class="sr-only">Étape {{ loop.index }} : </span>{{ etape.titre }}</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-ink-300">{{ etape.texte }}</p>
                     </li>
                 {% endfor %}
             </ol>
+
+            {% if verifies is not empty %}
+                <div class="mt-12" data-reveal>
+                    <h3 class="flex items-center gap-2 text-sm font-semibold text-white"><i class="fa-solid fa-circle-check text-trust-400" aria-hidden="true"></i> Dernières fiches vérifiées</h3>
+                    <ul class="mt-4 grid gap-3 md:grid-cols-3">
+                        {% for o in verifies %}
+                            <li>
+                                <a href="{{ path('orphelinat_show', {id: o.id, slug: o.slug}) }}" class="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[.04] px-4 py-3 transition hover:border-trust-400/50 hover:bg-white/[.08]">
+                                    <span class="min-w-0">
+                                        <span class="block truncate font-semibold text-white">{{ o.nom }}</span>
+                                        <span class="block truncate text-xs text-ink-400">{{ o.localisationLabel }}</span>
+                                    </span>
+                                    <i class="fa-solid fa-arrow-right text-xs text-ink-400" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
         </div>
     </section>
 
     {# ───── Appel à contribution ───── #}
     <section class="om-container om-section" aria-labelledby="titre-contribuer">
-        <div class="relative overflow-hidden rounded-xl bg-ink-900 px-6 py-10 text-white sm:px-10 sm:py-12">
-            <div class="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl" aria-hidden="true"></div>
-            <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-6 py-12 text-white shadow-[0_30px_60px_-30px_rgb(194_65_12/.7)] sm:px-12 sm:py-14" data-reveal="zoom">
+            <div class="om-halo -right-16 -top-24 h-72 w-72 bg-white/20" aria-hidden="true"></div>
+            <div class="absolute inset-0 opacity-20 [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_left,black,transparent_70%)]" aria-hidden="true"></div>
+            <div class="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
                 <div>
-                    <h2 id="titre-contribuer" class="font-display text-2xl font-bold text-white sm:text-3xl">Un établissement manque à l’annuaire&nbsp;?</h2>
-                    <p class="mt-2 max-w-xl text-ink-300">Quelques minutes suffisent pour le proposer. Vous pourrez suivre l’avancement de la vérification.</p>
+                    <h2 id="titre-contribuer" class="font-display text-3xl font-extrabold text-white sm:text-4xl">Un orphelinat manque à l’appel&nbsp;?</h2>
+                    <p class="mt-3 max-w-xl text-lg text-brand-50">Trois minutes suffisent pour le faire connaître. Vous suivez ensuite sa vérification depuis un lien privé.</p>
                 </div>
-                <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary om-btn-lg"><i class="fa-solid fa-plus" aria-hidden="true"></i> Proposer un orphelinat</a>
+                <a href="{{ path('proposer_orphelinat') }}" class="group inline-flex min-h-[56px] items-center justify-center gap-3 rounded-xl bg-white px-7 text-base font-bold text-brand-700 shadow-lg transition duration-300 hover:-translate-y-0.5 hover:shadow-xl">
+                    <i class="fa-solid fa-plus transition duration-300 group-hover:rotate-90" aria-hidden="true"></i> Proposer un orphelinat
+                </a>
             </div>
         </div>
     </section>

@@ -13,6 +13,19 @@
     ] %}
 
     <div class="om-container max-w-2xl py-10 sm:py-14">
+        {% if statut in ['en_attente', 'acceptee'] %}
+            <div class="mb-8 flex items-center gap-4" data-reveal="zoom">
+                <svg class="h-16 w-16 shrink-0" viewBox="0 0 64 64" aria-hidden="true">
+                    <circle cx="32" cy="32" r="30" fill="rgb(var(--trust-50))" stroke="rgb(var(--trust-200))" stroke-width="2"/>
+                    <circle class="om-onde" cx="32" cy="32" r="30" fill="rgb(var(--trust-500))" opacity=".25"/>
+                    <path class="om-succes-coche" d="M20 33l8 8 16-17" fill="none" stroke="rgb(var(--trust-600))" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                    <p class="font-display text-xl font-bold text-ink-900">{{ statut == 'acceptee' ? 'Établissement publié !' : 'Merci, c’est bien reçu !' }}</p>
+                    <p class="text-sm text-ink-600">{{ statut == 'acceptee' ? 'Votre contribution enrichit l’annuaire.' : 'Votre proposition rejoint la file de vérification.' }}</p>
+                </div>
+            </div>
+        {% endif %}
         <p class="om-eyebrow">Suivi de votre proposition</p>
         <h1 class="om-h2 mt-1">{{ proposition.nom }}</h1>
         <p class="mt-1 text-sm text-ink-500">

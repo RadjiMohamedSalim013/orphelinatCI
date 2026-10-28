@@ -53,7 +53,7 @@
     {% set tel = orphelinat.telephone ? orphelinat.telephone|replace({' ': '', '.': '', '-': '', '(': '', ')': ''}) %}
     {% set images = (orphelinat.image ? [orphelinat.image] : [])|merge(orphelinat.photos|map(p => p.filename)) %}
 
-    <section class="border-b border-ink-200/70 bg-white">
+    <section class="relative overflow-hidden border-b border-ink-200/70 bg-gradient-to-b from-brand-50/70 to-white">
         <div class="om-container py-6 sm:py-8">
             <nav aria-label="Fil d’Ariane" class="text-sm">
                 <ol class="flex flex-wrap items-center gap-1.5 text-ink-500">
@@ -100,7 +100,7 @@
         {% endif %}
 
         <div class="grid gap-8 lg:grid-cols-[1fr_360px] [&>*]:min-w-0">
-            <div class="space-y-10">
+            <div class="space-y-10" data-reveal>
                 {% if images is not empty %}
                     <div class="grid gap-3 {{ images|length > 1 ? 'grid-cols-2 sm:grid-cols-4' }}">
                         {% for image in images|slice(0, 5) %}
@@ -145,7 +145,7 @@
                 {% endif %}
             </div>
 
-            <aside class="space-y-4" aria-label="Coordonnées et informations">
+            <aside class="space-y-4" aria-label="Coordonnées et informations" data-reveal style="--i: 2">
                 <div class="om-card om-card-pad">
                     <h2 class="om-h3">Coordonnées</h2>
                     <dl class="mt-4 space-y-4 text-sm">

@@ -89,14 +89,28 @@
     /* Cartes */
     .om-card { @apply rounded-lg border border-ink-200/80 bg-white shadow-card; }
     .om-card-pad { @apply p-5 sm:p-6; }
-    .om-card-interactive { @apply om-card transition duration-150 hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-raised focus-within:border-brand-500 motion-reduce:hover:translate-y-0; }
+    .om-card-interactive { @apply om-card transition duration-300 ease-out hover:-translate-y-1 hover:border-brand-200 hover:shadow-raised focus-within:border-brand-500 motion-reduce:hover:translate-y-0; }
+    .om-card-interactive img { @apply transition duration-500 ease-out group-hover:scale-[1.04] motion-reduce:group-hover:scale-100; }
 
     /* Boutons */
     .om-btn {
         @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 text-sm font-semibold transition duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-55 aria-[busy=true]:cursor-progress;
     }
     .om-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-    .om-btn-primary { @apply om-btn bg-brand-600 text-white shadow-sm hover:bg-brand-700; }
+    .om-btn-primary {
+        @apply om-btn relative overflow-hidden bg-brand-600 text-white shadow-[0_1px_0_rgb(255_255_255/.15)_inset,0_6px_16px_-6px_rgb(194_65_12/.55)] hover:-translate-y-px hover:bg-brand-700 hover:shadow-[0_1px_0_rgb(255_255_255/.15)_inset,0_10px_22px_-8px_rgb(194_65_12/.6)] motion-reduce:hover:translate-y-0;
+    }
+    /* Reflet qui traverse le bouton principal au survol */
+    .om-btn-primary::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / .22) 50%, transparent 70%);
+        transform: translateX(-120%);
+        transition: transform .6s ease;
+        pointer-events: none;
+    }
+    .om-btn-primary:hover::after { transform: translateX(120%); }
     .om-btn-secondary { @apply om-btn border border-ink-300 bg-white text-ink-800 shadow-sm hover:border-ink-400 hover:bg-ink-50; }
     .om-btn-ghost { @apply om-btn text-ink-700 hover:bg-ink-100 hover:text-ink-900; }
     .om-btn-danger { @apply om-btn bg-red-700 text-white shadow-sm hover:bg-red-800; }
@@ -114,6 +128,9 @@
         @apply block min-h-[44px] w-full rounded-md border border-ink-300 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 shadow-sm transition placeholder:text-ink-400 hover:border-ink-400 focus:border-brand-600 focus:outline-none disabled:cursor-not-allowed disabled:bg-ink-50 disabled:text-ink-400;
     }
     .om-input:focus { box-shadow: var(--focus-ring); }
+    /* Retour immédiat après saisie : vert si correct, rouge sinon (seulement après interaction) */
+    .om-input:user-valid:not(:placeholder-shown):not(select):not([type=search]) { @apply border-trust-500; }
+    .om-input:user-invalid { @apply border-red-600 bg-red-50/40; }
     select.om-input {
         @apply appearance-none bg-no-repeat pr-10;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
@@ -205,6 +222,82 @@
     .bg-page { background-color: rgb(var(--surface-page)); }
 }
 
+/* ───────────── 5. Mouvement ─────────────
+ * Les éléments [data-reveal] apparaissent au défilement (reveal_controller).
+ * La classe .js (posée dans <head>) garantit qu'ils restent visibles sans JavaScript.
+ */
+.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .6s cubic-bezier(.2, .7, .2, 1), transform .6s cubic-bezier(.2, .7, .2, 1);
+    transition-delay: calc(var(--i, 0) * 70ms);
+}
+.js [data-reveal='gauche'] { transform: translateX(-24px); }
+.js [data-reveal='zoom'] { transform: scale(.96); }
+.js [data-reveal].is-visible { opacity: 1; transform: none; }
+
+/* Titre principal : mots qui montent un à un */
+.om-mot {
+    display: inline-block;
+    animation: om-mot .7s cubic-bezier(.2, .7, .2, 1) both;
+    animation-delay: calc(var(--i, 0) * 80ms + 100ms);
+}
+@keyframes om-mot {
+    from { opacity: 0; transform: translateY(.45em); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: none; }
+}
+
+/* Fond de l'accueil : halos colorés qui dérivent lentement */
+.om-halo {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: om-derive 18s ease-in-out infinite alternate;
+}
+@keyframes om-derive {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(40px, -30px) scale(1.08); }
+    100% { transform: translate(-30px, 20px) scale(.95); }
+}
+
+/* Illustration animée */
+.om-pin { transform-box: fill-box; transform-origin: 50% 100%; animation: om-chute .8s cubic-bezier(.3, 1.5, .5, 1) both; animation-delay: calc(var(--i, 0) * 180ms + 400ms); }
+@keyframes om-chute {
+    0% { opacity: 0; transform: translateY(-60px) scale(.6); }
+    70% { opacity: 1; transform: translateY(4px) scale(1.04, .96); }
+    100% { opacity: 1; transform: none; }
+}
+.om-onde { transform-box: fill-box; transform-origin: center; animation: om-onde 2.8s ease-out infinite; }
+.om-onde-2 { animation-delay: 1.4s; }
+@keyframes om-onde {
+    from { opacity: .45; transform: scale(.4); }
+    to { opacity: 0; transform: scale(1.6); }
+}
+.om-trace { stroke-dasharray: 6 9; animation: om-trace 1.6s linear infinite; }
+@keyframes om-trace { to { stroke-dashoffset: -30; } }
+.om-flotte { animation: om-flotte 6s ease-in-out infinite; }
+.om-flotte-2 { animation-delay: -3s; }
+@keyframes om-flotte {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Assistant de formulaire */
+.om-etape-entree { animation: om-etape .35s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes om-etape {
+    from { opacity: 0; transform: translateX(var(--sens, 24px)); }
+    to { opacity: 1; transform: none; }
+}
+.om-secousse { animation: om-secousse .4s ease; }
+@keyframes om-secousse {
+    0%, 100% { transform: none; }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+.om-succes-coche { stroke-dasharray: 30; stroke-dashoffset: 30; animation: om-coche .5s .2s ease forwards; }
+@keyframes om-coche { to { stroke-dashoffset: 0; } }
+
 @keyframes om-shimmer {
     100% { transform: translateX(100%); }
 }
@@ -220,6 +313,8 @@
 .leaflet-popup-content a { display: inline-block; margin-top: .35rem; font-weight: 600; color: rgb(var(--brand-700)); }
 
 @media (prefers-reduced-motion: reduce) {
+    .js [data-reveal] { opacity: 1; transform: none; }
+    .om-mot, .om-pin { opacity: 1; transform: none; filter: none; }
     *, *::before, *::after {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
@@ -227,3 +322,12 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* Soulignement du titre d'accueil qui se dessine */
+.om-souligne { stroke-dasharray: 320; stroke-dashoffset: 320; animation: om-dessin 1s .9s cubic-bezier(.6, 0, .2, 1) forwards; }
+@keyframes om-dessin { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .om-souligne { stroke-dashoffset: 0; } }
+
+/* Un <legend> se place par défaut sur la bordure du fieldset : on le remet dans la carte. */
+.om-fieldset > legend { float: left; width: 100%; padding: 0; }
+.om-fieldset > legend + * { clear: both; }

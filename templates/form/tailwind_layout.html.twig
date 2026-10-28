@@ -23,7 +23,7 @@
         {%- set balise = compound ? 'p' : 'label' -%}
         <{{ balise }}{% if compound %} id="{{ id }}_label"{% endif %}{% with {attr: label_attr} %}{{ block('attributes') }}{% endwith %}>
             {{- translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain) -}}
-            {%- if required %} <span class="text-red-700" aria-hidden="true">*</span>{% else %} <span class="font-normal text-ink-400">(facultatif)</span>{% endif -%}
+            {%- if required or (mention_obligatoire ?? false) %} <span class="text-red-700" aria-hidden="true">*</span>{% else %} <span class="font-normal text-ink-400">(facultatif)</span>{% endif -%}
         </{{ balise }}>
     {%- endif -%}
 {%- endblock form_label -%}

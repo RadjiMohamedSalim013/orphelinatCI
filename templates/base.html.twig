@@ -24,6 +24,7 @@
     <meta name="twitter:card" content="summary_large_image">
 
     <meta name="theme-color" content="#c2410c">
+    <script>document.documentElement.classList.add('js');setTimeout(function(){if(!document.documentElement.dataset.reveal){document.documentElement.classList.remove('js')}},2500)</script>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
@@ -40,7 +41,7 @@
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     {% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}" data-controller="confirm" data-action="submit->confirm#intercept:capture">
+<body class="{% block body_class %}{% endblock %}" data-controller="confirm reveal" data-action="submit->confirm#intercept:capture">
 <a href="#contenu" class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] om-btn-primary">Aller au contenu</a>
 
 {% block page %}
