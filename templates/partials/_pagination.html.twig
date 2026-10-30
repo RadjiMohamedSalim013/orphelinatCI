@@ -7,9 +7,9 @@
         <ul class="flex items-center gap-1">
             <li>
                 {% if page > 1 %}
-                    <a class="om-btn-secondary om-btn-sm" href="{{ path(route, params|merge({page: page - 1})) }}" rel="prev"><i class="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i><span class="max-sm:sr-only">Précédente</span></a>
+                    <a class="om-btn-secondary om-btn-sm" href="{{ path(route, params|merge({page: page - 1})) }}" rel="prev">{{ ux_icon('lucide:chevron-left', {class: 'text-xs'}) }}<span class="max-sm:sr-only">Précédente</span></a>
                 {% else %}
-                    <span class="om-btn-secondary om-btn-sm pointer-events-none opacity-50" aria-disabled="true"><i class="fa-solid fa-chevron-left text-xs" aria-hidden="true"></i><span class="max-sm:sr-only">Précédente</span></span>
+                    <span class="om-btn-secondary om-btn-sm pointer-events-none opacity-50" aria-disabled="true">{{ ux_icon('lucide:chevron-left', {class: 'text-xs'}) }}<span class="max-sm:sr-only">Précédente</span></span>
                 {% endif %}
             </li>
             {% if debut > 1 %}
@@ -31,9 +31,9 @@
             {% endif %}
             <li>
                 {% if page < pages %}
-                    <a class="om-btn-secondary om-btn-sm" href="{{ path(route, params|merge({page: page + 1})) }}" rel="next"><span class="max-sm:sr-only">Suivante</span><i class="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i></a>
+                    <a class="om-btn-secondary om-btn-sm" href="{{ path(route, params|merge({page: page + 1})) }}" rel="next"><span class="max-sm:sr-only">Suivante</span>{{ ux_icon('lucide:chevron-right', {class: 'text-xs'}) }}</a>
                 {% else %}
-                    <span class="om-btn-secondary om-btn-sm pointer-events-none opacity-50" aria-disabled="true"><span class="max-sm:sr-only">Suivante</span><i class="fa-solid fa-chevron-right text-xs" aria-hidden="true"></i></span>
+                    <span class="om-btn-secondary om-btn-sm pointer-events-none opacity-50" aria-disabled="true"><span class="max-sm:sr-only">Suivante</span>{{ ux_icon('lucide:chevron-right', {class: 'text-xs'}) }}</span>
                 {% endif %}
             </li>
         </ul>

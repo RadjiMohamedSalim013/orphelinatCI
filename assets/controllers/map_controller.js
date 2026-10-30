@@ -1,7 +1,9 @@
+/* stimulusFetch: 'lazy' */
 import { Controller } from '@hotwired/stimulus';
+import L from 'leaflet';
 
 /*
- * Carte Leaflet (chargée par la page via window.L).
+ * Carte Leaflet, chargée seulement sur les pages qui en affichent une (contrôleur paresseux).
  *
  * - points   : [{id, nom, latitude, longitude, commune, verifie, url}]
  * - editable : un clic place le marqueur et remplit les champs latitude/longitude
@@ -19,12 +21,6 @@ export default class extends Controller {
     };
 
     connect() {
-        if (typeof window.L === 'undefined') {
-            this.showMessage('La carte n’a pas pu être chargée. La liste reste disponible.');
-            return;
-        }
-
-        const L = window.L;
         // Retirer le squelette avant l'initialisation : Leaflet décide alors lui-même du positionnement.
         if (this.hasCanvasTarget) this.canvasTarget.classList.remove('om-skeleton');
         this.map = L.map(this.hasCanvasTarget ? this.canvasTarget : this.element, { scrollWheelZoom: false });
@@ -32,7 +28,7 @@ export default class extends Controller {
 
         const markers = this.pointsValue
             .filter((p) => p.latitude !== null && p.longitude !== null)
-            .map((p) => L.marker([Number(p.latitude), Number(p.longitude)], { title: p.nom }).bindPopup(this.popup(p)));
+            .map((p) => L.marker([Number(p.latitude), Number(p.longitude)], { title: p.nom, icon: this.repere(p.verifie) }).bindPopup(this.popup(p)));
 
         if (markers.length > 0) {
             const group = L.featureGroup(markers).addTo(this.map);
@@ -49,12 +45,24 @@ export default class extends Controller {
         this.map?.remove();
     }
 
+    // Repère aux couleurs du site : vert pour une fiche vérifiée, orange sinon.
+    repere(verifie) {
+        const couleur = verifie ? 'var(--trust-700)' : 'var(--brand-600)';
+
+        return L.divIcon({
+            className: 'om-repere',
+            html: `<svg viewBox="0 0 32 42" width="32" height="42" aria-hidden="true"><path d="M16 1C7.7 1 1 7.6 1 15.8 1 27 16 41 16 41s15-14 15-25.2C31 7.6 24.3 1 16 1Z" style="fill: rgb(${couleur})" stroke="#fff" stroke-width="2"/><circle cx="16" cy="16" r="5.5" fill="#fff"/></svg>`,
+            iconSize: [32, 42],
+            iconAnchor: [16, 41],
+            popupAnchor: [0, -36],
+        });
+    }
+
     enableEditing(existing) {
-        const L = window.L;
         let marker = existing;
 
         const place = (latlng) => {
-            if (!marker) marker = L.marker(latlng, { draggable: true }).addTo(this.map);
+            if (!marker) marker = L.marker(latlng, { draggable: true, icon: this.repere(true) }).addTo(this.map);
             marker.setLatLng(latlng);
             marker.dragging?.enable();
             marker.off('dragend').on('dragend', () => this.writeInputs(marker.getLatLng()));

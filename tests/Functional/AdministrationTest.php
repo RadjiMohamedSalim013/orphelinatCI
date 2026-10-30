@@ -4,11 +4,14 @@ namespace App\Tests\Functional;
 
 use App\Entity\Commune;
 use App\Entity\Orphelinat;
+use App\Entity\SecurityAudit;
 use App\Enum\OrphelinatStatut;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class AdministrationTest extends AppWebTestCase
 {
+    private const CONNEXION = '/espace-equipe-test';
+
     /**
      * @return iterable<array{string}>
      */
@@ -20,10 +23,20 @@ class AdministrationTest extends AppWebTestCase
     }
 
     #[DataProvider('pagesAdmin')]
-    public function testVisiteurRedirigeVersLaConnexion(string $url): void
+    public function testAdministrationInvisibleAuxVisiteurs(string $url): void
     {
+        // Même réponse qu'une adresse inexistante : ni redirection, ni cookie de session,
+        // ni en-tête particulier qui trahirait l'existence de l'administration.
+        $this->client->request('GET', '/adresse-inexistante-'.md5($url));
+        $reference = $this->client->getResponse();
+
         $this->client->request('GET', $url);
-        self::assertResponseRedirects('/login');
+        $reponse = $this->client->getResponse();
+        self::assertResponseStatusCodeSame(404);
+        self::assertSame([], $reponse->headers->getCookies());
+        foreach (['Cache-Control', 'X-Robots-Tag', 'Location'] as $entete) {
+            self::assertSame($reference->headers->get($entete), $reponse->headers->get($entete), $entete);
+        }
     }
 
     #[DataProvider('pagesAdmin')]
@@ -46,20 +59,45 @@ class AdministrationTest extends AppWebTestCase
     {
         $id = $this->ref['espoir']->getId();
         $this->client->request('POST', "/admin/orphelinats/$id/statut", ['statut' => 'archive']);
-        self::assertResponseRedirects('/login');
+        self::assertResponseStatusCodeSame(404);
         self::assertSame(OrphelinatStatut::Actif, $this->reload($this->ref['espoir'])->getStatut());
     }
 
     public function testConnexionParFormulaire(): void
     {
-        $crawler = $this->client->request('GET', '/login');
+        $crawler = $this->client->request('GET', self::CONNEXION);
+        self::assertResponseHeaderSame('X-Robots-Tag', 'noindex, nofollow');
         $this->client->submit($crawler->selectButton('Se connecter')->form(['email' => 'admin@test.local', 'password' => 'mauvais']));
         $this->client->followRedirect();
         self::assertSelectorExists('[role="alert"]');
 
-        $crawler = $this->client->request('GET', '/login');
+        $crawler = $this->client->request('GET', self::CONNEXION);
         $this->client->submit($crawler->selectButton('Se connecter')->form(['email' => 'admin@test.local', 'password' => 'motdepasse-admin']));
         self::assertResponseRedirects('/admin');
+    }
+
+    public function testPageDeConnexionAUneAdresseConfigurable(): void
+    {
+        // ADMIN_LOGIN_PATH vaut /espace-equipe-test dans .env.test : /login n'existe plus.
+        $this->client->request('GET', '/login');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testDeconnexionExigeUnJeton(): void
+    {
+        $this->loginAdmin();
+
+        // Simple lien (ou requête forgée par un autre site) : refusé, la session reste ouverte.
+        $this->client->request('POST', '/logout');
+        $this->client->request('GET', '/admin');
+        self::assertResponseIsSuccessful();
+
+        // Bouton « Quitter » du menu : formulaire avec jeton, session fermée.
+        $crawler = $this->client->request('GET', '/admin');
+        $this->client->submit($crawler->selectButton('Quitter')->form());
+        self::assertResponseRedirects('/');
+        $this->client->request('GET', '/admin');
+        self::assertResponseStatusCodeSame(404);
     }
 
     public function testTableauDeBordCalculeLesIndicateurs(): void
@@ -166,5 +204,38 @@ class AdministrationTest extends AppWebTestCase
         $this->client->followRedirect();
         self::assertSelectorTextContains('body', 'encore utilisé');
         self::assertNotNull($this->em->getRepository(Commune::class)->find($cocody));
+    }
+
+    public function testResolutionDUnPointDAuditParFormulaireProtege(): void
+    {
+        $audit = (new SecurityAudit())->setType('upload')->setSeverity('critical')->setMessage('Fichier suspect dans les dépôts');
+        $this->em->persist($audit);
+        $this->em->flush();
+        $this->loginAdmin();
+
+        // Sans jeton CSRF : refusé, le point reste ouvert.
+        $this->client->request('POST', '/admin/security/issue/'.$audit->getId().'/resolve');
+        self::assertResponseRedirects('/admin/security/');
+        self::assertFalse($this->reload($audit)->isResolved());
+
+        // Depuis la page : la gravité s'affiche et le formulaire marque le point comme résolu.
+        $crawler = $this->client->request('GET', '/admin/security/');
+        self::assertSelectorTextContains('#titre-a-traiter + ul', 'Critique');
+        $this->client->submit($crawler->selectButton('Résolu')->form());
+        self::assertResponseRedirects('/admin/security/');
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('body', 'Problème marqué comme résolu');
+        self::assertTrue($this->reload($audit)->isResolved());
+    }
+
+    public function testActionsDeSauvegardeExigentUnJetonCsrf(): void
+    {
+        $this->loginAdmin();
+        foreach (['/admin/backups/create', '/admin/backups/clean'] as $url) {
+            $this->client->request('POST', $url);
+            self::assertResponseRedirects('/admin/backups/');
+            $this->client->followRedirect();
+            self::assertSelectorTextContains('body', 'Le formulaire a expiré');
+        }
     }
 }

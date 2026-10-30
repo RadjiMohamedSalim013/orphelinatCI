@@ -1,131 +1,83 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Gestion des Sauvegardes - OrphaMap Admin{% endblock %}
+{% block title %}Sauvegardes — Administration OrphaMap CI{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-ink-900">
-                <i class="fa-solid fa-database text-brand-500 mr-2"></i>
-                Gestion des Sauvegardes
-            </h1>
-            <p class="text-ink-500 mt-1">Sauvegardes automatiques de la base de données et des fichiers</p>
-        </div>
-        
-        <div class="flex gap-3">
-            <button onclick="createBackup()" 
-                    class="bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2 px-4 rounded-lg transition">
-                <i class="fa-solid fa-plus mr-2"></i>
-                Nouvelle Sauvegarde
-            </button>
-            <button onclick="cleanBackups()" 
-                    class="bg-ink-500 hover:bg-ink-600 text-white font-semibold py-2 px-4 rounded-lg transition">
-                <i class="fa-solid fa-trash mr-2"></i>
-                Nettoyer
-            </button>
-        </div>
-    </div>
+    {% embed 'admin/_page_header.html.twig' with {titre: 'Sauvegardes', sous_titre: 'Copies de la base de données et des fichiers déposés, conservées 30 jours sur le serveur.', backups: backups} %}
+        {% block actions %}
+            {% if backups is not empty %}
+                <form method="post" action="{{ path('admin_backups_clean') }}"
+                      data-confirm="Les sauvegardes de plus de 30 jours seront supprimées du serveur. Les plus récentes sont conservées."
+                      data-confirm-title="Supprimer les anciennes sauvegardes ?" data-confirm-label="Supprimer" data-confirm-variant="danger">
+                    <input type="hidden" name="_token" value="{{ csrf_token('backup_clean') }}">
+                    <button type="submit" class="om-btn-secondary">{{ ux_icon('lucide:trash-2') }}Nettoyer</button>
+                </form>
+            {% endif %}
+            <form method="post" action="{{ path('admin_backups_create') }}" data-controller="ui" data-action="submit->ui#loading"
+                  data-confirm="La base de données et les fichiers déposés seront copiés. L’opération peut prendre quelques minutes."
+                  data-confirm-title="Créer une sauvegarde ?" data-confirm-label="Lancer la sauvegarde">
+                <input type="hidden" name="_token" value="{{ csrf_token('backup_create') }}">
+                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Sauvegarde en cours…">{{ ux_icon('lucide:plus') }}Nouvelle sauvegarde</button>
+            </form>
+        {% endblock %}
+    {% endembed %}
 
-    <!-- Messages flash -->
-    <div id="backup-messages"></div>
-
-    <!-- Statistiques -->
-    <div class="grid md:grid-cols-3 gap-4">
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-box-archive text-blue-600 text-xl"></i>
+    {% set derniere = backups|first %}
+    <section class="grid gap-4 sm:grid-cols-3" aria-label="Résumé">
+        {% for kpi in [
+            {libelle: 'Fichiers de sauvegarde', valeur: backups|length, icone: 'archive', ton: 'bg-ink-100 text-ink-700'},
+            {libelle: 'Dernière sauvegarde', valeur: derniere ? derniere.date|date('d/m/Y') : '—', detail: derniere ? 'à ' ~ derniere.date|date('H\\hi') : 'Aucune pour le moment', icone: 'clock', ton: 'bg-brand-50 text-brand-700'},
+            {libelle: 'Durée de conservation', valeur: '30 jours', detail: 'Au-delà, « Nettoyer » les supprime', icone: 'history', ton: 'bg-trust-50 text-trust-700'},
+        ] %}
+            <div class="om-card p-5" data-reveal style="--i: {{ loop.index0 }}">
+                <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm font-medium text-ink-600">{{ kpi.libelle }}</p>
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ kpi.ton }}" aria-hidden="true">{{ ux_icon('lucide:' ~ (kpi.icone), {class: 'text-sm'}) }}</span>
                 </div>
-                <div>
-                    <p class="text-sm text-ink-500">Total Sauvegardes</p>
-                    <p class="text-2xl font-bold text-ink-900">{{ backups|length }}</p>
-                </div>
+                <p class="mt-2 font-display text-3xl font-extrabold tabular-nums text-ink-900">{{ kpi.valeur }}</p>
+                {% if kpi.detail is defined %}<p class="mt-1 text-xs text-ink-500">{{ kpi.detail }}</p>{% endif %}
             </div>
-        </div>
-        
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-green-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-hard-drive text-green-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-ink-500">Espace Utilisé</p>
-                    <p class="text-2xl font-bold text-ink-900">
-                        {% set totalSize = 0 %}
-                        {% for backup in backups %}
-                            {% set totalSize = totalSize + backup.size %}
-                        {% endfor %}
-                        {{ totalSize }} MB
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-brand-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-clock text-brand-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-ink-500">Dernière Sauvegarde</p>
-                    <p class="text-2xl font-bold text-ink-900">
-                        {% if backups|length > 0 %}
-                            {{ backups[0].date|date('d/m/Y') }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+        {% endfor %}
+    </section>
 
-    <!-- Liste des sauvegardes -->
-    <div class="bg-white border rounded-lg overflow-hidden">
-        <div class="p-4 border-b bg-ink-50">
-            <h2 class="font-semibold text-ink-800">
-                <i class="fa-solid fa-list mr-2"></i>
-                Historique des Sauvegardes
-            </h2>
-        </div>
-
-        {% if backups|length > 0 %}
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-ink-50 border-b">
+    <section class="mt-6" aria-labelledby="titre-historique">
+        <h2 id="titre-historique" class="mb-3 font-display text-lg font-bold text-ink-900">Historique</h2>
+        {% if backups is empty %}
+            {% embed 'partials/_empty.html.twig' with {icone: 'package-open', titre: 'Aucune sauvegarde disponible', texte: 'Créez une première sauvegarde avant toute mise à jour importante du site.'} %}{% endembed %}
+        {% else %}
+            <div class="om-card overflow-hidden">
+                <table class="om-table">
+                    <caption class="sr-only">Fichiers de sauvegarde, du plus récent au plus ancien</caption>
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Nom</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Taille</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Actions</th>
+                            <th scope="col">Fichier</th>
+                            <th scope="col">Contenu</th>
+                            <th scope="col">Taille</th>
+                            <th scope="col">Créé le</th>
+                            <th scope="col"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-ink-200">
+                    <tbody>
                         {% for backup in backups %}
-                            <tr class="hover:bg-ink-50">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <i class="fa-solid fa-file-zipper text-ink-400"></i>
-                                        <span class="font-mono text-sm">{{ backup.name }}</span>
-                                    </div>
+                            <tr>
+                                <td>
+                                    <span class="flex min-w-0 items-center gap-2">
+                                        {{ ux_icon('lucide:file-archive', {class: 'text-ink-400'}) }}
+                                        <span class="truncate font-mono text-xs text-ink-800 max-md:max-w-[14rem]">{{ backup.name }}</span>
+                                    </span>
                                 </td>
-                                <td class="px-6 py-4">
-                                    {% if backup.name starts with 'db_backup' %}
-                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Base de données</span>
+                                <td data-label="Contenu">
+                                    {% if '.sql' in backup.name %}
+                                        <span class="om-badge-info">{{ ux_icon('lucide:database') }}Base de données</span>
                                     {% else %}
-                                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Fichiers</span>
+                                        <span class="om-badge-trust">{{ ux_icon('lucide:hard-drive') }}Fichiers</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-ink-600">{{ backup.size }}</td>
-                                <td class="px-6 py-4 text-sm text-ink-600">{{ backup.date }}</td>
-                                <td class="px-6 py-4">
-                                    <a href="{{ path('admin_backups_download', {'filename': backup.name}) }}" 
-                                       class="text-brand-600 hover:text-brand-700 mr-3">
-                                        <i class="fa-solid fa-download"></i>
+                                <td data-label="Taille" class="whitespace-nowrap tabular-nums text-ink-600">{{ backup.size }}</td>
+                                <td data-label="Créé le" class="whitespace-nowrap tabular-nums text-ink-600">{{ backup.date|date('d/m/Y H:i') }}</td>
+                                <td data-label="" class="text-right">
+                                    <a href="{{ path('admin_backups_download', {filename: backup.name}) }}" class="om-btn-ghost !min-h-[36px] !px-3 text-sm">
+                                        {{ ux_icon('lucide:download') }}Télécharger<span class="sr-only"> {{ backup.name }}</span>
                                     </a>
                                 </td>
                             </tr>
@@ -133,114 +85,17 @@
                     </tbody>
                 </table>
             </div>
-        {% else %}
-            <div class="p-12 text-center">
-                <i class="fa-solid fa-box-open text-ink-300 text-6xl mb-4"></i>
-                <p class="text-ink-500">Aucune sauvegarde disponible</p>
-                <button onclick="createBackup()" class="mt-4 text-brand-600 hover:text-brand-700 font-semibold">
-                    Créer une sauvegarde maintenant
-                </button>
-            </div>
         {% endif %}
-    </div>
+    </section>
 
-    <!-- Informations -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div class="flex items-start gap-3">
-            <i class="fa-solid fa-circle-info text-blue-600 mt-1"></i>
-            <div class="text-sm text-blue-800">
-                <p class="font-semibold mb-1">Informations</p>
-                <ul class="list-disc list-inside space-y-1">
-                    <li>Les sauvegardes sont conservées pendant 30 jours</li>
-                    <li>La sauvegarde inclut la base de données (format SQL compressé) et les fichiers uploadés</li>
-                    <li>Il est recommandé de faire une sauvegarde avant chaque mise à jour importante</li>
-                </ul>
-            </div>
+    <div class="om-alert-info mt-6">
+        {{ ux_icon('lucide:info', {class: 'mt-0.5'}) }}
+        <div>
+            <p class="font-semibold">Bon à savoir</p>
+            <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                <li>Chaque sauvegarde comprend la base de données (SQL compressé) et les fichiers déposés.</li>
+                <li>Faites une sauvegarde avant chaque mise à jour importante, puis téléchargez-la : sur un hébergement gratuit, le disque du serveur peut être effacé lors d’un redéploiement.</li>
+            </ul>
         </div>
     </div>
-
-</div>
-
-<script>
-function createBackup() {
-    if (!confirm('Créer une nouvelle sauvegarde ? Cela peut prendre quelques minutes.')) {
-        return;
-    }
-
-    const btn = event.target.closest('button');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Sauvegarde en cours...';
-
-    fetch('{{ path('admin_backups_create') }}', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            '{{ csrf_token('backup_create') }}': '{{ csrf_token('backup_create') }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const messagesDiv = document.getElementById('backup-messages');
-        if (data.success) {
-            messagesDiv.innerHTML = `
-                <div class="bg-green-50 border border-green-200 text-green-700 rounded-lg p-4 mb-4">
-                    <i class="fa-solid fa-check-circle mr-2"></i>
-                    ${data.message}
-                </div>
-            `;
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            messagesDiv.innerHTML = `
-                <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4">
-                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
-                    ${data.message}
-                </div>
-            `;
-        }
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    });
-}
-
-function cleanBackups() {
-    if (!confirm('Supprimer les sauvegardes de plus de 30 jours ?')) {
-        return;
-    }
-
-    fetch('{{ path('admin_backups_clean') }}', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            '{{ csrf_token('backup_clean') }}': '{{ csrf_token('backup_clean') }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const messagesDiv = document.getElementById('backup-messages');
-        if (data.success) {
-            messagesDiv.innerHTML = `
-                <div class="bg-green-50 border border-green-200 text-green-700 rounded-lg p-4 mb-4">
-                    <i class="fa-solid fa-check-circle mr-2"></i>
-                    ${data.message}
-                </div>
-            `;
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            messagesDiv.innerHTML = `
-                <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4">
-                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
-                    ${data.message}
-                </div>
-            `;
-        }
-    });
-}
-</script>
-
 {% endblock %}

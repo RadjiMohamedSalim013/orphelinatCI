@@ -3,7 +3,14 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Cookie de session : HTTPS uniquement quand le site est en HTTPS, illisible par
+    # JavaScript, non envoyé par les formulaires d'autres sites ; session abandonnée
+    # après 2 h d'inactivité.
+    session:
+        cookie_secure: auto
+        cookie_httponly: true
+        cookie_samesite: lax
+        gc_maxlifetime: 7200
 
     #esi: true
     #fragments: true

@@ -2,13 +2,13 @@
 
 {% block title %}{{ orphelinat ? 'Modifier ' ~ orphelinat.nom : 'Nouvel établissement' }} — Administration OrphaMap CI{% endblock %}
 
-{% block stylesheets %}{% include 'partials/_leaflet.html.twig' %}{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="{{ asset('vendor/leaflet/dist/leaflet.min.css') }}">{% endblock %}
 
 {% block content %}
 {% embed 'admin/_page_header.html.twig' with {        titre: orphelinat ? 'Modifier « ' ~ orphelinat.nom ~ ' »' : 'Nouvel établissement',        sous_titre: 'Les champs marqués * sont obligatoires.',        retour: orphelinat ? {url: path('admin_orphelinat_show', {id: orphelinat.id}), label: 'Retour à la fiche'} : {url: path('admin_orphelinat_list'), label: 'Établissements'},    } %}{% endembed %}
 
     {% if not form.vars.valid and form.vars.submitted %}
-        <div class="om-alert-error mb-6" role="alert" tabindex="-1" data-controller="focus-on-connect"><i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i><div>
+        <div class="om-alert-error mb-6" role="alert" tabindex="-1" data-controller="focus-on-connect">{{ ux_icon('lucide:circle-alert', {class: 'mt-0.5'}) }}<div>
             <p class="font-semibold">Le formulaire contient des erreurs, signalées sous les champs concernés.</p>
             {{ form_errors(form) }}</div>
         </div>
@@ -85,7 +85,7 @@
                             <li class="relative">
                                 <img src="{{ image_url(photo.filename, 640) }}" alt="" class="h-24 w-full rounded-lg object-cover">
                                 <button type="submit" form="suppr-photo-{{ photo.id }}" class="absolute right-1 top-1 rounded-md bg-white/90 px-2 py-1 text-xs font-semibold text-red-700 shadow hover:bg-white">
-                                    <i class="fa-solid fa-trash" aria-hidden="true"></i><span class="sr-only">Supprimer cette photo</span>
+                                    {{ ux_icon('lucide:trash-2') }}<span class="sr-only">Supprimer cette photo</span>
                                 </button>
                             </li>
                         {% endfor %}
@@ -94,7 +94,7 @@
             {% endif %}
 
             <div class="flex flex-col gap-2 xl:sticky xl:bottom-4">
-                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Enregistrement…"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Enregistrer</button>
+                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Enregistrement…">{{ ux_icon('lucide:save') }} Enregistrer</button>
                 <a href="{{ orphelinat ? path('admin_orphelinat_show', {id: orphelinat.id}) : path('admin_orphelinat_list') }}" class="om-btn-secondary">Annuler</a>
             </div>
         </div>

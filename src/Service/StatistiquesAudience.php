@@ -50,9 +50,9 @@ class StatistiquesAudience
             ],
             'pagesParVisiteur' => $totaux['visiteurs'] > 0 ? round($totaux['vues'] / $totaux['visiteurs'], 1) : 0,
             'appareils' => [
-                ['libelle' => 'Mobile', 'icone' => 'fa-mobile-screen', 'total' => $totaux['mobile']],
-                ['libelle' => 'Ordinateur', 'icone' => 'fa-desktop', 'total' => $totaux['ordinateur']],
-                ['libelle' => 'Tablette', 'icone' => 'fa-tablet-screen-button', 'total' => $totaux['tablette']],
+                ['libelle' => 'Mobile', 'icone' => 'smartphone', 'total' => $totaux['mobile']],
+                ['libelle' => 'Ordinateur', 'icone' => 'monitor', 'total' => $totaux['ordinateur']],
+                ['libelle' => 'Tablette', 'icone' => 'tablet', 'total' => $totaux['tablette']],
             ],
             'fiches' => $this->fiches($debut, $fin),
             'communes' => $this->communes($debut, $fin),

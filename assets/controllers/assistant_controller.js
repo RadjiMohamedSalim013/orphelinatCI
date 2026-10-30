@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { icone } from '../icones.js';
 
 /*
  * Assistant en plusieurs étapes pour un long formulaire.
@@ -150,7 +151,7 @@ export default class extends Controller {
         erreur.className = 'om-error animate-fade-up';
         erreur.dataset.client = '';
         erreur.id = `${champ.id}_client`;
-        erreur.innerHTML = '<i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>';
+        erreur.append(icone('circle-alert', 'mt-0.5'));
         erreur.append(document.createTextNode(message));
         champ.setAttribute('aria-describedby', [champ.getAttribute('aria-describedby'), erreur.id].filter(Boolean).join(' '));
 

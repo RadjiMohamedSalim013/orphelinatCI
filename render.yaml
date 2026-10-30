@@ -33,3 +33,7 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      # Adresse secrète de la page de connexion (ex. /espace-7f3k9q2m) : à choisir
+      # soi-même et à ne communiquer qu'à l'équipe. /admin renvoie 404 aux visiteurs.
+      - key: ADMIN_LOGIN_PATH
+        sync: false

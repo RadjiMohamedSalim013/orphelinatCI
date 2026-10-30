@@ -6,7 +6,7 @@
 {% set p = proposition ?? null %}
 
 {% embed 'admin/_modal.html.twig' with {
-    id: 'modale-accepter', titre: 'Accepter la proposition', icone: 'fa-check', ton: 'trust',
+    id: 'modale-accepter', titre: 'Accepter la proposition', icone: 'check', ton: 'trust',
     sous_titre: p ? p.nom : '',
     action: p ? path('admin_propositions_accepter', {id: p.id}) : '',
     jeton: p ? csrf_token('accepter_' ~ p.id) : '',
@@ -16,7 +16,7 @@
         <p class="text-sm text-ink-600">La fiche sera créée et publiée dans l’annuaire. Vous pourrez la compléter ensuite (position GPS, photos…).</p>
 
         <div class="om-alert-warning mt-4" data-modal-masquer-si-vide {{ doublons is empty ? 'hidden' }}>
-            <i class="fa-solid fa-clone mt-0.5" aria-hidden="true"></i>
+            {{ ux_icon('lucide:copy', {class: 'mt-0.5'}) }}
             <p><strong>Attention :</strong> <span data-modal-texte="doublons">{{ doublons is not empty ? doublons|length ~ ' établissement(s) similaire(s) déjà dans l’annuaire. Vérifiez qu’il ne s’agit pas d’un doublon.' }}</span></p>
         </div>
 
@@ -50,13 +50,13 @@
     {% endblock %}
     {% block pied %}
         <button type="submit" class="om-btn-success" data-ui-target="submit" data-loading-label="Création de la fiche…">
-            <i class="fa-solid fa-check" aria-hidden="true"></i> Accepter et créer la fiche
+            {{ ux_icon('lucide:check') }} Accepter et créer la fiche
         </button>
     {% endblock %}
 {% endembed %}
 
 {% embed 'admin/_modal.html.twig' with {
-    id: 'modale-refuser', titre: 'Refuser la proposition', icone: 'fa-xmark', ton: 'danger',
+    id: 'modale-refuser', titre: 'Refuser la proposition', icone: 'x', ton: 'danger',
     sous_titre: p ? p.nom : '',
     action: p ? path('admin_propositions_refuser', {id: p.id}) : '',
     jeton: p ? csrf_token('refuser_' ~ p.id) : '',
@@ -83,7 +83,7 @@
     {% endblock %}
     {% block pied %}
         <button type="submit" class="om-btn-danger" data-ui-target="submit" data-loading-label="Enregistrement…">
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Refuser la proposition
+            {{ ux_icon('lucide:x') }} Refuser la proposition
         </button>
     {% endblock %}
 {% endembed %}

@@ -7,22 +7,22 @@
 
     {% embed 'admin/_page_header.html.twig' with {titre: 'Tableau de bord', sous_titre: 'Indicateurs calculés en temps réel à partir de la base de données.'} %}
         {% block actions %}
-            <a href="{{ path('admin_orphelinat_create') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Ajouter un établissement</a>
+            <a href="{{ path('admin_orphelinat_create') }}" class="om-btn-primary">{{ ux_icon('lucide:plus') }} Ajouter un établissement</a>
         {% endblock %}
     {% endembed %}
 
     <section aria-label="Indicateurs clés" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {% set kpis = [
-            {label: 'Établissements dans l’annuaire', valeur: orphelinats.actifs, detail: orphelinats.fermes ~ ' fermé(s) · ' ~ orphelinats.archives ~ ' archivé(s)', icone: 'fa-house-chimney-window', ton: 'bg-ink-100 text-ink-700', lien: path('admin_orphelinat_list', {statut: 'actif'})},
-            {label: 'Fiches vérifiées', valeur: orphelinats.verifies, detail: orphelinats.actifs > 0 ? (orphelinats.verifies / orphelinats.actifs * 100)|round ~ ' % des fiches actives' : 'Aucune fiche active', icone: 'fa-circle-check', ton: 'bg-trust-50 text-trust-700', lien: path('admin_orphelinat_list', {verification: 'verifie'})},
-            {label: 'Propositions à traiter', valeur: ouvertes, detail: propositions.en_attente ~ ' en attente · ' ~ propositions.en_verification ~ ' en vérification', icone: 'fa-inbox', ton: ouvertes > 0 ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-700', lien: path('admin_propositions_index')},
-            {label: 'Signalements à traiter', valeur: signalementsOuverts, detail: 'Nouveaux ou en cours', icone: 'fa-flag', ton: signalementsOuverts > 0 ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-700', lien: path('admin_signalements_index')},
+            {label: 'Établissements dans l’annuaire', valeur: orphelinats.actifs, detail: orphelinats.fermes ~ ' fermé(s) · ' ~ orphelinats.archives ~ ' archivé(s)', icone: 'house', ton: 'bg-ink-100 text-ink-700', lien: path('admin_orphelinat_list', {statut: 'actif'})},
+            {label: 'Fiches vérifiées', valeur: orphelinats.verifies, detail: orphelinats.actifs > 0 ? (orphelinats.verifies / orphelinats.actifs * 100)|round ~ ' % des fiches actives' : 'Aucune fiche active', icone: 'circle-check', ton: 'bg-trust-50 text-trust-700', lien: path('admin_orphelinat_list', {verification: 'verifie'})},
+            {label: 'Propositions à traiter', valeur: ouvertes, detail: propositions.en_attente ~ ' en attente · ' ~ propositions.en_verification ~ ' en vérification', icone: 'inbox', ton: ouvertes > 0 ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-700', lien: path('admin_propositions_index')},
+            {label: 'Signalements à traiter', valeur: signalementsOuverts, detail: 'Nouveaux ou en cours', icone: 'flag', ton: signalementsOuverts > 0 ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-700', lien: path('admin_signalements_index')},
         ] %}
         {% for kpi in kpis %}
             <a href="{{ kpi.lien }}" class="om-card-interactive group p-5">
                 <div class="flex items-start justify-between gap-3">
                     <p class="text-sm font-medium text-ink-600">{{ kpi.label }}</p>
-                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md {{ kpi.ton }}" aria-hidden="true"><i class="fa-solid {{ kpi.icone }} text-sm"></i></span>
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md {{ kpi.ton }}" aria-hidden="true">{{ ux_icon('lucide:' ~ (kpi.icone), {class: 'text-sm'}) }}</span>
                 </div>
                 <p class="mt-2 font-display text-3xl font-extrabold text-ink-900">{{ kpi.valeur }}</p>
                 <p class="mt-1 text-xs text-ink-500">{{ kpi.detail }}</p>
@@ -42,7 +42,7 @@
                     {% endif %}
                 </p>
             </div>
-            <a href="{{ path('admin_statistiques') }}" class="om-btn-secondary om-btn-sm">Statistiques détaillées <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i></a>
+            <a href="{{ path('admin_statistiques') }}" class="om-btn-secondary om-btn-sm">Statistiques détaillées {{ ux_icon('lucide:arrow-right', {class: 'text-xs'}) }}</a>
         </div>
         {% include 'admin/_graphique_jours.html.twig' with {serie: audience.serie, cle: 'visiteurs', libelle: 'Visiteurs uniques', hauteur: 'h-36'} %}
     </section>
@@ -58,7 +58,7 @@
                     <a href="{{ bloc.lien }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">Tout voir</a>
                 </div>
                 {% if bloc.items is empty %}
-                    <p class="flex items-center gap-2 px-5 py-8 text-sm text-ink-500"><i class="fa-solid fa-circle-check text-trust-600" aria-hidden="true"></i>{{ bloc.vide }}</p>
+                    <p class="flex items-center gap-2 px-5 py-8 text-sm text-ink-500">{{ ux_icon('lucide:circle-check', {class: 'text-trust-600'}) }}{{ bloc.vide }}</p>
                 {% else %}
                     <ul class="divide-y divide-ink-100">
                         {% for item in bloc.items %}

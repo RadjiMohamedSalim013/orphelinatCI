@@ -12,7 +12,7 @@
             <li>
                 <div class="flex items-baseline justify-between gap-3 text-sm">
                     <span class="min-w-0 truncate">
-                        {% if ligne.icone is defined %}<i class="fa-solid {{ ligne.icone }} mr-1.5 w-4 text-center text-ink-400" aria-hidden="true"></i>{% endif %}
+                        {% if ligne.icone is defined %}{{ ux_icon('lucide:' ~ (ligne.icone), {class: 'mr-1.5 w-4 text-center text-ink-400'}) }}{% endif %}
                         {% if ligne.lien is defined %}
                             <a href="{{ ligne.lien }}" class="font-medium text-ink-900 hover:text-brand-700" target="_blank" rel="noopener">{{ ligne.libelle }}</a>
                         {% else %}

@@ -7,9 +7,9 @@
     {% set statut = proposition.statut.value %}
     {% set rang = {en_attente: 0, en_verification: 1, acceptee: 2, refusee: 2}[statut] %}
     {% set etapes = [
-        {label: 'Reçue', icone: 'fa-inbox'},
-        {label: 'En vérification', icone: 'fa-magnifying-glass'},
-        {label: statut == 'refusee' ? 'Refusée' : (statut == 'acceptee' ? 'Publiée' : 'Décision'), icone: statut == 'refusee' ? 'fa-xmark' : 'fa-circle-check'},
+        {label: 'Reçue', icone: 'inbox'},
+        {label: 'En vérification', icone: 'search'},
+        {label: statut == 'refusee' ? 'Refusée' : (statut == 'acceptee' ? 'Publiée' : 'Décision'), icone: statut == 'refusee' ? 'x' : 'circle-check'},
     ] %}
 
     <div class="om-container max-w-2xl py-10 sm:py-14">
@@ -40,7 +40,7 @@
                     <li class="relative flex flex-col items-center gap-2 px-2 py-5 text-center text-xs font-semibold sm:text-sm {{ fait ? (refus ? 'text-red-800' : 'text-trust-800') : 'text-ink-400' }}"
                         {% if loop.index0 == rang %}aria-current="step"{% endif %}>
                         <span class="flex h-9 w-9 items-center justify-center rounded-full ring-1 {{ fait ? (refus ? 'bg-red-50 ring-red-200' : 'bg-trust-50 ring-trust-200') : 'bg-ink-50 ring-ink-200' }}" aria-hidden="true">
-                            <i class="fa-solid {{ etape.icone }}"></i>
+                            {{ ux_icon('lucide:' ~ (etape.icone)) }}
                         </span>
                         {{ etape.label }}<span class="sr-only">{{ fait ? ' (étape atteinte)' : ' (à venir)' }}</span>
                         {% if not loop.last %}<span class="absolute left-[calc(50%+1.5rem)] right-[calc(-50%+1.5rem)] top-[2.35rem] h-px {{ loop.index0 < rang ? 'bg-trust-300' : 'bg-ink-200' }}" aria-hidden="true"></span>{% endif %}
@@ -57,7 +57,7 @@
                     <p class="font-semibold text-ink-900">Merci pour votre contribution&nbsp;!</p>
                     <p class="mt-1">L’établissement fait désormais partie de l’annuaire.</p>
                     {% if proposition.orphelinat and proposition.orphelinat.publiclyVisible %}
-                        <a class="om-btn-primary mt-4" href="{{ path('orphelinat_show', {id: proposition.orphelinat.id, slug: proposition.orphelinat.slug}) }}">Voir la fiche publiée <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i></a>
+                        <a class="om-btn-primary mt-4" href="{{ path('orphelinat_show', {id: proposition.orphelinat.id, slug: proposition.orphelinat.slug}) }}">Voir la fiche publiée {{ ux_icon('lucide:arrow-right', {class: 'text-xs'}) }}</a>
                     {% endif %}
                 {% else %}
                     <p>Votre proposition n’a pas été retenue.</p>
@@ -69,12 +69,12 @@
         </div>
 
         <div class="om-alert-info mt-6">
-            <i class="fa-solid fa-bookmark mt-0.5" aria-hidden="true"></i>
+            {{ ux_icon('lucide:bookmark', {class: 'mt-0.5'}) }}
             <p>Ajoutez cette page à vos favoris pour suivre votre demande. Son adresse est personnelle&nbsp;: ne la partagez pas.</p>
         </div>
 
         <div class="mt-8 flex flex-wrap gap-2">
-            <a href="{{ path('orphelinat_index') }}" class="om-btn-secondary"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Rechercher un orphelinat</a>
+            <a href="{{ path('orphelinat_index') }}" class="om-btn-secondary">{{ ux_icon('lucide:search') }} Rechercher un orphelinat</a>
             <a href="{{ path('proposer_orphelinat') }}" class="om-btn-ghost">Proposer un autre établissement</a>
         </div>
     </div>

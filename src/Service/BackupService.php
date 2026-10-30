@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use Doctrine\DBAL\Connection;
 use Symfony\Component\Process\Process;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -13,7 +14,7 @@ class BackupService
     private string $uploadsDir;
     private Filesystem $filesystem;
 
-    public function __construct(ParameterBagInterface $params)
+    public function __construct(ParameterBagInterface $params, private readonly Connection $connection)
     {
         $this->backupDir = $params->get('kernel.project_dir') . '/var/backups';
         $this->uploadsDir = $params->get('kernel.project_dir') . '/public/uploads';
@@ -33,18 +34,18 @@ class BackupService
         // Récupérer les paramètres de la base de données
         $dbParams = $this->getDatabaseParams();
 
-        // Construire la commande mysqldump
+        // Le mot de passe passe par MYSQL_PWD, jamais par la ligne de commande
+        // (visible de tous les processus de la machine).
         $command = sprintf(
-            'mysqldump --host=%s --port=%s --user=%s --password=%s %s | gzip > %s',
+            'mysqldump --host=%s --port=%s --user=%s --single-transaction %s | gzip > %s',
             escapeshellarg($dbParams['host']),
             escapeshellarg($dbParams['port']),
             escapeshellarg($dbParams['user']),
-            escapeshellarg($dbParams['password']),
             escapeshellarg($dbParams['dbname']),
             escapeshellarg($backupFile)
         );
 
-        $process = Process::fromShellCommandline($command);
+        $process = Process::fromShellCommandline($command, null, ['MYSQL_PWD' => $dbParams['password']]);
         $process->setTimeout(300); // 5 minutes timeout
         $process->run();
 
@@ -108,13 +109,15 @@ class BackupService
 
     private function getDatabaseParams(): array
     {
-        // Récupérer les paramètres depuis les variables d'environnement
+        // Paramètres de la connexion Doctrine (issus de DATABASE_URL), ceux réellement utilisés par le site
+        $params = $this->connection->getParams();
+
         return [
-            'host' => $_ENV['DATABASE_HOST'] ?? 'localhost',
-            'port' => $_ENV['DATABASE_PORT'] ?? '3306',
-            'user' => $_ENV['DATABASE_USER'] ?? 'root',
-            'password' => $_ENV['DATABASE_PASSWORD'] ?? '',
-            'dbname' => $_ENV['DATABASE_NAME'] ?? 'orphamap',
+            'host' => (string) ($params['host'] ?? 'localhost'),
+            'port' => (string) ($params['port'] ?? '3306'),
+            'user' => (string) ($params['user'] ?? 'root'),
+            'password' => (string) ($params['password'] ?? ''),
+            'dbname' => (string) ($params['dbname'] ?? 'orphamap'),
         ];
     }
 

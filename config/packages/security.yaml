@@ -20,13 +20,17 @@ security:
             lazy: true
             provider: app_user_provider
             custom_authenticator: App\Security\AppAuthenticator
-            # 5 tentatives de connexion par minute (par identifiant et par IP)
+            # 5 tentatives de connexion par quart d'heure (par identifiant et par IP),
+            # soit moins de 500 essais par jour au lieu de 7 200.
             login_throttling:
                 max_attempts: 5
-                interval: '1 minute'
+                interval: '15 minutes'
+            # Déconnexion par formulaire POST avec jeton : un site tiers ne peut pas
+            # déclencher la déconnexion d'un administrateur.
             logout:
                 path: app_logout
                 target: home
+                enable_csrf: true
 
     # ROLE_ADMIN : gestion complète. Un seul rôle suffit pour l'instant ;
     # ajouter un rôle intermédiaire ici si des modérateurs sont nécessaires.

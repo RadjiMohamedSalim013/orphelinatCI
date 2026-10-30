@@ -9,7 +9,7 @@
             <img src="{{ image_url(orphelinat.image, 640) }}" alt="" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover">
         {% else %}
             <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-50 to-ink-50 text-brand-300">
-                <i class="fa-solid fa-house-chimney-window {{ ligne ? 'text-2xl' : 'text-4xl' }}" aria-hidden="true"></i>
+                {{ ux_icon('lucide:house', {class: '' ~ ' ' ~ (ligne ? 'text-2xl' : 'text-4xl')}) }}
             </div>
         {% endif %}
     </div>
@@ -19,16 +19,16 @@
             <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="rounded-sm after:absolute after:inset-0 focus:outline-none group-hover:text-brand-700">{{ orphelinat.nom }}</a>
         </h3>
         <p class="flex items-start gap-2 text-sm text-ink-600">
-            <i class="fa-solid fa-location-dot mt-1 text-xs text-ink-400" aria-hidden="true"></i>
+            {{ ux_icon('lucide:map-pin', {class: 'mt-1 text-xs text-ink-400'}) }}
             <span class="line-clamp-2">{{ orphelinat.localisationLabel }}</span>
         </p>
         {% if orphelinat.telephone %}
             <p class="flex items-center gap-2 text-sm text-ink-600">
-                <i class="fa-solid fa-phone text-xs text-ink-400" aria-hidden="true"></i>{{ orphelinat.telephone }}
+                {{ ux_icon('lucide:phone', {class: 'text-xs text-ink-400'}) }}{{ orphelinat.telephone }}
             </p>
         {% endif %}
         <span class="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-semibold text-brand-700" aria-hidden="true">
-            Voir la fiche <i class="fa-solid fa-arrow-right text-xs transition group-hover:translate-x-0.5"></i>
+            Voir la fiche {{ ux_icon('lucide:arrow-right', {class: 'text-xs transition group-hover:translate-x-0.5'}) }}
         </span>
     </div>
 </article>

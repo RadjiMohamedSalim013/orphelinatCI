@@ -8,7 +8,7 @@
         {% if parent %}<input type="hidden" name="parent" value="{{ parent }}">{% endif %}
         <label class="sr-only" for="ajout-{{ type }}-{{ parent ?: 0 }}">{{ placeholder }}</label>
         <input id="ajout-{{ type }}-{{ parent ?: 0 }}" name="nom" required maxlength="255" class="om-input !py-1.5 text-sm" placeholder="{{ placeholder }}">
-        <button class="om-btn-secondary !py-1.5 !px-3" title="Ajouter"><i class="fa-solid fa-plus" aria-hidden="true"></i><span class="sr-only">Ajouter</span></button>
+        <button class="om-btn-secondary !py-1.5 !px-3" title="Ajouter">{{ ux_icon('lucide:plus') }}<span class="sr-only">Ajouter</span></button>
     </form>
 {% endmacro %}
 

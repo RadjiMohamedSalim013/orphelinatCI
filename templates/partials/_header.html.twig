@@ -1,7 +1,7 @@
 {% set route = app.request.attributes.get('_route') %}
 {% set nav = [
-    {route: 'home', label: 'Accueil', icon: 'fa-house', actif: route == 'home'},
-    {route: 'orphelinat_index', label: 'Rechercher', icon: 'fa-magnifying-glass', actif: route in ['orphelinat_index', 'orphelinat_show', 'orphelinat_signaler']},
+    {route: 'home', label: 'Accueil', icon: 'house', actif: route == 'home'},
+    {route: 'orphelinat_index', label: 'Rechercher', icon: 'search', actif: route in ['orphelinat_index', 'orphelinat_show', 'orphelinat_signaler']},
 ] %}
 <header class="sticky top-0 z-40 border-b border-ink-200/70 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80" data-controller="menu">
     <div class="om-container flex h-16 items-center justify-between gap-4">
@@ -12,20 +12,20 @@
         <nav class="hidden items-center gap-1 md:flex" aria-label="Navigation principale">
             {% for item in nav %}
                 <a href="{{ path(item.route) }}" class="om-btn-ghost om-btn-sm {{ item.actif ? '!bg-brand-50 !text-brand-800' }}" {% if item.actif %}aria-current="page"{% endif %}>
-                    <i class="fa-solid {{ item.icon }} text-xs opacity-70" aria-hidden="true"></i>{{ item.label }}
+                    {{ ux_icon('lucide:' ~ (item.icon), {class: 'text-xs opacity-70'}) }}{{ item.label }}
                 </a>
             {% endfor %}
         </nav>
 
         <div class="flex items-center gap-2">
             {% if app.request.hasPreviousSession and is_granted('ROLE_ADMIN') %}
-                <a href="{{ path('admin_dashboard') }}" class="om-btn-ghost om-btn-sm hidden lg:inline-flex"><i class="fa-solid fa-gauge text-xs" aria-hidden="true"></i> Administration</a>
+                <a href="{{ path('admin_dashboard') }}" class="om-btn-ghost om-btn-sm hidden lg:inline-flex">{{ ux_icon('lucide:gauge', {class: 'text-xs'}) }} Administration</a>
             {% endif %}
             <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary om-btn-sm hidden sm:inline-flex {{ route == 'proposer_orphelinat' ? 'ring-2 ring-brand-200' }}">
-                <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i> Proposer un orphelinat
+                {{ ux_icon('lucide:plus', {class: 'text-xs'}) }} Proposer un orphelinat
             </a>
             <button type="button" class="om-btn-icon om-btn-ghost md:hidden" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-controls="menu-mobile">
-                <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i><span class="sr-only">Ouvrir le menu</span>
+                {{ ux_icon('lucide:menu', {class: 'text-lg'}) }}<span class="sr-only">Ouvrir le menu</span>
             </button>
         </div>
     </div>
@@ -34,15 +34,15 @@
         <div class="om-container flex flex-col gap-1 py-3">
             {% for item in nav %}
                 <a href="{{ path(item.route) }}" class="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-base font-medium {{ item.actif ? 'bg-brand-50 text-brand-800' : 'text-ink-700 hover:bg-ink-50' }}" {% if item.actif %}aria-current="page"{% endif %}>
-                    <i class="fa-solid {{ item.icon }} w-5 text-center text-ink-400" aria-hidden="true"></i>{{ item.label }}
+                    {{ ux_icon('lucide:' ~ (item.icon), {class: 'w-5 text-center text-ink-400'}) }}{{ item.label }}
                 </a>
             {% endfor %}
             {% if app.request.hasPreviousSession and is_granted('ROLE_ADMIN') %}
                 <a href="{{ path('admin_dashboard') }}" class="flex min-h-[48px] items-center gap-3 rounded-md px-3 text-base font-medium text-ink-700 hover:bg-ink-50">
-                    <i class="fa-solid fa-gauge w-5 text-center text-ink-400" aria-hidden="true"></i>Administration
+                    {{ ux_icon('lucide:gauge', {class: 'w-5 text-center text-ink-400'}) }}Administration
                 </a>
             {% endif %}
-            <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary mt-2"><i class="fa-solid fa-plus" aria-hidden="true"></i> Proposer un orphelinat</a>
+            <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary mt-2">{{ ux_icon('lucide:plus') }} Proposer un orphelinat</a>
         </div>
     </nav>
 </header>

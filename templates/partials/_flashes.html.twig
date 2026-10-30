@@ -1,10 +1,10 @@
 {# Messages flash présentés en notifications. Les erreurs restent affichées jusqu'à fermeture. #}
 {% if app.request.hasPreviousSession and app.session.flashBag.peekAll is not empty %}
     {% set styles = {
-        success: ['fa-circle-check', 'border-trust-200', 'text-trust-700', 'Succès'],
-        error: ['fa-circle-exclamation', 'border-red-200', 'text-red-700', 'Erreur'],
-        warning: ['fa-triangle-exclamation', 'border-amber-200', 'text-amber-700', 'Attention'],
-        info: ['fa-circle-info', 'border-sky-200', 'text-sky-700', 'Information'],
+        success: ['circle-check', 'border-trust-200', 'text-trust-700', 'Succès'],
+        error: ['circle-alert', 'border-red-200', 'text-red-700', 'Erreur'],
+        warning: ['triangle-alert', 'border-amber-200', 'text-amber-700', 'Attention'],
+        info: ['info', 'border-sky-200', 'text-sky-700', 'Information'],
     } %}
     <div class="pointer-events-none fixed inset-x-3 top-3 z-50 ml-auto flex max-w-sm flex-col gap-2 sm:inset-x-auto sm:right-5 sm:top-5 sm:w-96" aria-live="polite">
         {% for label, messages in app.flashes(['success', 'error', 'warning', 'info']) %}
@@ -13,10 +13,10 @@
                 <div class="om-toast {{ style[1] }}" role="{{ label == 'error' ? 'alert' : 'status' }}"
                      data-controller="toast" data-toast-delay-value="{{ label == 'error' ? 0 : 6000 }}"
                      data-action="mouseenter->toast#pause mouseleave->toast#start focusin->toast#pause">
-                    <i class="fa-solid {{ style[0] }} mt-0.5 {{ style[2] }}" aria-hidden="true"></i>
+                    {{ ux_icon('lucide:' ~ (style[0]), {class: 'mt-0.5' ~ ' ' ~ (style[2])}) }}
                     <p class="flex-1 text-ink-800"><span class="sr-only">{{ style[3] }} : </span>{{ message }}</p>
                     <button type="button" class="-m-1 rounded p-1 text-ink-400 hover:text-ink-700" data-action="toast#dismiss">
-                        <i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Fermer</span>
+                        {{ ux_icon('lucide:x') }}<span class="sr-only">Fermer</span>
                     </button>
                 </div>
             {% endfor %}

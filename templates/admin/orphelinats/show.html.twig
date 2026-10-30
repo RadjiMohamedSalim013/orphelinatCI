@@ -14,9 +14,9 @@
         {% endblock %}
         {% block actions %}
             {% if statut != 'archive' %}
-                <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="om-btn-secondary" target="_blank" rel="noopener"><i class="fa-solid fa-eye" aria-hidden="true"></i> Fiche publique</a>
+                <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="om-btn-secondary" target="_blank" rel="noopener">{{ ux_icon('lucide:eye') }} Fiche publique</a>
             {% endif %}
-            <a href="{{ path('admin_orphelinat_edit', {id: orphelinat.id}) }}" class="om-btn-primary"><i class="fa-solid fa-pen" aria-hidden="true"></i> Modifier</a>
+            <a href="{{ path('admin_orphelinat_edit', {id: orphelinat.id}) }}" class="om-btn-primary">{{ ux_icon('lucide:pencil') }} Modifier</a>
         {% endblock %}
     {% endembed %}
 
@@ -70,16 +70,16 @@
                 <p class="mt-1 text-sm text-ink-500">L’archivage retire la fiche du site tout en conservant son historique.</p>
                 <div class="mt-4 grid gap-2">
                     {% set actions = {
-                        actif: {label: 'Réactiver la fiche', icon: 'fa-rotate-left', message: 'La fiche redeviendra visible dans l’annuaire.'},
-                        ferme: {label: 'Marquer comme fermé', icon: 'fa-door-closed', message: 'La fiche restera consultable mais sortira des résultats de recherche.'},
-                        archive: {label: 'Archiver', icon: 'fa-box-archive', message: 'La fiche ne sera plus visible sur le site public. Vous pourrez la réactiver.'},
+                        actif: {label: 'Réactiver la fiche', icon: 'rotate-ccw', message: 'La fiche redeviendra visible dans l’annuaire.'},
+                        ferme: {label: 'Marquer comme fermé', icon: 'door-closed', message: 'La fiche restera consultable mais sortira des résultats de recherche.'},
+                        archive: {label: 'Archiver', icon: 'archive', message: 'La fiche ne sera plus visible sur le site public. Vous pourrez la réactiver.'},
                     } %}
                     {% for valeur, action in actions %}
                         {% if valeur != statut %}
                             <form method="post" action="{{ path('admin_orphelinat_statut', {id: orphelinat.id}) }}" data-confirm="{{ action.message }}" data-confirm-title="{{ action.label }} ?" data-confirm-label="{{ action.label }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('statut_orphelinat_' ~ orphelinat.id) }}">
                                 <input type="hidden" name="statut" value="{{ valeur }}">
-                                <button class="om-btn-secondary w-full !justify-start"><i class="fa-solid {{ action.icon }} w-4 text-ink-500" aria-hidden="true"></i> {{ action.label }}</button>
+                                <button class="om-btn-secondary w-full !justify-start">{{ ux_icon('lucide:' ~ (action.icon), {class: 'w-4 text-ink-500'}) }} {{ action.label }}</button>
                             </form>
                         {% endif %}
                     {% endfor %}
@@ -87,7 +87,7 @@
                         <form method="post" action="{{ path('admin_orphelinat_delete', {id: orphelinat.id}) }}" class="mt-2 border-t border-ink-100 pt-4"
                               data-confirm="La fiche, ses photos et son document seront supprimés. Cette action est irréversible." data-confirm-title="Supprimer définitivement ?" data-confirm-label="Supprimer" data-confirm-variant="danger">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete_orphelinat_' ~ orphelinat.id) }}">
-                            <button class="om-btn-danger w-full"><i class="fa-solid fa-trash" aria-hidden="true"></i> Supprimer définitivement</button>
+                            <button class="om-btn-danger w-full">{{ ux_icon('lucide:trash-2') }} Supprimer définitivement</button>
                         </form>
                     {% endif %}
                 </div>

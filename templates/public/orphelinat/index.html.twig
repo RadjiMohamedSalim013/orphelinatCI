@@ -14,24 +14,22 @@
     {%- if erreur or criteres.recherche or (resultats and resultats.total == 0) -%}<meta name="robots" content="noindex, follow">{%- endif -%}
 {% endblock %}
 
-{% block stylesheets %}
-    {% if points is not empty %}{% include 'partials/_leaflet.html.twig' %}{% endif %}
-{% endblock %}
+{% block stylesheets %}{% if points is not empty %}<link rel="stylesheet" href="{{ asset('vendor/leaflet/dist/leaflet.min.css') }}">{% endif %}{% endblock %}
 
 {% block body %}
     {# Libellés des filtres actifs, retrouvés dans les listes déjà chargées #}
     {% set filtres = [] %}
     {% for p in pays|filter(p => p.id == criteres.paysId) %}
-        {% set filtres = filtres|merge([{label: p.nom, icone: 'fa-earth-africa', sans: {q: criteres.recherche}}]) %}
+        {% set filtres = filtres|merge([{label: p.nom, icone: 'globe', sans: {q: criteres.recherche}}]) %}
     {% endfor %}
     {% for v in villes|filter(v => v.id == criteres.villeId) %}
-        {% set filtres = filtres|merge([{label: v.nom, icone: 'fa-city', sans: {pays: criteres.paysId, q: criteres.recherche}}]) %}
+        {% set filtres = filtres|merge([{label: v.nom, icone: 'building-2', sans: {pays: criteres.paysId, q: criteres.recherche}}]) %}
     {% endfor %}
     {% for c in communes|filter(c => c.id == criteres.communeId) %}
-        {% set filtres = filtres|merge([{label: c.nom, icone: 'fa-location-dot', sans: {pays: criteres.paysId, ville: criteres.villeId, q: criteres.recherche}}]) %}
+        {% set filtres = filtres|merge([{label: c.nom, icone: 'map-pin', sans: {pays: criteres.paysId, ville: criteres.villeId, q: criteres.recherche}}]) %}
     {% endfor %}
     {% if criteres.recherche %}
-        {% set filtres = filtres|merge([{label: '« ' ~ criteres.recherche ~ ' »', icone: 'fa-signature', sans: criteres.toQuery|filter((v, k) => k != 'q')}]) %}
+        {% set filtres = filtres|merge([{label: '« ' ~ criteres.recherche ~ ' »', icone: 'type', sans: criteres.toQuery|filter((v, k) => k != 'q')}]) %}
     {% endif %}
 
     <section class="relative overflow-hidden border-b border-ink-200/70 bg-gradient-to-b from-brand-50/70 to-white">
@@ -44,8 +42,8 @@
 
     <section class="om-container py-8" aria-labelledby="titre-resultats" data-controller="view">
         {% if erreur %}
-            {% embed 'partials/_empty.html.twig' with {icone: 'fa-plug-circle-exclamation', titre: 'La recherche est momentanément indisponible', texte: 'Ce n’est pas de votre fait. Réessayez dans quelques instants.'} %}
-                {% block actions %}<a href="{{ app.request.requestUri }}" class="om-btn-primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Réessayer</a>{% endblock %}
+            {% embed 'partials/_empty.html.twig' with {icone: 'unplug', titre: 'La recherche est momentanément indisponible', texte: 'Ce n’est pas de votre fait. Réessayez dans quelques instants.'} %}
+                {% block actions %}<a href="{{ app.request.requestUri }}" class="om-btn-primary">{{ ux_icon('lucide:rotate-cw') }} Réessayer</a>{% endblock %}
             {% endembed %}
         {% else %}
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -57,11 +55,11 @@
                     <div class="inline-flex rounded-md border border-ink-200 bg-white p-1 lg:hidden" role="tablist" aria-label="Affichage des résultats" id="bascule-vue">
                         <button type="button" role="tab" aria-selected="true" aria-controls="vue-liste" data-view="liste" data-view-target="tab" data-action="view#show"
                                 class="rounded px-3 py-1.5 text-sm font-semibold text-ink-600 aria-selected:bg-ink-900 aria-selected:text-white">
-                            <i class="fa-solid fa-list mr-1" aria-hidden="true"></i>Liste
+                            {{ ux_icon('lucide:list', {class: 'mr-1'}) }}Liste
                         </button>
                         <button type="button" role="tab" aria-selected="false" aria-controls="vue-carte" data-view="carte" data-view-target="tab" data-action="view#show"
                                 class="rounded px-3 py-1.5 text-sm font-semibold text-ink-600 aria-selected:bg-ink-900 aria-selected:text-white">
-                            <i class="fa-solid fa-map mr-1" aria-hidden="true"></i>Carte
+                            {{ ux_icon('lucide:map', {class: 'mr-1'}) }}Carte
                         </button>
                     </div>
                 {% endif %}
@@ -72,8 +70,8 @@
                     {% for f in filtres %}
                         <li>
                             <a href="{{ path('orphelinat_index', f.sans|filter(v => v)) }}" class="om-chip" aria-label="Retirer le filtre {{ f.label }}">
-                                <i class="fa-solid {{ f.icone }} text-xs text-ink-400" aria-hidden="true"></i>{{ f.label }}
-                                <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
+                                {{ ux_icon('lucide:' ~ (f.icone), {class: 'text-xs text-ink-400'}) }}{{ f.label }}
+                                {{ ux_icon('lucide:x', {class: 'text-xs'}) }}
                             </a>
                         </li>
                     {% endfor %}
@@ -103,13 +101,13 @@
                             {% include 'partials/_pagination.html.twig' with {page: resultats.page, pages: resultats.pages, total: resultats.total, route: 'orphelinat_index', params: criteres.toQuery} %}
                         {% else %}
                             {% embed 'partials/_empty.html.twig' with {
-                                icone: 'fa-magnifying-glass-location',
+                                icone: 'search-x',
                                 titre: criteres.hasFilters ? 'Aucun établissement pour ces critères' : 'L’annuaire est encore vide',
                                 texte: criteres.hasFilters ? 'Élargissez la recherche (retirez la commune ou le nom), ou proposez un établissement que vous connaissez.' : 'Vous connaissez un établissement ? Proposez-le pour enrichir l’annuaire.',
                             } %}
                                 {% block actions %}
                                     {% if criteres.hasFilters %}<a href="{{ path('orphelinat_index') }}" class="om-btn-secondary">Effacer les filtres</a>{% endif %}
-                                    <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Proposer un orphelinat</a>
+                                    <a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary">{{ ux_icon('lucide:plus') }} Proposer un orphelinat</a>
                                 {% endblock %}
                             {% endembed %}
                         {% endif %}

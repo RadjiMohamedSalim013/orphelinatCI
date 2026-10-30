@@ -10,17 +10,17 @@
     } %}{% endembed %}
 
     {% set onglets = [
-        {cle: 'ouvertes', label: 'À traiter', n: a_traiter, icone: 'fa-inbox'},
-        {cle: 'en_attente', label: 'En attente', n: compteurs.en_attente, icone: 'fa-hourglass-half'},
-        {cle: 'en_verification', label: 'En vérification', n: compteurs.en_verification, icone: 'fa-magnifying-glass'},
-        {cle: 'acceptee', label: 'Acceptées', n: compteurs.acceptee, icone: 'fa-check'},
-        {cle: 'refusee', label: 'Refusées', n: compteurs.refusee, icone: 'fa-xmark'},
-        {cle: 'toutes', label: 'Toutes', n: null, icone: 'fa-layer-group'},
+        {cle: 'ouvertes', label: 'À traiter', n: a_traiter, icone: 'inbox'},
+        {cle: 'en_attente', label: 'En attente', n: compteurs.en_attente, icone: 'hourglass'},
+        {cle: 'en_verification', label: 'En vérification', n: compteurs.en_verification, icone: 'search'},
+        {cle: 'acceptee', label: 'Acceptées', n: compteurs.acceptee, icone: 'check'},
+        {cle: 'refusee', label: 'Refusées', n: compteurs.refusee, icone: 'x'},
+        {cle: 'toutes', label: 'Toutes', n: null, icone: 'layers'},
     ] %}
     <nav class="om-tabs" aria-label="Filtrer par statut">
         {% for o in onglets %}
             <a href="{{ path('admin_propositions_index', {statut: o.cle}) }}" class="om-tab" {% if filtre == o.cle %}aria-current="page"{% endif %}>
-                <i class="fa-solid {{ o.icone }} text-xs opacity-60" aria-hidden="true"></i>{{ o.label }}
+                {{ ux_icon('lucide:' ~ (o.icone), {class: 'text-xs opacity-60'}) }}{{ o.label }}
                 {% if o.n is not null %}<span class="rounded-full px-1.5 text-xs font-semibold {{ filtre == o.cle ? 'bg-brand-100 text-brand-800' : 'bg-ink-100 text-ink-600' }}">{{ o.n }}</span>{% endif %}
             </a>
         {% endfor %}
@@ -29,7 +29,7 @@
     <div class="mt-6" data-controller="modal">
         {% if propositions is empty %}
             <div class="om-empty">
-                <span class="om-empty-icon" aria-hidden="true"><i class="fa-solid {{ filtre == 'ouvertes' ? 'fa-mug-hot' : 'fa-inbox' }}"></i></span>
+                <span class="om-empty-icon" aria-hidden="true">{{ ux_icon('lucide:' ~ (filtre == 'ouvertes' ? 'coffee' : 'inbox')) }}</span>
                 <p class="font-display text-lg font-bold text-ink-900">{{ filtre == 'ouvertes' ? 'Aucune proposition à traiter' : 'Aucune proposition dans cette catégorie' }}</p>
                 {% if filtre == 'ouvertes' %}<p class="mt-1 text-sm text-ink-500">Les nouvelles propositions du public apparaîtront ici.</p>{% endif %}
             </div>
@@ -47,30 +47,30 @@
                                     {% if p.image %}
                                         <img src="{{ image_url(p.image, 640) }}" alt="" loading="lazy" class="h-full w-full object-cover">
                                     {% else %}
-                                        <div class="flex h-full w-full items-center justify-center text-ink-300"><i class="fa-solid fa-image text-xl" aria-hidden="true"></i></div>
+                                        <div class="flex h-full w-full items-center justify-center text-ink-300">{{ ux_icon('lucide:image', {class: 'text-xl'}) }}</div>
                                     {% endif %}
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-2">
                                         {% include 'admin/_statut_badge.html.twig' with {statut: p.statut} %}
-                                        {% if nb_doublons > 0 %}<span class="om-badge-warning"><i class="fa-solid fa-clone text-[10px]" aria-hidden="true"></i> {{ nb_doublons }} doublon{{ nb_doublons > 1 ? 's' }} possible{{ nb_doublons > 1 ? 's' }}</span>{% endif %}
-                                        {% if not p.commune %}<span class="om-badge-neutral"><i class="fa-solid fa-circle-question text-[10px]" aria-hidden="true"></i> Commune hors liste</span>{% endif %}
+                                        {% if nb_doublons > 0 %}<span class="om-badge-warning">{{ ux_icon('lucide:copy', {class: 'text-[10px]'}) }} {{ nb_doublons }} doublon{{ nb_doublons > 1 ? 's' }} possible{{ nb_doublons > 1 ? 's' }}</span>{% endif %}
+                                        {% if not p.commune %}<span class="om-badge-neutral">{{ ux_icon('lucide:circle-help', {class: 'text-[10px]'}) }} Commune hors liste</span>{% endif %}
                                         <span class="font-mono text-xs text-ink-400">{{ p.reference }}</span>
                                     </div>
                                     <h2 class="mt-1.5 truncate font-display text-lg font-bold text-ink-900">
                                         <a href="{{ path('admin_propositions_show', {id: p.id}) }}" class="hover:text-brand-700">{{ p.nom }}</a>
                                     </h2>
                                     <p class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-600">
-                                        <span><i class="fa-solid fa-location-dot mr-1 text-ink-400" aria-hidden="true"></i>{{ [p.quartier, p.communeLabel, p.ville]|filter(v => v)|join(', ') }}</span>
-                                        {% if p.telephone %}<span class="tabular-nums"><i class="fa-solid fa-phone mr-1 text-ink-400" aria-hidden="true"></i>{{ p.telephone }}</span>{% endif %}
-                                        <span class="text-ink-500"><i class="fa-regular fa-clock mr-1 text-ink-400" aria-hidden="true"></i>{{ jours == 0 ? 'Aujourd’hui' : (jours == 1 ? 'Hier' : 'Il y a ' ~ jours ~ ' jours') }}</span>
+                                        <span>{{ ux_icon('lucide:map-pin', {class: 'mr-1 text-ink-400'}) }}{{ [p.quartier, p.communeLabel, p.ville]|filter(v => v)|join(', ') }}</span>
+                                        {% if p.telephone %}<span class="tabular-nums">{{ ux_icon('lucide:phone', {class: 'mr-1 text-ink-400'}) }}{{ p.telephone }}</span>{% endif %}
+                                        <span class="text-ink-500">{{ ux_icon('lucide:clock', {class: 'mr-1 text-ink-400'}) }}{{ jours == 0 ? 'Aujourd’hui' : (jours == 1 ? 'Hier' : 'Il y a ' ~ jours ~ ' jours') }}</span>
                                     </p>
                                 </div>
                             </div>
 
                             <div class="flex shrink-0 flex-wrap gap-2 lg:justify-end">
                                 <a href="{{ path('admin_propositions_show', {id: p.id}) }}" class="om-btn-secondary om-btn-sm flex-1 sm:flex-none">
-                                    <i class="fa-solid fa-eye text-xs" aria-hidden="true"></i> Examiner
+                                    {{ ux_icon('lucide:eye', {class: 'text-xs'}) }} Examiner
                                 </a>
                                 {% if ouverte %}
                                     <button type="button" class="om-btn om-btn-sm flex-1 bg-trust-700 text-white hover:bg-trust-800 sm:flex-none"
@@ -79,7 +79,7 @@
                                             data-modal-jeton-param="{{ csrf_token('accepter_' ~ p.id) }}"
                                             data-modal-valeurs-param="{{ {commune: p.commune ? p.commune.id : '', quartier: p.quartier ?? '', verifie: false}|json_encode }}"
                                             data-modal-textes-param="{{ {sous_titre: p.nom, doublons: nb_doublons > 0 ? nb_doublons ~ ' établissement(s) similaire(s) déjà dans l’annuaire. Examinez la proposition avant d’accepter.' : '', commune_saisie: p.commune ? '' : (p.communeSaisie ~ ', ' ~ p.ville)}|json_encode }}">
-                                        <i class="fa-solid fa-check text-xs" aria-hidden="true"></i> Accepter…
+                                        {{ ux_icon('lucide:check', {class: 'text-xs'}) }} Accepter…
                                     </button>
                                     <button type="button" class="om-btn om-btn-sm flex-1 border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50 sm:flex-none"
                                             data-action="modal#ouvrir" data-modal-cible-param="modale-refuser"
@@ -87,10 +87,10 @@
                                             data-modal-jeton-param="{{ csrf_token('refuser_' ~ p.id) }}"
                                             data-modal-valeurs-param="{{ {motif: ''}|json_encode }}"
                                             data-modal-textes-param="{{ {sous_titre: p.nom}|json_encode }}">
-                                        <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i> Refuser…
+                                        {{ ux_icon('lucide:x', {class: 'text-xs'}) }} Refuser…
                                     </button>
                                 {% elseif p.orphelinat %}
-                                    <a href="{{ path('admin_orphelinat_show', {id: p.orphelinat.id}) }}" class="om-btn-ghost om-btn-sm"><i class="fa-solid fa-house-chimney-window text-xs" aria-hidden="true"></i> Fiche créée</a>
+                                    <a href="{{ path('admin_orphelinat_show', {id: p.orphelinat.id}) }}" class="om-btn-ghost om-btn-sm">{{ ux_icon('lucide:house', {class: 'text-xs'}) }} Fiche créée</a>
                                 {% endif %}
                             </div>
                         </div>

@@ -54,9 +54,10 @@ class SeoController extends AbstractController
     public function robots(): Response
     {
         $lignes = [
+            // L'administration et la page de connexion n'y figurent volontairement pas :
+            // robots.txt est public et servirait de plan aux attaquants. Elles sont
+            // exclues de l'indexation par l'en-tête X-Robots-Tag (SecurityHeadersSubscriber).
             'User-agent: *',
-            'Disallow: /admin',
-            'Disallow: /login',
             'Disallow: /api/',
             'Disallow: /proposition/suivi/',
             'Disallow: /*/signaler',

@@ -23,7 +23,10 @@ class ReferencementTest extends AppWebTestCase
         $this->client->request('GET', '/robots.txt');
         $contenu = $this->client->getResponse()->getContent();
 
-        self::assertStringContainsString('Disallow: /admin', $contenu);
+        // robots.txt est public : il ne doit pas indiquer où se trouve l'administration.
+        self::assertStringNotContainsString('/admin', $contenu);
+        self::assertStringNotContainsString('/login', $contenu);
+        self::assertStringNotContainsString('/espace-equipe-test', $contenu);
         self::assertStringContainsString('Disallow: /proposition/suivi/', $contenu);
         self::assertMatchesRegularExpression('#Sitemap: https?://.+/sitemap\.xml#', $contenu);
     }

@@ -11,6 +11,11 @@ fi
 
 mkdir -p var public/uploads/images public/uploads/documents var/uploads/private
 
+# Page de connexion à une adresse secrète : sans ADMIN_LOGIN_PATH, elle reste sur /login.
+if [ -z "${ADMIN_LOGIN_PATH:-}" ] || [ "${ADMIN_LOGIN_PATH}" = "/login" ]; then
+    echo "ATTENTION : ADMIN_LOGIN_PATH n'est pas défini, la connexion reste accessible sur /login." >&2
+fi
+
 # Le cache est construit ici, avec les variables de l'hébergeur (SSL inclus).
 rm -rf var/cache/prod
 php bin/console cache:warmup --no-interaction

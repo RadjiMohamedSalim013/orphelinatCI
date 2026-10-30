@@ -3,7 +3,7 @@
     Variables : icone, titre, texte ; bloc « actions » pour les boutons.
 #}
 <div class="om-empty">
-    <span class="om-empty-icon" aria-hidden="true"><i class="fa-solid {{ icone|default('fa-inbox') }}"></i></span>
+    <span class="om-empty-icon" aria-hidden="true">{{ ux_icon('lucide:' ~ (icone|default('inbox'))) }}</span>
     <p class="font-display text-lg font-bold text-ink-900">{{ titre }}</p>
     {% if texte|default(false) %}<p class="mt-1 max-w-md text-sm text-ink-600">{{ texte }}</p>{% endif %}
     {% set _actions %}{% block actions %}{% endblock %}{% endset %}

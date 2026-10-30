@@ -14,14 +14,14 @@
         <input type="hidden" name="_token" value="{{ jeton|default('') }}">
         <div class="flex items-start gap-4 border-b border-ink-100 px-6 py-5">
             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 {{ tons[ton|default('brand')] }}" aria-hidden="true">
-                <i class="fa-solid {{ icone|default('fa-circle-info') }}"></i>
+                {{ ux_icon('lucide:' ~ (icone|default('info'))) }}
             </span>
             <div class="min-w-0 flex-1">
                 <h2 id="{{ id }}-titre" class="font-display text-lg font-bold text-ink-900">{{ titre }}</h2>
                 <p class="mt-0.5 truncate text-sm text-ink-500" data-modal-texte="sous_titre">{{ sous_titre|default('') }}</p>
             </div>
             <button type="button" class="om-btn-icon om-btn-ghost -mr-2 -mt-1" data-action="modal#fermer">
-                <i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Fermer</span>
+                {{ ux_icon('lucide:x') }}<span class="sr-only">Fermer</span>
             </button>
         </div>
         <div class="max-h-[65vh] overflow-y-auto px-6 py-5">{% block corps %}{% endblock %}</div>

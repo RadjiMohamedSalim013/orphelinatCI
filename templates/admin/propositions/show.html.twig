@@ -16,7 +16,7 @@
             {% if doublons is not empty %}
                 <section class="overflow-hidden rounded-xl border border-amber-300 bg-amber-50" aria-labelledby="titre-doublons">
                     <div class="flex items-center gap-3 border-b border-amber-200 px-5 py-3">
-                        <i class="fa-solid fa-clone text-amber-700" aria-hidden="true"></i>
+                        {{ ux_icon('lucide:copy', {class: 'text-amber-700'}) }}
                         <h2 id="titre-doublons" class="font-semibold text-amber-950">{{ doublons|length }} établissement{{ doublons|length > 1 ? 's' }} similaire{{ doublons|length > 1 ? 's' }} déjà dans l’annuaire</h2>
                     </div>
                     <ul class="divide-y divide-amber-200/70">
@@ -34,7 +34,7 @@
             {% endif %}
             {% if propositionsSimilaires is not empty %}
                 <div class="om-alert-info">
-                    <i class="fa-solid fa-code-compare mt-0.5" aria-hidden="true"></i>
+                    {{ ux_icon('lucide:git-compare', {class: 'mt-0.5'}) }}
                     <p>Autres propositions en cours au nom proche :
                         {% for s in propositionsSimilaires %}<a class="font-semibold underline" href="{{ path('admin_propositions_show', {id: s.id}) }}">{{ s.nom }}</a>{{ not loop.last ? ', ' }}{% endfor %}
                     </p>
@@ -52,7 +52,7 @@
                             </a>
                         {% else %}
                             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-ink-400">
-                                <i class="fa-solid fa-image text-2xl" aria-hidden="true"></i><span class="text-xs">Aucune photo</span>
+                                {{ ux_icon('lucide:image', {class: 'text-2xl'}) }}<span class="text-xs">Aucune photo</span>
                             </div>
                         {% endif %}
                     </div>
@@ -85,19 +85,19 @@
                 <div class="mt-5 flex flex-wrap gap-2">
                     {% if proposition.document %}
                         <a href="{{ path('admin_propositions_justificatif', {id: proposition.id}) }}" target="_blank" rel="noopener" class="om-btn-secondary om-btn-sm">
-                            <i class="fa-solid fa-file-shield text-xs" aria-hidden="true"></i> Ouvrir le justificatif<span class="sr-only"> (nouvel onglet)</span>
+                            {{ ux_icon('lucide:file-lock', {class: 'text-xs'}) }} Ouvrir le justificatif<span class="sr-only"> (nouvel onglet)</span>
                         </a>
                     {% else %}
                         <span class="text-sm text-ink-500">Aucun justificatif joint.</span>
                     {% endif %}
                     {% if proposition.telephone %}
-                        <a href="tel:{{ proposition.telephone|replace({' ': '', '.': '', '-': ''}) }}" class="om-btn-secondary om-btn-sm"><i class="fa-solid fa-phone text-xs" aria-hidden="true"></i> Appeler l’établissement</a>
+                        <a href="tel:{{ proposition.telephone|replace({' ': '', '.': '', '-': ''}) }}" class="om-btn-secondary om-btn-sm">{{ ux_icon('lucide:phone', {class: 'text-xs'}) }} Appeler l’établissement</a>
                     {% endif %}
                 </div>
             </section>
 
             <section class="om-card om-card-pad" aria-labelledby="titre-proposant">
-                <h2 id="titre-proposant" class="om-h3 !text-base">Proposant <span class="om-badge-neutral ml-1 align-middle"><i class="fa-solid fa-lock text-[10px]" aria-hidden="true"></i> Confidentiel</span></h2>
+                <h2 id="titre-proposant" class="om-h3 !text-base">Proposant <span class="om-badge-neutral ml-1 align-middle">{{ ux_icon('lucide:lock', {class: 'text-[10px]'}) }} Confidentiel</span></h2>
                 <div class="mt-3 flex items-center gap-3">
                     <span class="flex h-10 w-10 items-center justify-center rounded-full bg-ink-900 text-sm font-bold uppercase text-white" aria-hidden="true">{{ proposition.nomProposant|first }}</span>
                     <div class="text-sm">
@@ -137,7 +137,7 @@
                             {% set fait = loop.index0 <= rang %}
                             <li class="flex items-center {{ not loop.last ? 'flex-1' }}" {% if loop.index0 == rang %}aria-current="step"{% endif %}>
                                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ fait ? (loop.last and statut == 'refusee' ? 'bg-red-600 text-white' : 'bg-trust-600 text-white') : 'bg-ink-200 text-ink-500' }}">
-                                    <i class="fa-solid {{ fait ? (loop.last and statut == 'refusee' ? 'fa-xmark' : 'fa-check') : 'fa-circle' }} text-[9px]" aria-hidden="true"></i>
+                                    {{ ux_icon('lucide:' ~ (fait ? (loop.last and statut == 'refusee' ? 'x' : 'check') : 'circle'), {class: 'text-[9px]'}) }}
                                 </span>
                                 <span class="ml-1.5 {{ fait ? 'text-ink-800' : 'text-ink-400' }}">{{ etape }}</span>
                                 {% if not loop.last %}<span class="mx-2 h-px flex-1 {{ loop.index0 < rang ? 'bg-trust-400' : 'bg-ink-200' }}" aria-hidden="true"></span>{% endif %}
@@ -150,11 +150,11 @@
                     {% if ouverte %}
                         <button type="button" class="om-btn om-btn-lg w-full bg-trust-700 text-white shadow-[0_8px_20px_-8px_rgb(15_118_110/.6)] hover:-translate-y-px hover:bg-trust-800"
                                 data-action="modal#ouvrir" data-modal-cible-param="modale-accepter">
-                            <i class="fa-solid fa-check" aria-hidden="true"></i> Accepter…
+                            {{ ux_icon('lucide:check') }} Accepter…
                         </button>
                         <button type="button" class="om-btn w-full border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50"
                                 data-action="modal#ouvrir" data-modal-cible-param="modale-refuser">
-                            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Refuser…
+                            {{ ux_icon('lucide:x') }} Refuser…
                         </button>
 
                         {% if statut == 'en_attente' %}
@@ -164,7 +164,7 @@
                                 <label for="note-verif" class="sr-only">Note interne (facultatif)</label>
                                 <input id="note-verif" name="note" class="om-input mt-2" placeholder="Note interne (facultatif)">
                                 <button class="om-btn-secondary mt-2 w-full" data-ui-target="submit" data-loading-label="Mise à jour…">
-                                    <i class="fa-solid fa-magnifying-glass text-xs" aria-hidden="true"></i> Passer en vérification
+                                    {{ ux_icon('lucide:search', {class: 'text-xs'}) }} Passer en vérification
                                 </button>
                             </form>
                         {% endif %}
@@ -172,7 +172,7 @@
                         <p class="text-sm text-ink-700">{{ proposition.statut.label }}{% if proposition.traiteeAt %} le {{ proposition.traiteeAt|date('d/m/Y à H:i') }}{% endif %}.</p>
                         {% if proposition.motifRefus %}<p class="rounded-md bg-ink-50 p-3 text-sm text-ink-800"><strong>Motif :</strong> {{ proposition.motifRefus }}</p>{% endif %}
                         {% if proposition.orphelinat %}
-                            <a class="om-btn-secondary w-full" href="{{ path('admin_orphelinat_show', {id: proposition.orphelinat.id}) }}"><i class="fa-solid fa-house-chimney-window text-xs" aria-hidden="true"></i> Voir la fiche créée</a>
+                            <a class="om-btn-secondary w-full" href="{{ path('admin_orphelinat_show', {id: proposition.orphelinat.id}) }}">{{ ux_icon('lucide:house', {class: 'text-xs'}) }} Voir la fiche créée</a>
                         {% endif %}
                     {% endif %}
                 </div>
@@ -189,7 +189,7 @@
                         {ok: proposition.contactProposantEmail is not null, texte: proposition.contactProposantEmail ? 'Proposant joignable par e-mail' : 'Proposant sans adresse e-mail'},
                     ] %}
                         <li class="flex items-start gap-2 {{ point.ok ? 'text-ink-700' : 'text-ink-500' }}">
-                            <i class="fa-solid {{ point.ok ? 'fa-circle-check text-trust-600' : 'fa-circle-exclamation text-amber-600' }} mt-0.5" aria-hidden="true"></i>
+                            {{ ux_icon('lucide:' ~ (point.ok ? 'circle-check' : 'circle-alert'), {class: 'mt-0.5 ' ~ (point.ok ? 'text-trust-600' : 'text-amber-600')}) }}
                             <span>{{ point.texte }}<span class="sr-only"> : {{ point.ok ? 'oui' : 'non' }}</span></span>
                         </li>
                     {% endfor %}

@@ -6,7 +6,7 @@
     <div class="min-w-0">
         {% if retour|default(false) %}
             <a href="{{ retour.url }}" class="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 hover:text-brand-700">
-                <i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i>{{ retour.label }}
+                {{ ux_icon('lucide:arrow-left', {class: 'text-xs'}) }}{{ retour.label }}
             </a>
         {% endif %}
         {% block surtitre %}{% endblock %}

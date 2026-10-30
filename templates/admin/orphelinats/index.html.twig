@@ -7,7 +7,7 @@
 
     {% embed 'admin/_page_header.html.twig' with {titre: 'Établissements', sous_titre: resultats.total ~ ' fiche' ~ (resultats.total > 1 ? 's') ~ (actifs ? ' correspondant aux filtres' : ' au total')} %}
         {% block actions %}
-            <a href="{{ path('admin_orphelinat_create') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Ajouter</a>
+            <a href="{{ path('admin_orphelinat_create') }}" class="om-btn-primary">{{ ux_icon('lucide:plus') }} Ajouter</a>
         {% endblock %}
     {% endembed %}
 
@@ -77,7 +77,7 @@
                                 <a href="{{ path('admin_orphelinat_show', {id: o.id}) }}" class="font-semibold text-ink-900 hover:text-brand-700">{{ o.nom }}</a>
                                 <p class="mt-0.5 text-xs text-ink-500">
                                     Ajouté le {{ o.createdAt|date('d/m/Y') }}
-                                    {% if not o.hasCoordinates %}<span class="ml-1 text-amber-700"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> sans position</span>{% endif %}
+                                    {% if not o.hasCoordinates %}<span class="ml-1 text-amber-700">{{ ux_icon('lucide:locate-fixed') }} sans position</span>{% endif %}
                                 </p>
                             </td>
                             <td data-label="Localisation">{{ o.commune.nom }}<span class="block text-xs text-ink-500">{{ o.ville.nom }}</span></td>
@@ -89,7 +89,7 @@
                                 </div>
                             </td>
                             <td data-label="" class="md:text-right">
-                                <a href="{{ path('admin_orphelinat_edit', {id: o.id}) }}" class="om-btn-secondary om-btn-sm w-full md:w-auto"><i class="fa-solid fa-pen text-xs" aria-hidden="true"></i> Modifier<span class="sr-only"> {{ o.nom }}</span></a>
+                                <a href="{{ path('admin_orphelinat_edit', {id: o.id}) }}" class="om-btn-secondary om-btn-sm w-full md:w-auto">{{ ux_icon('lucide:pencil', {class: 'text-xs'}) }} Modifier<span class="sr-only"> {{ o.nom }}</span></a>
                             </td>
                         </tr>
                     {% endfor %}

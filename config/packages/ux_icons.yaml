@@ -1,0 +1,13 @@
+# Icônes SVG intégrées (jeu Lucide). En production, seules les icônes
+# enregistrées dans assets/icons/ (php bin/console ux:icons:lock) sont servies.
+ux_icons:
+    default_icon_attributes:
+        # Taille calée sur la police : text-sm, text-lg… règlent l'icône comme du texte.
+        height: '1em'
+        width: '1em'
+        class: 'om-icone'
+    ignore_not_found: false
+
+when@prod:
+    ux_icons:
+        ignore_not_found: true

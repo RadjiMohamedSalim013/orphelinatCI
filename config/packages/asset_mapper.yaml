@@ -4,6 +4,9 @@ framework:
         paths:
             - assets/
         missing_import_mode: strict
+        # Pas de polyfill es-module-shims chargé depuis un CDN tiers : les cartes
+        # d'import sont reconnues par tous les navigateurs actuels (Safari 16.4+).
+        importmap_polyfill: false
 
 when@prod:
     framework:

@@ -1,9 +1,9 @@
 {% if orphelinat.verifie %}
     <span class="om-badge-trust" title="Informations confirmées par l’équipe OrphaMap{{ orphelinat.verifiedAt ? ' le ' ~ orphelinat.verifiedAt|date('d/m/Y') }}">
-        <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Vérifié
+        {{ ux_icon('lucide:circle-check') }} Vérifié
     </span>
 {% else %}
     <span class="om-badge-neutral" title="Informations pas encore confirmées par l’équipe">
-        <i class="fa-regular fa-clock" aria-hidden="true"></i> Non vérifié
+        {{ ux_icon('lucide:clock') }} Non vérifié
     </span>
 {% endif %}

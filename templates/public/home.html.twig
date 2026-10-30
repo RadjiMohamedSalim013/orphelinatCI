@@ -65,9 +65,9 @@
                 </p>
 
                 <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-600" data-reveal style="--i: 7">
-                    <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-trust-600" aria-hidden="true"></i>Fiches vérifiées par l’équipe</span>
-                    <span class="inline-flex items-center gap-2"><i class="fa-solid fa-lock text-trust-600" aria-hidden="true"></i>Aucune donnée sur les enfants</span>
-                    <span class="inline-flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-trust-600" aria-hidden="true"></i>Gratuit et ouvert à tous</span>
+                    <span class="inline-flex items-center gap-2">{{ ux_icon('lucide:circle-check', {class: 'text-trust-600'}) }}Fiches vérifiées par l’équipe</span>
+                    <span class="inline-flex items-center gap-2">{{ ux_icon('lucide:lock', {class: 'text-trust-600'}) }}Aucune donnée sur les enfants</span>
+                    <span class="inline-flex items-center gap-2">{{ ux_icon('lucide:hand-heart', {class: 'text-trust-600'}) }}Gratuit et ouvert à tous</span>
                 </div>
             </div>
 
@@ -79,7 +79,7 @@
                         <p class="text-xs font-medium text-ink-500">établissement{{ stats.actifs > 1 ? 's' }} répertorié{{ stats.actifs > 1 ? 's' }}</p>
                     </div>
                     <div class="om-flotte om-flotte-2 absolute -right-4 bottom-14 flex items-center gap-3 rounded-xl border border-trust-200 bg-white/95 px-4 py-3 shadow-raised backdrop-blur" aria-hidden="true">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-trust-50 text-trust-700"><i class="fa-solid fa-circle-check"></i></span>
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-trust-50 text-trust-700">{{ ux_icon('lucide:circle-check') }}</span>
                         <div>
                             <p class="font-display text-lg font-extrabold leading-none text-ink-900">{{ stats.communes }}</p>
                             <p class="text-xs font-medium text-ink-500">commune{{ stats.communes > 1 ? 's' }} couverte{{ stats.communes > 1 ? 's' }}</p>
@@ -93,7 +93,7 @@
             <div class="relative rounded-2xl bg-gradient-to-r from-brand-200/60 via-white to-trust-200/60 p-px shadow-[0_24px_60px_-24px_rgb(194_65_12/.35)]">
                 <div class="rounded-[calc(1rem-1px)] bg-white p-4 sm:p-6">
                     <h2 class="mb-4 flex items-center gap-2 font-display text-lg font-bold text-ink-900">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white" aria-hidden="true"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white" aria-hidden="true">{{ ux_icon('lucide:search', {class: 'text-sm'}) }}</span>
                         Où cherchez-vous&nbsp;?
                     </h2>
                     {% include 'partials/_search_form.html.twig' with {pays: pays, villes: [], communes: [], criteres: null} %}
@@ -133,13 +133,13 @@
                         <a href="{{ path('orphelinat_index', {pays: c.paysId, ville: c.villeId, commune: c.communeId}) }}"
                            class="group flex items-center gap-3 rounded-xl border border-ink-200 bg-white p-4 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-raised">
                             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition duration-300 group-hover:bg-brand-600 group-hover:text-white" aria-hidden="true">
-                                <i class="fa-solid fa-location-dot"></i>
+                                {{ ux_icon('lucide:map-pin') }}
                             </span>
                             <span class="min-w-0 flex-1">
                                 <span class="block truncate font-semibold text-ink-900">{{ c.commune }}</span>
                                 <span class="block text-xs text-ink-500">{{ c.ville }} · {{ c.total }} établissement{{ c.total > 1 ? 's' }}</span>
                             </span>
-                            <i class="fa-solid fa-arrow-right text-xs text-ink-300 transition duration-300 group-hover:translate-x-1 group-hover:text-brand-600" aria-hidden="true"></i>
+                            {{ ux_icon('lucide:arrow-right', {class: 'text-xs text-ink-300 transition duration-300 group-hover:translate-x-1 group-hover:text-brand-600'}) }}
                         </a>
                     </li>
                 {% endfor %}
@@ -154,7 +154,7 @@
                 <p class="om-eyebrow">Annuaire</p>
                 <h2 id="titre-recents" class="om-h2 mt-1">Ajoutés récemment</h2>
             </div>
-            <a href="{{ path('orphelinat_index') }}" class="group om-btn-secondary om-btn-sm">Tout l’annuaire <i class="fa-solid fa-arrow-right text-xs transition group-hover:translate-x-0.5" aria-hidden="true"></i></a>
+            <a href="{{ path('orphelinat_index') }}" class="group om-btn-secondary om-btn-sm">Tout l’annuaire {{ ux_icon('lucide:arrow-right', {class: 'text-xs transition group-hover:translate-x-0.5'}) }}</a>
         </div>
 
         {% if recents is not empty %}
@@ -164,8 +164,8 @@
                 {% endfor %}
             </div>
         {% else %}
-            {% embed 'partials/_empty.html.twig' with {icone: 'fa-seedling', titre: 'L’annuaire est en cours de constitution', texte: 'Vous connaissez un établissement ? Proposez-le : il sera publié après vérification.'} %}
-                {% block actions %}<a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Proposer un orphelinat</a>{% endblock %}
+            {% embed 'partials/_empty.html.twig' with {icone: 'sprout', titre: 'L’annuaire est en cours de constitution', texte: 'Vous connaissez un établissement ? Proposez-le : il sera publié après vérification.'} %}
+                {% block actions %}<a href="{{ path('proposer_orphelinat') }}" class="om-btn-primary">{{ ux_icon('lucide:plus') }} Proposer un orphelinat</a>{% endblock %}
             {% endembed %}
         {% endif %}
     </section>
@@ -183,14 +183,14 @@
 
             <ol class="mt-12 grid gap-6 md:grid-cols-3">
                 {% for etape in [
-                    {icone: 'fa-map-location-dot', titre: 'Cherchez par lieu', texte: 'Pays, ville puis commune : seuls les établissements correspondants s’affichent, sur une liste et sur la carte.'},
-                    {icone: 'fa-address-card', titre: 'Consultez la fiche', texte: 'Adresse, téléphone, itinéraire et statut de vérification. Les fiches non vérifiées sont clairement signalées.'},
-                    {icone: 'fa-hand-holding-heart', titre: 'Contribuez', texte: 'Proposez un établissement manquant ou signalez une erreur. L’équipe contrôle chaque information.'},
+                    {icone: 'map-pinned', titre: 'Cherchez par lieu', texte: 'Pays, ville puis commune : seuls les établissements correspondants s’affichent, sur une liste et sur la carte.'},
+                    {icone: 'contact', titre: 'Consultez la fiche', texte: 'Adresse, téléphone, itinéraire et statut de vérification. Les fiches non vérifiées sont clairement signalées.'},
+                    {icone: 'hand-heart', titre: 'Contribuez', texte: 'Proposez un établissement manquant ou signalez une erreur. L’équipe contrôle chaque information.'},
                 ] %}
                     <li class="group relative rounded-2xl border border-white/10 bg-white/[.04] p-6 backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand-400/40 hover:bg-white/[.07]" data-reveal style="--i: {{ loop.index0 }}">
                         <span class="absolute right-5 top-4 font-display text-5xl font-extrabold text-white/[.06]" aria-hidden="true">{{ loop.index }}</span>
                         <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-[0_8px_24px_-8px_rgb(234_88_12/.8)] transition duration-300 group-hover:scale-110 group-hover:rotate-[-4deg]" aria-hidden="true">
-                            <i class="fa-solid {{ etape.icone }}"></i>
+                            {{ ux_icon('lucide:' ~ (etape.icone)) }}
                         </span>
                         <h3 class="mt-5 font-display text-lg font-bold text-white"><span class="sr-only">Étape {{ loop.index }} : </span>{{ etape.titre }}</h3>
                         <p class="mt-2 text-sm leading-relaxed text-ink-300">{{ etape.texte }}</p>
@@ -200,7 +200,7 @@
 
             {% if verifies is not empty %}
                 <div class="mt-12" data-reveal>
-                    <h3 class="flex items-center gap-2 text-sm font-semibold text-white"><i class="fa-solid fa-circle-check text-trust-400" aria-hidden="true"></i> Dernières fiches vérifiées</h3>
+                    <h3 class="flex items-center gap-2 text-sm font-semibold text-white">{{ ux_icon('lucide:circle-check', {class: 'text-trust-400'}) }} Dernières fiches vérifiées</h3>
                     <ul class="mt-4 grid gap-3 md:grid-cols-3">
                         {% for o in verifies %}
                             <li>
@@ -209,7 +209,7 @@
                                         <span class="block truncate font-semibold text-white">{{ o.nom }}</span>
                                         <span class="block truncate text-xs text-ink-400">{{ o.localisationLabel }}</span>
                                     </span>
-                                    <i class="fa-solid fa-arrow-right text-xs text-ink-400" aria-hidden="true"></i>
+                                    {{ ux_icon('lucide:arrow-right', {class: 'text-xs text-ink-400'}) }}
                                 </a>
                             </li>
                         {% endfor %}
@@ -230,7 +230,7 @@
                     <p class="mt-3 max-w-xl text-lg text-brand-50">Trois minutes suffisent pour le faire connaître. Vous suivez ensuite sa vérification depuis un lien privé.</p>
                 </div>
                 <a href="{{ path('proposer_orphelinat') }}" class="group inline-flex min-h-[56px] items-center justify-center gap-3 rounded-xl bg-white px-7 text-base font-bold text-brand-700 shadow-lg transition duration-300 hover:-translate-y-0.5 hover:shadow-xl">
-                    <i class="fa-solid fa-plus transition duration-300 group-hover:rotate-90" aria-hidden="true"></i> Proposer un orphelinat
+                    {{ ux_icon('lucide:plus', {class: 'transition duration-300 group-hover:rotate-90'}) }} Proposer un orphelinat
                 </a>
             </div>
         </div>

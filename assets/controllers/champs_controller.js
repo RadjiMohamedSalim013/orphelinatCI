@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { icone as svgIcone } from '../icones.js';
 
 /*
  * Confort de saisie dans un formulaire :
@@ -54,7 +55,7 @@ export default class extends Controller {
             } else {
                 const icone = document.createElement('span');
                 icone.className = 'flex h-12 w-12 shrink-0 items-center justify-center rounded bg-red-50 text-red-700';
-                icone.innerHTML = '<i class="fa-solid fa-file-pdf" aria-hidden="true"></i>';
+                icone.append(svgIcone('file-text'));
                 apercu.append(icone);
             }
 

@@ -1,180 +1,113 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Audit de Sécurité - OrphaMap Admin{% endblock %}
+{% block title %}Audit de sécurité — Administration OrphaMap CI{% endblock %}
+
+{% set severites = {
+    critical: {label: 'Critique', badge: 'om-badge-danger', icone: 'circle-alert', ton: 'bg-red-50 text-red-700'},
+    high: {label: 'Élevée', badge: 'om-badge-brand', icone: 'triangle-alert', ton: 'bg-brand-50 text-brand-700'},
+    medium: {label: 'Moyenne', badge: 'om-badge-warning', icone: 'info', ton: 'bg-amber-50 text-amber-700'},
+    low: {label: 'Faible', badge: 'om-badge-neutral', icone: 'info', ton: 'bg-ink-100 text-ink-700'},
+} %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-ink-900">
-                <i class="fa-solid fa-shield-halved text-brand-500 mr-2"></i>
-                Audit de Sécurité
-            </h1>
-            <p class="text-ink-500 mt-1">Surveillance et analyse des problèmes de sécurité</p>
-        </div>
-        
-        <button onclick="runAudit()" 
-                class="bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2 px-4 rounded-lg transition">
-            <i class="fa-solid fa-magnifying-glass mr-2"></i>
-            Lancer un Audit
-        </button>
-    </div>
+    {% embed 'admin/_page_header.html.twig' with {titre: 'Audit de sécurité', sous_titre: 'Contrôle des permissions, des fichiers déposés, des sauvegardes et de la configuration.'} %}
+        {% block actions %}
+            <form method="post" action="{{ path('admin_security_audit_run') }}" data-controller="ui" data-action="submit->ui#loading">
+                <input type="hidden" name="_token" value="{{ csrf_token('audit_run') }}">
+                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Audit en cours…">{{ ux_icon('lucide:shield-check') }}Lancer un audit</button>
+            </form>
+        {% endblock %}
+    {% endembed %}
 
-    <!-- Messages flash -->
-    <div id="audit-messages"></div>
+    <section class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4" aria-label="Constats des 30 derniers jours">
+        {% for cle in ['critical', 'high', 'medium'] %}
+            {% set s = severites[cle] %}
+            <div class="om-card p-4 sm:p-5" data-reveal style="--i: {{ loop.index0 }}">
+                <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm font-medium text-ink-600">Gravité {{ s.label|lower }}</p>
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ s.ton }}" aria-hidden="true">{{ ux_icon('lucide:' ~ (s.icone), {class: 'text-sm'}) }}</span>
+                </div>
+                <p class="mt-2 font-display text-2xl font-extrabold tabular-nums text-ink-900 sm:text-3xl">{{ attribute(statistics, cle)|default(0) }}</p>
+                <p class="mt-1 text-xs text-ink-500">Sur 30 jours</p>
+            </div>
+        {% endfor %}
+        <div class="om-card p-4 sm:p-5" data-reveal style="--i: 3">
+            <div class="flex items-start justify-between gap-3">
+                <p class="text-sm font-medium text-ink-600">Total des constats</p>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-700" aria-hidden="true">{{ ux_icon('lucide:list-checks', {class: 'text-sm'}) }}</span>
+            </div>
+            <p class="mt-2 font-display text-2xl font-extrabold tabular-nums text-ink-900 sm:text-3xl">{{ statistics.total|default(0) }}</p>
+            <p class="mt-1 text-xs text-ink-500">Sur 30 jours</p>
+        </div>
+    </section>
 
-    <!-- Statistiques -->
-    <div class="grid md:grid-cols-4 gap-4">
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-red-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-circle-exclamation text-red-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-ink-500">Critiques</p>
-                    <p class="text-2xl font-bold text-red-600">{{ statistics.critical }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-brand-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-triangle-exclamation text-brand-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-ink-500">Élevés</p>
-                    <p class="text-2xl font-bold text-brand-600">{{ statistics.high }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-yellow-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-exclamation text-yellow-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-ink-500">Moyens</p>
-                    <p class="text-2xl font-bold text-yellow-600">{{ statistics.medium }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white border rounded-lg p-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-ink-100 p-3 rounded-lg">
-                    <i class="fa-solid fa-list text-ink-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-ink-500">Total</p>
-                    <p class="text-2xl font-bold text-ink-900">{{ statistics.total }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <section class="mt-6" aria-labelledby="titre-a-traiter">
+        <h2 id="titre-a-traiter" class="mb-3 flex items-center gap-2 font-display text-lg font-bold text-ink-900">
+            Points à traiter
+            {% if unresolved_issues is not empty %}<span class="om-badge-brand">{{ unresolved_issues|length }}</span>{% endif %}
+        </h2>
 
-    <!-- Problèmes non résolus -->
-    <div class="bg-white border rounded-lg overflow-hidden">
-        <div class="p-4 border-b bg-ink-50 flex items-center justify-between">
-            <h2 class="font-semibold text-ink-800">
-                <i class="fa-solid fa-triangle-exclamation mr-2 text-brand-500"></i>
-                Problèmes Non Résolus ({{ unresolved_issues|length }})
-            </h2>
-        </div>
-
-        {% if unresolved_issues|length > 0 %}
-            <div class="divide-y divide-ink-200">
-                {% for issue in unresolved_issues %}
-                    <div class="p-4 hover:bg-ink-50">
-                        <div class="flex items-start justify-between">
-                            <div class="flex items-start gap-3 flex-1">
-                                {% set severityIcon = issue.severity == 'critical' ? 'fa-circle-exclamation text-red-600' : 
-                                                       issue.severity == 'high' ? 'fa-triangle-exclamation text-brand-600' : 
-                                                       'fa-exclamation text-yellow-600' %}
-                                <i class="fa-solid {{ severityIcon }} mt-1"></i>
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="px-2 py-1 text-xs rounded-full font-semibold
-                                            {% if issue.severity == 'critical' %}bg-red-100 text-red-700
-                                            {% elseif issue.severity == 'high' %}bg-brand-100 text-brand-700
-                                            {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                                            {{ issue.severity|upper }}
-                                        </span>
-                                        <span class="text-xs text-ink-500">{{ issue.type }}</span>
-                                    </div>
-                                    <p class="text-sm text-ink-800">{{ issue.message }}</p>
-                                    <p class="text-xs text-ink-500 mt-1">
-                                        <i class="fa-regular fa-clock mr-1"></i>
-                                        {{ issue.createdAt|date('d/m/Y H:i') }}
-                                    </p>
-                                </div>
-                            </div>
-                            <button onclick="resolveIssue({{ issue.id }})" 
-                                    class="ml-4 text-green-600 hover:text-green-700 text-sm font-semibold whitespace-nowrap">
-                                <i class="fa-solid fa-check mr-1"></i>
-                                Résoudre
-                            </button>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
+        {% if unresolved_issues is empty %}
+            {% embed 'partials/_empty.html.twig' with {icone: 'shield-check', titre: 'Aucun point en attente', texte: 'Le dernier audit n’a rien relevé qui demande votre attention. Relancez-en un après chaque mise à jour.'} %}{% endembed %}
         {% else %}
-            <div class="p-12 text-center">
-                <i class="fa-solid fa-shield-check text-green-500 text-6xl mb-4"></i>
-                <p class="text-ink-500 text-lg">Aucun problème de sécurité détecté</p>
-                <p class="text-ink-400 text-sm mt-2">Votre système est sécurisé</p>
-            </div>
+            <ul class="om-card divide-y divide-ink-100" role="list">
+                {% for issue in unresolved_issues %}
+                    {% set s = severites[issue.severity] ?? severites.low %}
+                    <li class="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+                        <div class="flex min-w-0 gap-3">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ s.ton }}" aria-hidden="true">{{ ux_icon('lucide:' ~ (s.icone), {class: 'text-sm'}) }}</span>
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="{{ s.badge }}">{{ s.label }}</span>
+                                    <span class="font-mono text-xs text-ink-500">{{ issue.type }}</span>
+                                </div>
+                                <p class="mt-1 break-words text-sm text-ink-800">{{ issue.message }}</p>
+                                <p class="mt-1 inline-flex items-center gap-1 text-xs text-ink-500">{{ ux_icon('lucide:clock') }}Relevé le {{ issue.createdAt|date('d/m/Y à H\\hi') }}</p>
+                            </div>
+                        </div>
+                        <form method="post" action="{{ path('admin_security_issue_resolve', {id: issue.id}) }}" class="shrink-0"
+                              data-confirm="Ce point disparaîtra de la liste. Il réapparaîtra au prochain audit si le problème persiste."
+                              data-confirm-title="Marquer comme résolu ?" data-confirm-label="Marquer résolu">
+                            <input type="hidden" name="_token" value="{{ csrf_token('issue_resolve_' ~ issue.id) }}">
+                            <button type="submit" class="om-btn-secondary !min-h-[36px] text-sm">{{ ux_icon('lucide:check') }}Résolu</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
         {% endif %}
-    </div>
+    </section>
 
-    <!-- Derniers audits -->
-    <div class="bg-white border rounded-lg overflow-hidden">
-        <div class="p-4 border-b bg-ink-50">
-            <h2 class="font-semibold text-ink-800">
-                <i class="fa-solid fa-clock-rotate-left mr-2"></i>
-                Derniers Audits (7 derniers jours)
-            </h2>
-        </div>
-
-        {% if recent_audits|length > 0 %}
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-ink-50 border-b">
+    <section class="mt-6" aria-labelledby="titre-historique">
+        <h2 id="titre-historique" class="mb-3 font-display text-lg font-bold text-ink-900">Historique des 7 derniers jours</h2>
+        {% if recent_audits is empty %}
+            {% embed 'partials/_empty.html.twig' with {icone: 'history', titre: 'Aucun audit récent', texte: 'Lancez un audit pour obtenir un premier état des lieux.'} %}{% endembed %}
+        {% else %}
+            <div class="om-card overflow-hidden">
+                <table class="om-table">
+                    <caption class="sr-only">Constats des 7 derniers jours</caption>
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Sévérité</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Message</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase">Statut</th>
+                            <th scope="col">Constat</th>
+                            <th scope="col">Gravité</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Statut</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-ink-200">
+                    <tbody>
                         {% for audit in recent_audits %}
-                            <tr class="hover:bg-ink-50">
-                                <td class="px-6 py-4 text-sm text-ink-600">{{ audit.type }}</td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2 py-1 text-xs rounded-full font-semibold
-                                        {% if audit.severity == 'critical' %}bg-red-100 text-red-700
-                                        {% elseif audit.severity == 'high' %}bg-brand-100 text-brand-700
-                                        {% elseif audit.severity == 'medium' %}bg-yellow-100 text-yellow-700
-                                        {% else %}bg-ink-100 text-ink-700{% endif %}">
-                                        {{ audit.severity }}
-                                    </span>
+                            {% set s = severites[audit.severity] ?? severites.low %}
+                            <tr>
+                                <td>
+                                    <span class="block font-mono text-xs text-ink-500">{{ audit.type }}</span>
+                                    <span class="block max-w-md truncate text-ink-800 max-md:max-w-[14rem]" title="{{ audit.message }}">{{ audit.message }}</span>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-ink-800">{{ audit.message|slice(0, 80) }}{% if audit.message|length > 80 %}...{% endif %}</td>
-                                <td class="px-6 py-4 text-sm text-ink-600">{{ audit.createdAt|date('d/m/Y H:i') }}</td>
-                                <td class="px-6 py-4">
+                                <td data-label="Gravité"><span class="{{ s.badge }}">{{ s.label }}</span></td>
+                                <td data-label="Date" class="whitespace-nowrap tabular-nums text-ink-600">{{ audit.createdAt|date('d/m/Y H:i') }}</td>
+                                <td data-label="Statut">
                                     {% if audit.resolved %}
-                                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                                            <i class="fa-solid fa-check mr-1"></i>Résolu
-                                        </span>
+                                        <span class="om-badge-trust">{{ ux_icon('lucide:check') }}Résolu</span>
                                     {% else %}
-                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-                                            <i class="fa-solid fa-circle-xmark mr-1"></i>Non résolu
-                                        </span>
+                                        <span class="om-badge-warning">{{ ux_icon('lucide:hourglass') }}À traiter</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -182,85 +115,6 @@
                     </tbody>
                 </table>
             </div>
-        {% else %}
-            <div class="p-8 text-center text-ink-500">
-                <i class="fa-solid fa-inbox text-4xl mb-2"></i>
-                <p>Aucun audit récent</p>
-            </div>
         {% endif %}
-    </div>
-
-
-</div>
-
-<script>
-function runAudit() {
-    const btn = event.target.closest('button');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Audit en cours...';
-
-    fetch('{{ path('admin_security_audit_run') }}', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            '{{ csrf_token('audit_run') }}': '{{ csrf_token('audit_run') }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const messagesDiv = document.getElementById('audit-messages');
-        if (data.success) {
-            messagesDiv.innerHTML = `
-                <div class="bg-green-50 border border-green-200 text-green-700 rounded-lg p-4 mb-4">
-                    <i class="fa-solid fa-check-circle mr-2"></i>
-                    ${data.message}
-                </div>
-            `;
-            setTimeout(() => location.reload(), 2000);
-        } else {
-            messagesDiv.innerHTML = `
-                <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4">
-                    <i class="fa-solid fa-exclamation-circle mr-2"></i>
-                    ${data.message}
-                </div>
-            `;
-        }
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    });
-}
-
-function resolveIssue(id) {
-    if (!confirm('Marquer ce problème comme résolu ?')) {
-        return;
-    }
-
-    fetch(`{{ path('admin_security_issue_resolve', {'id': 'PLACEHOLDER'}) }}`.replace('PLACEHOLDER', id), {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            '{{ csrf_token('issue_resolve') }}': '{{ csrf_token('issue_resolve') }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert(data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Erreur lors de la résolution du problème');
-    });
-}
-</script>
-
+    </section>
 {% endblock %}

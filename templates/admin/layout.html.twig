@@ -8,20 +8,20 @@
     {% set admin_nav_compteurs = admin_compteurs() %}
     {% set admin_sections = [
         {titre: 'Pilotage', liens: [
-            {route: 'admin_dashboard', prefix: 'admin_dashboard', label: 'Tableau de bord', icon: 'fa-gauge'},
-            {route: 'admin_statistiques', prefix: 'admin_statistiques', label: 'Statistiques', icon: 'fa-chart-simple'},
+            {route: 'admin_dashboard', prefix: 'admin_dashboard', label: 'Tableau de bord', icon: 'gauge'},
+            {route: 'admin_statistiques', prefix: 'admin_statistiques', label: 'Statistiques', icon: 'chart-column'},
         ]},
         {titre: 'À traiter', liens: [
-            {route: 'admin_propositions_index', prefix: 'admin_propositions', label: 'Propositions', icon: 'fa-inbox', compteur: admin_nav_compteurs.propositions},
-            {route: 'admin_signalements_index', prefix: 'admin_signalements', label: 'Signalements', icon: 'fa-flag', compteur: admin_nav_compteurs.signalements},
+            {route: 'admin_propositions_index', prefix: 'admin_propositions', label: 'Propositions', icon: 'inbox', compteur: admin_nav_compteurs.propositions},
+            {route: 'admin_signalements_index', prefix: 'admin_signalements', label: 'Signalements', icon: 'flag', compteur: admin_nav_compteurs.signalements},
         ]},
         {titre: 'Annuaire', liens: [
-            {route: 'admin_orphelinat_list', prefix: 'admin_orphelinat', label: 'Établissements', icon: 'fa-house-chimney-window'},
-            {route: 'admin_localisations_index', prefix: 'admin_localisations', label: 'Localisations', icon: 'fa-map-location-dot'},
+            {route: 'admin_orphelinat_list', prefix: 'admin_orphelinat', label: 'Établissements', icon: 'house'},
+            {route: 'admin_localisations_index', prefix: 'admin_localisations', label: 'Localisations', icon: 'map-pinned'},
         ]},
         {titre: 'Système', liens: [
-            {route: 'admin_backups_index', prefix: 'admin_backups', label: 'Sauvegardes', icon: 'fa-database'},
-            {route: 'admin_security_index', prefix: 'admin_security', label: 'Audit sécurité', icon: 'fa-shield-halved'},
+            {route: 'admin_backups_index', prefix: 'admin_backups', label: 'Sauvegardes', icon: 'database'},
+            {route: 'admin_security_index', prefix: 'admin_security', label: 'Audit sécurité', icon: 'shield'},
         ]},
     ] %}
 
@@ -30,7 +30,7 @@
         <div class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-ink-200 bg-white px-4 lg:hidden">
             <a href="{{ path('admin_dashboard') }}" class="rounded-md">{% include 'partials/_logo.html.twig' with {suffixe: 'Admin'} %}</a>
             <button type="button" class="om-btn-icon om-btn-ghost" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-controls="admin-menu">
-                <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i><span class="sr-only">Menu d’administration</span>
+                {{ ux_icon('lucide:menu', {class: 'text-lg'}) }}<span class="sr-only">Menu d’administration</span>
             </button>
         </div>
 
@@ -41,7 +41,7 @@
             <div class="flex h-16 shrink-0 items-center justify-between px-5">
                 <a href="{{ path('admin_dashboard') }}" class="rounded-md">{% include 'partials/_logo.html.twig' with {suffixe: 'Admin'} %}</a>
                 <button type="button" class="om-btn-icon om-btn-ghost lg:hidden" data-action="menu#close">
-                    <i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="sr-only">Fermer le menu</span>
+                    {{ ux_icon('lucide:x') }}<span class="sr-only">Fermer le menu</span>
                 </button>
             </div>
 
@@ -55,7 +55,7 @@
                                 <a href="{{ path(lien.route) }}"
                                    class="group flex min-h-[40px] items-center gap-3 rounded-md px-3 text-sm font-medium transition {{ admin_actif ? 'bg-brand-50 text-brand-800' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900' }}"
                                    {% if admin_actif %}aria-current="page"{% endif %}>
-                                    <i class="fa-solid {{ lien.icon }} w-4 text-center {{ admin_actif ? 'text-brand-600' : 'text-ink-400 group-hover:text-ink-600' }}" aria-hidden="true"></i>
+                                    {{ ux_icon('lucide:' ~ (lien.icon), {class: 'w-4 text-center' ~ ' ' ~ (admin_actif ? 'text-brand-600' : 'text-ink-400 group-hover:text-ink-600')}) }}
                                     <span class="flex-1">{{ lien.label }}</span>
                                     {% if lien.compteur|default(0) > 0 %}<span class="om-count">{{ lien.compteur }}<span class="sr-only"> à traiter</span></span>{% endif %}
                                 </a>
@@ -71,8 +71,11 @@
                     <p class="min-w-0 truncate text-sm text-ink-700" title="{{ app.user.userIdentifier }}">{{ app.user.userIdentifier }}</p>
                 </div>
                 <div class="mt-1 grid grid-cols-2 gap-1">
-                    <a href="{{ path('home') }}" class="om-btn-ghost om-btn-sm !justify-start" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square text-xs" aria-hidden="true"></i> Site</a>
-                    <a href="{{ path('app_logout') }}" class="om-btn-ghost om-btn-sm !justify-start"><i class="fa-solid fa-right-from-bracket text-xs" aria-hidden="true"></i> Quitter</a>
+                    <a href="{{ path('home') }}" class="om-btn-ghost om-btn-sm !justify-start" target="_blank" rel="noopener">{{ ux_icon('lucide:external-link', {class: 'text-xs'}) }} Site</a>
+                    <form method="post" action="{{ path('app_logout') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                        <button type="submit" class="om-btn-ghost om-btn-sm w-full !justify-start">{{ ux_icon('lucide:log-out', {class: 'text-xs'}) }} Quitter</button>
+                    </form>
                 </div>
             </div>
         </aside>

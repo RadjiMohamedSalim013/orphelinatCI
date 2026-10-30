@@ -15,7 +15,7 @@
     <div class="om-card mt-5 overflow-hidden">
         {% if signalements is empty %}
             <div class="flex flex-col items-center px-6 py-14 text-center">
-                <span class="om-empty-icon" aria-hidden="true"><i class="fa-solid fa-flag"></i></span>
+                <span class="om-empty-icon" aria-hidden="true">{{ ux_icon('lucide:flag') }}</span>
                 <p class="font-semibold text-ink-900">Aucun signalement dans cette catégorie.</p>
             </div>
         {% else %}

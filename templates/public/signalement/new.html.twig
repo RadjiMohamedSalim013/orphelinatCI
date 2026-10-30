@@ -5,11 +5,11 @@
 
 {% block body %}
     <div class="om-container max-w-2xl py-10 sm:py-14">
-        <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="om-btn-ghost om-btn-sm -ml-3"><i class="fa-solid fa-arrow-left text-xs" aria-hidden="true"></i> Retour à la fiche</a>
+        <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="om-btn-ghost om-btn-sm -ml-3">{{ ux_icon('lucide:arrow-left', {class: 'text-xs'}) }} Retour à la fiche</a>
 
         <h1 class="om-h2 mt-4">Signaler une erreur</h1>
         <div class="mt-4 flex items-center gap-3 rounded-lg border border-ink-200 bg-white p-3">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-600" aria-hidden="true"><i class="fa-solid fa-house-chimney-window"></i></span>
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-600" aria-hidden="true">{{ ux_icon('lucide:house') }}</span>
             <div class="min-w-0">
                 <p class="truncate font-semibold text-ink-900">{{ orphelinat.nom }}</p>
                 <p class="truncate text-sm text-ink-500">{{ orphelinat.localisationLabel }}</p>
@@ -20,7 +20,7 @@
         {{ form_start(form, {attr: {class: 'om-card om-card-pad mt-6', novalidate: 'novalidate', 'data-controller': 'ui', 'data-action': 'submit->ui#loading'}}) }}
             {% if form.vars.submitted and not form.vars.valid %}
                 <div class="om-alert-error mb-5" role="alert" tabindex="-1" data-controller="focus-on-connect">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    {{ ux_icon('lucide:circle-alert', {class: 'mt-0.5'}) }}
                     <div><p class="font-semibold">Merci de compléter le signalement.</p>{{ form_errors(form) }}</div>
                 </div>
             {% endif %}
@@ -30,7 +30,7 @@
             {{ form_rest(form) }}
             <div class="flex flex-col-reverse gap-3 border-t border-ink-100 pt-5 sm:flex-row sm:justify-end">
                 <a href="{{ path('orphelinat_show', {id: orphelinat.id, slug: orphelinat.slug}) }}" class="om-btn-ghost">Annuler</a>
-                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Envoi…"><i class="fa-regular fa-flag" aria-hidden="true"></i> Envoyer le signalement</button>
+                <button type="submit" class="om-btn-primary" data-ui-target="submit" data-loading-label="Envoi…">{{ ux_icon('lucide:flag') }} Envoyer le signalement</button>
             </div>
         {{ form_end(form) }}
     </div>
